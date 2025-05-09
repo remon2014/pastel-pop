@@ -17,7 +17,7 @@ export class ColorManager {
         glowFactor: 1.2,
         pulseRate: 1.3 // Faster pulse for energetic colors
       },
-      blue: {
+      blue: { 
         shadowBlur: 10,
         shadowColor: 'rgba(50, 50, 255, 0.35)',
         glowFactor: 0.9,
@@ -117,7 +117,7 @@ export class ParticleManager {
         thinningFactor: 1.0,
         // Visual weight that decreases as ripple expands
         visualWeight: (1 - (0.2 * i)) * enhancement.glowFactor
-      }); 
+      });
     }
 
     // Add subtle center highlight for more impact on white background
