@@ -117,7 +117,7 @@ export class ParticleManager {
         thinningFactor: 1.0,
         // Visual weight that decreases as ripple expands
         visualWeight: (1 - (0.2 * i)) * enhancement.glowFactor
-      });
+      }); 
     }
 
     // Add subtle center highlight for more impact on white background
