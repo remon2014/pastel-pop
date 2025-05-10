@@ -6,82 +6,195 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pastel Pop</title>
     <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #ffffff;
+      html, body {
         margin: 0;
         padding: 0;
         overflow: hidden;
-      }
-
-      #layout {
-        display: flex;
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: center;
-        gap: 40px;
-        padding: 32px;
-        box-sizing: border-box;
+        width: 100vw;
         height: 100vh;
+        font-family: 'Inter', sans-serif;
       }
 
-      #gameInfo {
-        flex-shrink: 0;
-        width: 180px;
-        padding-top: 16px;
-      }
-
-      #gameCanvas {
-        max-width: 100%;
-        height: auto;
-        border: none;
-        background-color: transparent; /* background managed by JS */
+      canvas#gameCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
         display: block;
+        z-index: 0;
+      }
+
+      #gameUI {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      #infoPanel {
+        padding: 20px;
+        pointer-events: none;
       }
 
       #targetColor,
       #level,
       #score,
       #highScore {
-        text-transform: lowercase;
         font-size: 14px;
         font-weight: 300;
-        color: #444;
-        margin-bottom: 4px;
-      }
-
-      #targetColor {
-        font-size: 14px;
-        font-weight: 300;
-        color: #444;
+        color: #333;
+        margin-bottom: 6px;
       }
 
       #targetColorName {
-        display: inline;
-        font-size: 18px;
         font-weight: 600;
-        color: #a3c4dc; /* default; dynamically updated by JS */
+        font-size: 18px;
         margin-left: 6px;
       }
 
+      #gameOverPanel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        pointer-events: auto;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+
       #gameOver {
-        font-size: 22px;
+        font-size: 28px;
         color: #d32f2f;
-        font-weight: 500;
-        margin-top: 20px;
+        font-weight: 600;
+        margin-bottom: 16px;
         display: none;
       }
 
       #restartBtn {
-        background: #000;
-        color: #fff;
+        background: #333;
+        color: white;
         font-size: 14px;
-        padding: 8px 16px;
+        padding: 10px 20px;
         border: none;
         border-radius: 100px;
-        margin-top: 8px;
         cursor: pointer;
         display: none;
+      }
+
+      /* 🎮 Main Menu Styles */
+      #mainMenu {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 20;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.96);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        pointer-events: auto;
+        gap: 20px;
+      }
+
+      #mainMenu h1 {
+        font-size: 48px;
+        font-weight: 700;
+        margin: 0;
+        background: linear-gradient(90deg, #ffb6c1, #b5d8ff, #b2f2bb);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+      }
+
+      /* ✅ Material-style pastel button */
+      .button-17 {
+        appearance: none;
+        background-color: #f0f7ff;
+        border: none;
+        border-radius: 24px;
+        box-shadow: rgba(0, 0, 0, .2) 0 3px 5px -1px,
+                    rgba(0, 0, 0, .14) 0 6px 10px 0,
+                    rgba(0, 0, 0, .12) 0 1px 18px 0;
+        color: #3c4043;
+        cursor: pointer;
+        font-family: "Inter", sans-serif;
+        font-size: 16px;
+        font-weight: 500;
+        height: 48px;
+        padding: 0 24px;
+        transition: box-shadow 280ms cubic-bezier(.4, 0, .2, 1),
+                    transform 270ms cubic-bezier(0, 0, .2, 1) 0ms;
+        will-change: transform, opacity;
+      }
+      
+      .button-17.black {
+        background-color: #333;
+        color: #fff;
+      }
+
+      .button-17.black:hover {
+        background-color: #000;
+        color: #fff;
+      }
+
+      /* Even spacing between Game Over buttons */
+      #gameOverPanel .button-17 {
+        margin-top: 10px;
+      }
+      .button-17:hover {
+        background: #e0efff;
+        color: #174ea6;
+      }
+
+      #menuHighScore {
+        font-size: 16px;
+        font-weight: 400;
+        color: #777;
+        margin: 0;
+      }
+
+      #backToMenuBtn {
+        display: none;
+      }
+      @media (max-width: 768px) {
+        #infoPanel {
+          padding: 12px;
+        }
+
+        #targetColorName {
+          font-size: 22px;
+        }
+
+        #gameOver {
+          font-size: 22px;
+        }
+
+        #restartBtn {
+          font-size: 16px;
+          padding: 12px 24px;
+        }
+
+        #menuBtn {
+          display: none; /* initially hidden until game starts */
+        }
+
+        .button-17 {
+          font-size: 16px;
+          padding: 12px 24px;
+        }
       }
 
       @keyframes shake {
@@ -96,55 +209,36 @@
       .shake {
         animation: shake 0.4s ease-in-out;
       }
-
-      /* ✅ Responsive layout for tablets and phones */
-      @media (max-width: 768px) {
-        #layout {
-          flex-direction: column;
-          align-items: center;
-          padding: 16px;
-          gap: 20px;
-        }
-
-        #gameInfo {
-          width: 100%;
-          text-align: center;
-          padding-top: 0;
-        }
-
-        #targetColor {
-          font-size: 16px;
-        }
-
-        #targetColorName {
-          font-size: 28px;
-        }
-
-        #gameCanvas {
-          width: 100%;
-          max-width: 100%;
-          height: auto;
-        }
-      }
     </style>
   </head>
+
   <body>
-    <div id="layout">
-      <div id="gameInfo">
+    <canvas id="gameCanvas"></canvas>
+    <button id="menuBtn" class="button-17" style="position:absolute; top:20px; right:20px; z-index:15;">☰ Menu</button>
+
+    <div id="gameUI">
+      <div id="infoPanel">
         <div id="targetColor">
           target: <span id="targetColorName">lavender</span>
         </div>
-        <div id="level"></div>
-        <div id="score"></div>
-        <div id="highScore"></div>
-        <div id="gameOver">Game Over!</div>
-        <button id="restartBtn">Restart Game</button>
+        <div id="level">level: 1</div>
+        <div id="score">score: 0</div>
+        <div id="highScore">high score: 0</div>
       </div>
 
-      <canvas id="gameCanvas" width="800" height="600"></canvas>
+      <div id="gameOverPanel">
+        <div id="gameOver">Game Over!</div>
+        <button id="restartBtn" class="button-17 black">Restart Game</button>
+        <button id="backToMenuBtn" class="button-17">Main Menu</button>
+      </div>
     </div>
 
-    <div id="flashOverlay"></div>
+    <!-- 🎮 Main Menu -->
+    <div id="mainMenu">
+      <h1>Pastel Pop</h1>
+      <button id="startGameBtn" class="button-17" role="button">Start Game</button>
+      <div id="menuHighScore">High Score: 0</div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

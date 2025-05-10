@@ -17,7 +17,7 @@ export class ColorManager {
         glowFactor: 1.2,
         pulseRate: 1.3 // Faster pulse for energetic colors
       },
-      blue: { 
+      blue: {
         shadowBlur: 10,
         shadowColor: 'rgba(50, 50, 255, 0.35)',
         glowFactor: 0.9,
@@ -149,7 +149,9 @@ export class ParticleManager {
       });
     }
   }
-
+  clear() {
+    this.particles = [];
+  }
   update() {
     this.particles = this.particles.filter(p => p.life > 0);
 

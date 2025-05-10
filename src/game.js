@@ -12,6 +12,7 @@ export class Game {
     this.canvas = canvas;
     this.ctx = ctx;
     this.ui = new UIManager();
+    this.ui.restartBtn.addEventListener('click', () => this.resetGame());
     this.colors = new ColorManager();
     this.particles = new ParticleManager();
 
@@ -31,6 +32,19 @@ export class Game {
     this.initLevel();
     this.update();
   }
+  resetGame() {
+    this.level = 1;
+    this.score = 0;
+    this.gameOver = false;
+    this.startTime = Date.now();
+    this.ui.gameOverText.style.display = 'none';
+    this.ui.restartBtn.style.display = 'none';
+    this.ui.backToMenuBtn.style.display = 'none'; // 👈 Hide Main Menu button
+    this.particles.clear();
+    this.initLevel();
+    this.update(); // resume the loop
+  }
+
 
   initLevel() {
     this.circles = [];
@@ -131,6 +145,8 @@ export class Game {
             this.highScore = this.score;
             localStorage.setItem('pastelPopHighScore', this.highScore);
           }
+          this.ui.showGameOver();
+          this.ui.update(this.level, this.score, this.highScore, this.currentTargetColor);
         }
 
         this.ui.update(this.level, this.score, this.highScore, this.currentTargetColor);
