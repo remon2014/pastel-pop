@@ -16,6 +16,9 @@ export class Game {
     this.ui.restartBtn.addEventListener('click', () => this.resetGame());
     this.colors = new ColorManager();
     this.particles = new ParticleManager();
+    this.currentBackgroundColor = '#ffffff'; // start as white
+    this.targetBackgroundColor = '#ffffff';
+    this.backgroundTransitionStart = null;
 
     this.circles = [];
     this.level = 1;
@@ -94,6 +97,10 @@ export class Game {
       if (selectedColor) {
         this.ui.targetColorName.textContent = selectedColor.name;
         this.ui.targetColorName.style.color = selectedColor.hex;
+
+        // ✅ Trigger pale background transition
+        const pale = this.getPaleHex(selectedColor.hex);
+        this.fadeToBackgroundColor(pale);
       }
     }
     this.ui.update(this.level, this.score, this.highScore, this.currentTargetColor);
@@ -158,18 +165,80 @@ export class Game {
     }
   }
 
+  fadeToBackgroundColor(newHex) {
+    if (newHex.toLowerCase() === this.currentBackgroundColor.toLowerCase()) return;
+    this.targetBackgroundColor = newHex;
+    this.backgroundTransitionStart = performance.now();
+  }
+
+  hexToRgb(hex) {
+    const bigint = parseInt(hex.replace('#', ''), 16);
+    return {
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255
+    };
+  }
+
+  getPaleHex(hex) {
+    const { r, g, b } = this.hexToRgb(hex);
+    const paleR = Math.round(r + (255 - r) * 0.7);
+    const paleG = Math.round(g + (255 - g) * 0.7);
+    const paleB = Math.round(b + (255 - b) * 0.7);
+    return this.rgbToHex(paleR, paleG, paleB); // return #hex instead of rgb(...)
+  }
+
+  rgbToHex(r, g, b) {
+  return (
+    "#" +
+    [r, g, b]
+      .map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      })
+      .join("")
+  );
+}
 
   update() {
     if (this.gameOver) return;
-    this.colors.drawBackground(this.ctx, this.level, this.canvas);
+
+    const now = performance.now();
+    const transitionDuration = 1000; // 1 second
+    let bgColor = this.currentBackgroundColor;
+
+    // Only animate if a transition is in progress
+    if (this.backgroundTransitionStart) {
+      const progress = Math.min((now - this.backgroundTransitionStart) / transitionDuration, 1);
+      const eased = 0.5 - 0.5 * Math.cos(Math.PI * progress); // cosine ease-in-out
+
+      const from = this.hexToRgb(this.currentBackgroundColor);
+      const to = this.hexToRgb(this.targetBackgroundColor);
+
+      const r = Math.round(from.r + (to.r - from.r) * eased);
+      const g = Math.round(from.g + (to.g - from.g) * eased);
+      const b = Math.round(from.b + (to.b - from.b) * eased);
+
+      bgColor = `rgb(${r}, ${g}, ${b})`;
+
+      if (progress >= 1) {
+        this.currentBackgroundColor = this.targetBackgroundColor;
+        this.backgroundTransitionStart = null;
+      }
+    }
+
+    this.ctx.fillStyle = bgColor;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
     this.particles.update();
     this.particles.draw(this.ctx);
 
     this.circles.forEach(circle => {
-    circle.update(this.canvas, performance.now());
-    circle.draw(this.ctx);
-  });
+      circle.update(this.canvas, performance.now());
+      circle.draw(this.ctx);
+    });
 
     requestAnimationFrame(this.update.bind(this));
   }
+
 }
