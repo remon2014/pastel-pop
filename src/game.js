@@ -6,6 +6,7 @@ import { ParticleManager } from './particle.js';
 import { getDistance } from './utils.js';
 import { CIRCLE_RADIUS } from './config.js';
 import { BACKGROUND_COLOR } from './config.js';
+import { maybeSaveHighScore } from './leaderboard.js';
 
 export class Game {
   constructor(canvas, ctx) {
@@ -132,6 +133,8 @@ export class Game {
           console.log('❌ Wrong circle clicked — should trigger game over');
           this.particles.createGlitch(circle.x, circle.y);
           this.gameOver = true;
+
+          maybeSaveHighScore(this.score);
 
           // 💥 Screen shake
             this.canvas.classList.add('shake');
