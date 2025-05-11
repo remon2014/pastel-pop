@@ -20,6 +20,7 @@ export class Game {
     this.targetBackgroundColor = '#ffffff';
     this.backgroundTransitionStart = null;
     this.prevBackgroundColor = this.currentBackgroundColor;
+    this.transitionDuration = 1000; // 1 second fade
 
     this.circles = [];
     this.level = 1;
@@ -142,13 +143,14 @@ export class Game {
           this.particles.createGlitch(circle.x, circle.y);
           this.gameOver = true;
 
-          maybeSaveHighScore(this.score);
+          // 💥 Shake first
+          this.canvas.classList.add('shake');
+          setTimeout(() => {
+            this.canvas.classList.remove('shake');
 
-          // 💥 Screen shake
-            this.canvas.classList.add('shake');
-            setTimeout(() => {
-              this.canvas.classList.remove('shake');
-            }, 400);
+            // THEN do high score check
+            maybeSaveHighScore(this.score);
+          }, 400); // after shake is done
 
           this.ui.showGameOver();
 
@@ -202,11 +204,52 @@ export class Game {
   );
 }
 
+updateBackgroundTransition() {
+  if (this.backgroundTransitionStart === null) return;
+
+  const now = performance.now();
+  const elapsed = now - this.backgroundTransitionStart;
+  const t = Math.min(elapsed / this.transitionDuration, 1);
+
+  this.currentBackgroundColor = this.lerpColor(
+    this.prevBackgroundColor,
+    this.targetBackgroundColor,
+    t
+  );
+
+  if (t >= 1) {
+    this.backgroundTransitionStart = null;
+    this.currentBackgroundColor = this.targetBackgroundColor;
+  }
+}
+
+lerpColor(a, b, t) {
+  const ar = parseInt(a.slice(1, 3), 16);
+  const ag = parseInt(a.slice(3, 5), 16);
+  const ab = parseInt(a.slice(5, 7), 16);
+
+  const br = parseInt(b.slice(1, 3), 16);
+  const bg = parseInt(b.slice(3, 5), 16);
+  const bb = parseInt(b.slice(5, 7), 16);
+
+  const rr = Math.round(ar + (br - ar) * t).toString(16).padStart(2, '0');
+  const rg = Math.round(ag + (bg - ag) * t).toString(16).padStart(2, '0');
+  const rb = Math.round(ab + (bb - ab) * t).toString(16).padStart(2, '0');
+
+  return `#${rr}${rg}${rb}`;
+}
+
+
   update() {
     if (this.gameOver) return;
 
     const now = performance.now();
     const transitionDuration = 1000; // 1 second
+
+    this.updateBackgroundTransition();
+    this.ctx.fillStyle = this.currentBackgroundColor;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
     let bgColor = this.currentBackgroundColor;
 
     // Only animate if a transition is in progress
