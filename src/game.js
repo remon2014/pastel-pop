@@ -1,4 +1,3 @@
-// src/game.js
 import { Circle } from './circle.js';
 import { UIManager } from './uiManager.js';
 import { ColorManager } from './colorManager.js';
@@ -13,20 +12,18 @@ export class Game {
     this.canvas = canvas;
     this.ctx = ctx;
     this.ui = new UIManager();
-
     this.colors = new ColorManager();
     this.particles = new ParticleManager();
 
     this.currentBackgroundColor = '#ffffff';
     this.targetBackgroundColor = '#ffffff';
     this.backgroundTransitionStart = null;
-    this.prevBackgroundColor = this.currentBackgroundColor;
+    this.prevBackgroundColor = '#ffffff';
     this.transitionDuration = 1000;
 
     this.selectedMode = 'classic';
     this.modeConfig = GAME_MODES[this.selectedMode];
 
-    this.circles = [];
     this.level = 1;
     this.score = 0;
     this.highScore = localStorage.getItem('pastelPopHighScore') || 0;
@@ -34,51 +31,59 @@ export class Game {
     this.gameOver = false;
     this.isPaused = false;
     this.startTime = Date.now();
+    this.circles = [];
 
-    // 🔒 Safe one-time event binding
-    if (!this._uiBound) {
-      this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
-      this.ui.continueBtn.addEventListener('click', () => this.resumeGame());
-      this.ui.changeModeBtn.addEventListener('click', () => this.changeModeFromPause());
-      this.ui.backToMainBtn.addEventListener('click', () => window.location.reload());
-      this._uiBound = true;
-    }
+    // Event listeners
+    this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
+    this.ui.continueBtn.addEventListener('click', () => this.resumeGame());
+    this.ui.changeModeBtn.addEventListener('click', () => this.changeModeFromPause());
+    this.ui.backToMainBtn.addEventListener('click', () => window.location.reload());
 
     this.canvas.addEventListener('click', this.handleClick.bind(this));
     this.canvas.addEventListener('touchstart', this.handleTouch.bind(this));
   }
 
   start() {
+    this.ui.resetUI();
+    this.particles.clear();
+    this.level = 1;
+    this.score = 0;
+    this.gameOver = false;
+    this.isPaused = false;
+    this.startTime = Date.now();
+
     const modeDropdown = document.getElementById('modeSelect');
     if (modeDropdown) {
       this.selectedMode = modeDropdown.value;
       this.modeConfig = GAME_MODES[this.selectedMode];
       this.colors.colors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
     }
+
     this.initLevel();
     this.update();
   }
 
   resetGame() {
-    this.isPaused = false;
+    this.ui.resetUI();
+    this.particles.clear();
     this.level = 1;
     this.score = 0;
     this.gameOver = false;
+    this.isPaused = false;
     this.startTime = Date.now();
 
-    this.ui.gameOverText.style.display = 'none';
-    this.ui.restartBtn.style.display = 'none';
-    this.ui.backToMenuBtn.style.display = 'none';
-
-    this.particles.clear();
     this.initLevel();
     this.update();
   }
 
   initLevel() {
     this.circles = [];
-    this.colors.colors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
-    const usedColors = this.colors.colors;
+    const usedColors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+    if (!usedColors || usedColors.length === 0) {
+      console.error('❌ No usable colors in current palette. Aborting level init.');
+      return;
+    }
+
     const numCircles = 5 + this.level * 2;
     const speed = this.modeConfig.baseSpeed + this.level * this.modeConfig.speedMultiplier;
 
@@ -103,24 +108,27 @@ export class Game {
   }
 
   selectNewTargetColor() {
-    const remainingColors = [...new Set(this.circles.map(c => c.color.name))];
+    const remainingColors = [...new Set(this.circles.map(c => c?.color?.name).filter(Boolean))];
     if (remainingColors.length === 0) {
       const timeBonus = Math.max(0, 1000 - (Date.now() - this.startTime)) / 100;
       this.score += Math.floor(10 * this.level + timeBonus);
       this.level++;
       this.initLevel();
-    } else {
-      const selectedName = remainingColors[Math.floor(Math.random() * remainingColors.length)];
-      this.currentTargetColor = selectedName;
-
-      const selectedColor = this.colors.colors.find(c => c.name === selectedName);
-      if (selectedColor) {
-        this.ui.targetColorName.textContent = selectedColor.name;
-        this.ui.targetColorName.style.color = selectedColor.hex;
-        const pale = this.getPaleHex(selectedColor.hex);
-        this.fadeToBackgroundColor(pale);
-      }
+      return;
     }
+
+    const selectedName = remainingColors[Math.floor(Math.random() * remainingColors.length)];
+    this.currentTargetColor = selectedName;
+
+    const usedColors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+    const selectedColor = usedColors.find(c => c.name === selectedName);
+    if (selectedColor) {
+      this.ui.targetColorName.textContent = selectedColor.name;
+      this.ui.targetColorName.style.color = selectedColor.hex;
+      const pale = this.getPaleHex(selectedColor.hex);
+      this.fadeToBackgroundColor(pale);
+    }
+
     this.ui.update(this.level, this.score, this.highScore, this.currentTargetColor);
   }
 
@@ -155,11 +163,11 @@ export class Game {
             this.canvas.classList.remove('shake');
             maybeSaveHighScore(this.score);
           }, 400);
-          this.ui.showGameOver();
           if (this.score > this.highScore) {
             this.highScore = this.score;
             localStorage.setItem('pastelPopHighScore', this.highScore);
           }
+          this.ui.showGameOver();
         }
         this.ui.update(this.level, this.score, this.highScore, this.currentTargetColor);
         return;
@@ -168,13 +176,13 @@ export class Game {
   }
 
   togglePause() {
-    console.log("⏸️ Toggle Pause triggered");
+    this.isPaused = !this.isPaused;
+    this.ui.setPauseLabel(this.isPaused);
     if (this.isPaused) {
-      this.resumeGame();
-    } else {
-      this.isPaused = true;
       this.ui.showPauseMenu();
-      this.ui.setPauseLabel(true);
+    } else {
+      this.ui.hidePauseMenu();
+      this.update();
     }
   }
 
@@ -182,25 +190,27 @@ export class Game {
     this.isPaused = false;
     this.ui.hidePauseMenu();
     this.ui.setPauseLabel(false);
-    this.update(); // resume loop
+    this.update();
   }
 
   changeModeFromPause() {
     const dropdown = document.getElementById('modeSelectPause');
     const newMode = dropdown.value;
-    if (newMode) {
-      this.selectedMode = newMode;
-      this.modeConfig = GAME_MODES[this.selectedMode];
-      this.level = 1;
-      this.score = 0;
-      this.gameOver = false;
-      this.isPaused = false; // ✅ unpause before updating
 
-      this.ui.hidePauseMenu();
-      this.ui.setPauseLabel(false);
-      this.initLevel();
-      this.update(); // ✅ start loop
-    }
+    this.selectedMode = newMode;
+    this.modeConfig = GAME_MODES[this.selectedMode];
+
+    this.level = 1;
+    this.score = 0;
+    this.gameOver = false;
+    this.isPaused = false;
+
+    this.ui.resetUI();
+    this.particles.clear();
+    this.colors.colors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+
+    this.initLevel();
+    this.update();
   }
 
 
@@ -209,11 +219,10 @@ export class Game {
 
     const now = performance.now();
     const transitionDuration = 1000;
-    this.updateBackgroundTransition();
-    this.ctx.fillStyle = this.currentBackgroundColor;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+    this.updateBackgroundTransition();
     let bgColor = this.currentBackgroundColor;
+
     if (this.backgroundTransitionStart) {
       const progress = Math.min((now - this.backgroundTransitionStart) / transitionDuration, 1);
       const eased = 0.5 - 0.5 * Math.cos(Math.PI * progress);
@@ -223,7 +232,6 @@ export class Game {
       const g = Math.round(from.g + (to.g - from.g) * eased);
       const b = Math.round(from.b + (to.b - from.b) * eased);
       bgColor = `rgb(${r}, ${g}, ${b})`;
-
       if (progress >= 1) {
         this.currentBackgroundColor = this.targetBackgroundColor;
         this.backgroundTransitionStart = null;
@@ -235,14 +243,13 @@ export class Game {
 
     this.particles.update();
     this.particles.draw(this.ctx);
+
     this.circles.forEach(circle => {
       circle.update(this.canvas, performance.now());
       circle.draw(this.ctx);
     });
 
-    if (!this.isPaused && !this.gameOver) {
-      requestAnimationFrame(this.update.bind(this));
-    }
+    requestAnimationFrame(this.update.bind(this));
   }
 
   fadeToBackgroundColor(newHex) {
@@ -270,10 +277,11 @@ export class Game {
     const br = parseInt(b.slice(1, 3), 16);
     const bg = parseInt(b.slice(3, 5), 16);
     const bb = parseInt(b.slice(5, 7), 16);
-    const rr = Math.round(ar + (br - ar) * t).toString(16).padStart(2, '0');
-    const rg = Math.round(ag + (bg - ag) * t).toString(16).padStart(2, '0');
-    const rb = Math.round(ab + (bb - ab) * t).toString(16).padStart(2, '0');
-    return `#${rr}${rg}${rb}`;
+    return `#${[
+      Math.round(ar + (br - ar) * t).toString(16).padStart(2, '0'),
+      Math.round(ag + (bg - ag) * t).toString(16).padStart(2, '0'),
+      Math.round(ab + (bb - ab) * t).toString(16).padStart(2, '0')
+    ].join('')}`;
   }
 
   hexToRgb(hex) {

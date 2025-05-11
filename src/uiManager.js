@@ -16,18 +16,44 @@ export class UIManager {
     this.backToMainBtn = document.getElementById('backToMainBtn');
   }
 
+  // 🎮 Core UI state reset
+  resetUI() {
+    this.hidePauseMenu();
+    this.hideGameOver();
 
-    showPauseMenu() {
-      this.pauseOverlay.style.display = 'flex';
-    }
+    this.restartBtn.style.display = 'none';
+    this.backToMenuBtn.style.display = 'none';
+    this.setPauseLabel(false);
 
-    hidePauseMenu() {
-      this.pauseOverlay.style.display = 'none';
-    }
+    this.levelText.textContent = 'Level: 1';
+    this.scoreText.textContent = 'Score: 0';
+    this.targetColorName.textContent = '...';
+    this.targetColorName.style.color = '#333';
+  }
 
-    setPauseLabel(isPaused) {
-      this.pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
-    }
+  showPauseMenu() {
+    this.pauseOverlay.style.display = 'flex';
+  }
+
+  hidePauseMenu() {
+    this.pauseOverlay.style.display = 'none';
+  }
+
+  setPauseLabel(isPaused) {
+    this.pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+  }
+
+  showGameOver() {
+    this.gameOverText.style.display = 'block';
+    this.restartBtn.style.display = 'inline-block';
+    this.backToMenuBtn.style.display = 'inline-block';
+  }
+
+  hideGameOver() {
+    this.gameOverText.style.display = 'none';
+    this.restartBtn.style.display = 'none';
+    this.backToMenuBtn.style.display = 'none';
+  }
 
   setRestartHandler(handlerFn) {
     this.restartBtn.addEventListener('click', handlerFn);
@@ -40,16 +66,5 @@ export class UIManager {
     if (targetColor) {
       this.targetColorName.textContent = targetColor;
     }
-  }
-
-  showGameOver() {
-    this.gameOverText.style.display = 'block';
-    this.restartBtn.style.display = 'inline-block';
-    this.backToMenuBtn.style.display = 'inline-block';
-  }
-
-  hideGameOver() {
-    this.gameOverText.style.display = 'none';
-    this.restartBtn.style.display = 'none';
   }
 }
