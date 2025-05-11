@@ -23,7 +23,8 @@ export function maybeSaveHighScore(score) {
   leaderboard.push({ name, score });
   leaderboard.sort((a, b) => b.score - a.score); // Descending order
   saveLeaderboard(leaderboard.slice(0, 5));
-
+  
+  updateMenuHighScore(score);
   renderLeaderboard();
 }
 
@@ -42,4 +43,11 @@ export function renderLeaderboard() {
     li.textContent = `${entry.name} — ${entry.score}`;
     list.appendChild(li);
   });
+}
+
+export function updateMenuHighScore(score) {
+  const el = document.getElementById('menuHighScore');
+  if (el) {
+    el.textContent = `High Score: ${score}`;
+  }
 }

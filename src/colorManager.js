@@ -1,10 +1,10 @@
+
 import { BACKGROUND_COLOR } from './config.js';
 
 export class ColorManager {
   constructor() {
     // Emotionally calibrated palette with psychological considerations
     this.colors = [
-      // Focus colors - capture attention while maintaining calm
       {
         name: 'serene coral',
         hex: '#e07a70',
@@ -37,6 +37,56 @@ export class ColorManager {
       }
     ];
 
+    this.palettes = {
+      dystopian: [
+        { name: "Coal Teal", hex: "#174950" },
+        { name: "Industrial Green", hex: "#008080" },
+        { name: "Warning Red", hex: "#E60234" },
+        { name: "Rust Blood", hex: "#8B0F32" }
+      ],
+      vintage: [
+        { name: "Olive Black", hex: "#16463F" },
+        { name: "Dust Rose", hex: "#EAC1C6" },
+        { name: "Old Canvas", hex: "#E7E1D5" },
+        { name: "Storm Grey", hex: "#6D7179" }
+      ],
+      natural: [
+        { name: "Clay", hex: "#C26C49" },
+        { name: "Stone Beige", hex: "#BD8869" },
+        { name: "Soft Sand", hex: "#E8C3A8" },
+        { name: "Leaf Mist", hex: "#D8E3DD" }
+      ],
+      energy: [
+        { name: "Midnight Core", hex: "#051341" },
+        { name: "Pulse Blue", hex: "#1501A1" },
+        { name: "Ignition Orange", hex: "#FF4801" }
+      ],
+      sunshine: [
+        { name: "Sunbeam", hex: "#FFB81D" },
+        { name: "Ash Grey", hex: "#404348" },
+        { name: "Tanned Wood", hex: "#C89C76" },
+        { name: "Porcelain", hex: "#EFECEC" }
+      ],
+      popshock: [
+        { name: "Blush Pink", hex: "#F5B0C2" },
+        { name: "Hot Magenta", hex: "#FC1577" },
+        { name: "Fire Red", hex: "#EB3402" },
+        { name: "Electric Blue", hex: "#00249E" }
+      ],
+      joy: [
+        { name: "Punch Pink", hex: "#D02C8F" },
+        { name: "Cherry Blaze", hex: "#EE3F46" },
+        { name: "Lemon Zest", hex: "#EDC100" },
+        { name: "Spring Green", hex: "#A6C871" }
+      ],
+      summer: [
+        { name: "Beach Yellow", hex: "#FEDE24" },
+        { name: "Tangerine", hex: "#FD6326" },
+        { name: "Cotton Candy", hex: "#FBC1C9" },
+        { name: "Cactus Bloom", hex: "#D8C508" }
+      ]
+    };
+
     // Purposeful emotional color combinations
     this.emotionalSchemes = [
       {
@@ -66,12 +116,11 @@ export class ColorManager {
       }
     ];
 
-    // Color dynamics for animation effects
     this.dynamicEffects = {
       pulse: {
         baseOpacity: 0.8,
         peakOpacity: 1.0,
-        duration: 1500, // ms
+        duration: 1500,
       },
       emphasis: {
         shadowBlur: 12,
@@ -80,40 +129,34 @@ export class ColorManager {
     };
   }
 
-  getUsedColors(level) {
-    // Progressive psychological journey through levels
+  getUsedColors(level, paletteName = null) {
+    if (paletteName && this.palettes[paletteName]) {
+      return this.palettes[paletteName];
+    }
+
     if (level < 2) {
-      // Early levels: focus and clarity (blues and greens)
       return this.colors.filter(c =>
         c.name === 'mindful blue' || c.name === 'renewal green');
     } else if (level < 4) {
-      // Mid levels: add energy and creativity
       return this.colors.filter(c =>
-        c.name === 'mindful blue' || c.name === 'renewal green' ||
-        c.name === 'serene coral');
+        c.name === 'mindful blue' || c.name === 'renewal green' || c.name === 'serene coral');
     } else if (level < 6) {
-      // Higher levels: full emotional spectrum except violet
       return this.colors.filter(c => c.name !== 'creative violet');
     } else {
-      // Mastery levels: complete palette including violet for insight
       return this.colors;
     }
   }
 
-  // Get emotionally targeted color scheme based on desired psychological effect
   getEmotionalScheme(emotionalState) {
     const scheme = this.emotionalSchemes.find(s => s.name === emotionalState);
-    return scheme || this.emotionalSchemes[0]; // Default to focus if not found
+    return scheme || this.emotionalSchemes[0];
   }
 
   drawBackground(ctx, level, canvas) {
-    // Pure white base
     ctx.fillStyle = BACKGROUND_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Add subtle psychological cues based on level
     if (level > 3) {
-      // Higher levels get subtle depth cues for increased focus
       const gradient = ctx.createRadialGradient(
         canvas.width/2, canvas.height/2, 0,
         canvas.width/2, canvas.height/2, canvas.width * 0.7
@@ -128,9 +171,7 @@ export class ColorManager {
     }
   }
 
-  // Get enhanced ripple effect settings based on color psychology
   getRippleEnhancement(colorHex) {
-    // Find the color in our palette
     const color = this.colors.find(c => c.hex === colorHex);
 
     if (!color) return {
@@ -140,42 +181,41 @@ export class ColorManager {
       pulseRate: 0.03
     };
 
-    // Color-specific enhancements based on psychology
     switch(color.name) {
       case 'serene coral':
         return {
           shadowColor: this.adjustColorLuminance(colorHex, -0.15),
           shadowBlur: 12,
           glowFactor: 1.25,
-          pulseRate: 0.04  // Slightly faster pulse for energy
+          pulseRate: 0.04
         };
       case 'mindful blue':
         return {
           shadowColor: this.adjustColorLuminance(colorHex, -0.1),
           shadowBlur: 9,
           glowFactor: 1.15,
-          pulseRate: 0.025  // Slower pulse for calmness
+          pulseRate: 0.025
         };
       case 'renewal green':
         return {
           shadowColor: this.adjustColorLuminance(colorHex, -0.12),
           shadowBlur: 10,
           glowFactor: 1.18,
-          pulseRate: 0.028  // Balanced pulse rate
+          pulseRate: 0.028
         };
       case 'optimistic amber':
         return {
           shadowColor: this.adjustColorLuminance(colorHex, -0.18),
           shadowBlur: 14,
           glowFactor: 1.3,
-          pulseRate: 0.035  // Dynamic pulse for attention
+          pulseRate: 0.035
         };
       case 'creative violet':
         return {
           shadowColor: this.adjustColorLuminance(colorHex, -0.15),
           shadowBlur: 15,
           glowFactor: 1.22,
-          pulseRate: 0.03  // Meditation-like pulse
+          pulseRate: 0.03
         };
       default:
         return {
@@ -187,16 +227,13 @@ export class ColorManager {
     }
   }
 
-  // Helper method to adjust color luminance
   adjustColorLuminance(hex, lum) {
-    // Convert hex to RGB
     hex = String(hex).replace(/[^0-9a-f]/gi, '');
     if (hex.length < 6) {
       hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
     }
     lum = lum || 0;
 
-    // Convert to decimal and adjust luminance
     let rgb = "#", c, i;
     for (i = 0; i < 3; i++) {
       c = parseInt(hex.substr(i*2,2), 16);
@@ -207,12 +244,10 @@ export class ColorManager {
     return rgb;
   }
 
-  // Get color with opacity and psychological enhancement
   getEnhancedColor(colorHex, opacity) {
     const rgb = this.hexToRgb(colorHex);
     const enhancement = this.getRippleEnhancement(colorHex);
 
-    // Add slight color adjustment based on psychology
     return {
       color: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`,
       glow: enhancement.glowFactor,
@@ -222,7 +257,6 @@ export class ColorManager {
     };
   }
 
-  // Convert hex to RGB
   hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
