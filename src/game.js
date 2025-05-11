@@ -7,6 +7,7 @@ import { getDistance } from './utils.js';
 import { CIRCLE_RADIUS } from './config.js';
 import { BACKGROUND_COLOR } from './config.js';
 import { maybeSaveHighScore } from './leaderboard.js';
+import { GAME_MODES } from './gameModes.js';
 
 export class Game {
   constructor(canvas, ctx) {
@@ -21,6 +22,9 @@ export class Game {
     this.backgroundTransitionStart = null;
     this.prevBackgroundColor = this.currentBackgroundColor;
     this.transitionDuration = 1000; // 1 second fade
+    this.selectedMode = 'classic'; // default mode
+    this.modeConfig = GAME_MODES[this.selectedMode];
+
 
     this.circles = [];
     this.level = 1;
@@ -35,9 +39,18 @@ export class Game {
   }
 
   start() {
+    const modeDropdown = document.getElementById('modeSelect');
+    if (modeDropdown) {
+      this.selectedMode = modeDropdown.value;
+      this.modeConfig = GAME_MODES[this.selectedMode];
+      this.colors.colors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+    }
+
     this.initLevel();
     this.update();
   }
+
+
   resetGame() {
     this.level = 1;
     this.score = 0;
@@ -54,14 +67,17 @@ export class Game {
 
   initLevel() {
     this.circles = [];
+
+    // 🔄 Apply the mode-specific palette if provided
+    this.colors.colors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+    const usedColors = this.colors.colors;
+
     const numCircles = 5 + this.level * 2;
-    const usedColors = this.colors.getUsedColors(this.level);
-    const speed = 2 + this.level * 0.5;
+    const speed = this.modeConfig.baseSpeed + this.level * this.modeConfig.speedMultiplier;
 
     for (let i = 0; i < numCircles; i++) {
       const color = usedColors[Math.floor(Math.random() * usedColors.length)];
 
-      // Target position for where the circle will land
       const targetX = Math.random() * (this.canvas.width - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
       const targetY = Math.random() * (this.canvas.height - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
 
@@ -79,6 +95,7 @@ export class Game {
     this.selectNewTargetColor();
     this.startTime = Date.now();
   }
+
 
 
   selectNewTargetColor() {
