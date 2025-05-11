@@ -212,12 +212,33 @@
       .shake {
         animation: shake 0.4s ease-in-out;
       }
+
+      .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.96);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 30;
+      }
+
+      .pause-menu {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
     </style>
   </head>
 
   <body>
     <canvas id="gameCanvas"></canvas>
-    <button id="menuBtn" class="button-17" style="position:absolute; top:20px; right:20px; z-index:15;">☰ Menu</button>
+    <button id="pauseBtn" class="button-17" style="position:absolute; top:20px; right:20px; z-index:15;">Pause</button>
     <div id="gameUI">
       <div id="infoPanel">
         <div id="targetColor">
@@ -239,7 +260,6 @@
     <div id="mainMenu">
       <h1>Pastel Pop</h1>
       <button id="startGameBtn" class="button-17" role="button">Start Game</button>
-      <label for="modeSelect">Game Mode:</label>
       <label for="modeSelect">Choose Mode:</label>
       <select id="modeSelect">
         <option value="classic">Classic</option>
@@ -258,8 +278,32 @@
         <h3>🏆 Leaderboard</h3>
         <ol id="leaderboardList"></ol>
       </div>
-
     </div>
+
+      <!-- 🛑 Pause Overlay -->
+  <div id="pauseOverlay" class="overlay">
+    <div class="pause-menu">
+      <h2>Game Paused</h2>
+      <button id="continueBtn" class="button-17 black">Continue Playing</button>
+
+      <label for="modeSelectPause">Select Different Mode:</label>
+      <select id="modeSelectPause">
+        <option value="classic">Classic</option>
+        <option value="fast">Fast Mode</option>
+        <option value="chill">Chill Mode</option>
+        <option value="retro">Retro Pop</option>
+        <option value="summer">Summer Vibes</option>
+        <option value="moody">Dystopian Drift</option>
+        <option value="joyful">Joy Burst</option>
+        <option value="vintage">Vintage Dust</option>
+        <option value="solar">Solar Radiance</option>
+      </select>
+
+      <button id="changeModeBtn" class="button-17">Change Mode</button>
+      <button id="backToMainBtn" class="button-17">Return to Main Menu</button>
+    </div>
+  </div>
+  
     <script type="module" src="./src/main.js?v=1.0.3"></script>
   </body>
 </html>
