@@ -42,5 +42,17 @@ window.addEventListener('DOMContentLoaded', () => {
     game.start();
   });
 
+  // ✅ Game Over: Restart Game
+  ui.restartBtn.addEventListener('click', () => {
+    game.resetGame();
+  });
+
+  // ✅ Game Over: Return to Main Menu
+  ui.backToMenuBtn.addEventListener('click', () => {
+    document.getElementById('mainMenu').style.display = 'flex';
+    document.getElementById('pauseBtn').style.display = 'none';
+  });
+
+
   // No need to bind pause/resume/mode change here — already handled in Game constructor
 });
