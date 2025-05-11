@@ -19,6 +19,7 @@ export class Game {
     this.currentBackgroundColor = '#ffffff'; // start as white
     this.targetBackgroundColor = '#ffffff';
     this.backgroundTransitionStart = null;
+    this.prevBackgroundColor = this.currentBackgroundColor;
 
     this.circles = [];
     this.level = 1;
@@ -167,6 +168,7 @@ export class Game {
 
   fadeToBackgroundColor(newHex) {
     if (newHex.toLowerCase() === this.currentBackgroundColor.toLowerCase()) return;
+    this.prevBackgroundColor = this.currentBackgroundColor;
     this.targetBackgroundColor = newHex;
     this.backgroundTransitionStart = performance.now();
   }
