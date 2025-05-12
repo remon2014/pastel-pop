@@ -70,5 +70,15 @@ export const GAME_MODES = {
     speedMultiplier: 0.8,
     backgroundMusic: "radiant.mp3",
     fxSet: "flash"
+  },
+
+  rain: {
+    name: 'Rain',
+    baseSpeed: 1.2,
+    speedMultiplier: 0.25,
+    palette: 'rain', // ✔️ Match the actual key in ColorManager
+    backgroundMusic: null,
+    fxSet: 'raindrop'
   }
+
 };

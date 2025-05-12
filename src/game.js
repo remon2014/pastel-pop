@@ -6,6 +6,7 @@ import { getDistance } from './utils.js';
 import { CIRCLE_RADIUS } from './config.js';
 import { maybeSaveHighScore } from './leaderboard.js';
 import { GAME_MODES } from './gameModes.js';
+import { triggerRainSplash } from './rainEffect.js';
 
 export class Game {
   constructor(canvas, ctx) {
@@ -56,7 +57,15 @@ export class Game {
     if (modeDropdown) {
       this.selectedMode = modeDropdown.value;
       this.modeConfig = GAME_MODES[this.selectedMode];
-      this.colors.colors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+
+      // 🔍 Fix: Match palette name for rain mode
+      const paletteName = this.modeConfig.palette || null;
+      this.colors.colors = this.colors.getUsedColors(this.level, paletteName);
+
+      // 🌧️ Dynamically load Rain CSS
+      if (this.selectedMode === 'rain') {
+        this.loadRainCSS();
+      }
     }
 
     this.initLevel();
@@ -151,7 +160,12 @@ export class Game {
       const circle = this.circles[i];
       if (getDistance(x, y, circle.x, circle.y) <= circle.radius) {
         if (circle.color.name === this.currentTargetColor) {
-          this.particles.createRipple(circle.x, circle.y, circle.color.hex);
+          if (this.selectedMode === 'rain') {
+            triggerRainSplash(x, y);
+          } else {
+            this.particles.createRipple(circle.x, circle.y, circle.color.hex);
+          }
+
           this.circles.splice(i, 1);
           this.score += 5;
           this.selectNewTargetColor();
@@ -238,8 +252,12 @@ export class Game {
       }
     }
 
-    this.ctx.fillStyle = bgColor;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.selectedMode === 'rain') {
+      this.colors.drawBackground(this.ctx, this.level, this.canvas, 'rain', performance.now());
+    } else {
+      this.ctx.fillStyle = bgColor;
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 
     this.particles.update();
     this.particles.draw(this.ctx);
@@ -311,4 +329,15 @@ export class Game {
         .join("")
     );
   }
+
+  loadRainCSS() {
+    if (!document.getElementById('rain-style')) {
+      const link = document.createElement('link');
+      link.id = 'rain-style';
+      link.rel = 'stylesheet';
+      link.href = './rain.css'; // Adjust path if needed
+      document.head.appendChild(link);
+    }
+  }
+
 }
