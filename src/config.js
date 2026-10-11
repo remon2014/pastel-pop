@@ -1,7 +1,17 @@
 // src/config.js
-export const CIRCLE_RADIUS = 50;
-export const BASE_SPEED = 2;
-export const SPEED_PER_LEVEL = 0.5;
+// Speeds are in play-area widths per second (D-003). 1.0x is one width in 4 seconds.
+export const BASE_SPEED_WIDTHS = 0.25;
+// Each level adds this much to the speed multiplier: level 1 is 1.0x, level 2 is 1.2x, and so on.
+// Matches the prototype, whose per-frame speed grew by 0.5 on a base of 2.5 (0.2 of level 1) per level.
+export const LEVEL_SPEED_STEP = 0.2;
+
+// Circle size (PROVISIONAL, waits on the game designer for large screens): 64 dp across on a
+// 360 dp wide phone, and never under 48 dp across (docs/game-design.md, Accessibility).
+export const CIRCLE_DIAMETER_DP = 64;
+export const CIRCLE_REFERENCE_WIDTH_DP = 360;
+export const CIRCLE_MIN_DIAMETER_DP = 48;
+// PROVISIONAL cap so circles do not fill a wide window; revisit when F-11 makes the play area a portrait column.
+export const CIRCLE_MAX_DIAMETER_DP = 112;
 
 // Calm supporting shades (docs/game-design.md, "Supporting shades").
 export const DUSK = '#332C2E';

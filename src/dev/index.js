@@ -1,10 +1,12 @@
 import { CREAM, DUSK, GLOW_1, GLOW_2 } from '../config.js';
 import { parseDevQuery } from './sceneName.js';
+import mountCirclesScene from './scenes/circles.js';
 import mountLoopScene from './scenes/loop.js';
 
 // One line per scene: name, what it shows, and its mount function.
 const SCENES = [
   { name: 'loop', title: 'Game loop: fps, elapsed, clamped frames, running loops', mount: mountLoopScene },
+  { name: 'circles', title: 'Circles: crossing time, slow frames, bounds pull-back', mount: mountCirclesScene },
 ];
 
 const STYLE = `
