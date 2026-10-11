@@ -38,11 +38,15 @@ Current layout; update this table when files are added, moved or removed.
 | `src/circle.js` | Circle entity (fly-in, bounce, draw) |
 | `src/particle.js` | Ripple and glitch effects |
 | `src/colorManager.js` | Palettes and rain background |
-| `src/gameModes.js` | Config for the 10 modes |
+| `src/gameModes.js` | Config for the 10 prototype modes (retired by the design; to be replaced by Calm and Story modes) |
 | `src/uiManager.js` | DOM HUD updates |
-| `src/leaderboard.js` | Top-5 leaderboard in localStorage |
+| `src/leaderboard.js` | Prototype top-5 leaderboard in localStorage (retired by the design) |
 | `src/rainEffect.js`, `rain.css` | Rain mode splash |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
+| `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
+| `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
+| `docs/backlog.md` | Known issues and priorities |
+| `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor` |
 
 ## Rules
 - **Static assets go in `public/`.** Vite only copies files from `public/` into the build. Anything in the repo root (icons, `sw.js`, CSS loaded at runtime) is missing from production builds.
