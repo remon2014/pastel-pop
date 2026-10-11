@@ -44,6 +44,7 @@ Current layout; update this table when files are added, moved or removed.
 | `src/colorManager.js` | Colour palette (neutral ids and hex) |
 | `src/uiManager.js` | DOM HUD updates |
 | `src/core/loop.js` | The one game loop: the only caller of `requestAnimationFrame`; elapsed seconds, capped, stops when hidden |
+| `src/dev/` | Dev-only test sandbox, absent from `npm run build`. Open `http://localhost:5174/?dev` for the scene list, `?dev=loop` for a scene. `index.js` scene registry, `readout.js` on-screen panel, `scenes/` one file per scene; `window.__pastelPopDev` holds the read-only numbers |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
 | `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`) |
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
