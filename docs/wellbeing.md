@@ -39,7 +39,7 @@ Rules:
 - A colour name never describes a mood or an effect on the player, in the game, the code, the accessibility labels or the store text. No "calm", "serene", "mindful", "healing" or similar.
 - Names are not shown as text during play. They may appear in accessibility labels with a plain colour word, for example "Target: Star, yellow".
 - The exit control's accessibility label is neutral: "Leave Calm". Never "Quit", "Give up", "End session" or anything that makes stopping sound like failing. This is design judgement, in line with the principle that stopping must feel complete.
-- The prototype's colour names and "psychology" strings ("mindful blue", "renewal green", "Creates mental space and peaceful clarity") are unsupported claims. None may reach player-facing or store text. They were still present in `src/colorManager.js` on branch `docs/calm-palette` when checked on 2026-10-11, and must be deleted before release (section 10).
+- The prototype's colour names and "psychology" strings ("mindful blue", "renewal green", "Creates mental space and peaceful clarity") are unsupported claims. None may reach player-facing or store text. They were removed from the code on 2026-10-11 (foundations task F-02); a search of `src/` and `index.html` finds none.
 - All store copy is reviewed against this section before release.
 
 ## 3. Evidence
@@ -166,7 +166,7 @@ A circle in Calm is light on a dark background: Star has a relative luminance of
 
 **Retired prototype effects**
 
-State of the code checked on 2026-10-11, on branch `docs/calm-palette`, by searching `src/` and `index.html`. The files `src/particle.js`, `src/rainEffect.js`, `src/gameModes.js`, `src/leaderboard.js` and `rain.css` no longer exist. "Still in the code" means the effect was found on that branch on that date; it may already be removed on a branch not yet merged.
+State of the code checked on 2026-10-11, after foundations tasks F-01 and F-02 were merged, by searching `src/` and `index.html`. The files `src/particle.js`, `src/rainEffect.js`, `src/gameModes.js`, `src/leaderboard.js` and `rain.css` no longer exist. "Still in the code" means the effect was found on that date.
 
 | Effect | Why it was retired | State on 2026-10-11 |
 |---|---|---|
@@ -174,12 +174,12 @@ State of the code checked on 2026-10-11, on branch `docs/calm-palette`, by searc
 | Large ripple rings (up to 260 px on every tap) | Not local to the circle | Removed: the particle file is deleted |
 | Rain mode bursts | White on near-black, the highest contrast in the prototype | Removed: the Rain files are deleted |
 | Frame-counted particle lifetimes | Speed varies with screen refresh rate | Removed with the particle file |
-| Uncontrolled canvas shake (±4 px, 0.4 s) | No off switch, not bounded | **Still in the code:** the `.shake` rule in `index.html` and the wrong-tap handler in `src/game.js` |
-| Full-screen background tint on each correct tap | Whole-screen colour tied to tap rate | **Still in the code:** `fadeToBackgroundColor` in `src/game.js`, called each time a new target is picked |
-| Red "Game Over!" on one wrong tap | Alarm colour and hard fail | **Still in the code:** `index.html` and `src/game.js` |
-| Fast swoop-in of circles | Frame-counted, abrupt entrance | **Still in the code:** `animateIn` in `src/circle.js` |
+| Uncontrolled canvas shake (±4 px, 0.4 s) | No off switch, not bounded | Removed (F-02) |
+| Full-screen background tint on each correct tap | Whole-screen colour tied to tap rate | Removed (F-02) |
+| Red "Game Over!" on one wrong tap | Alarm colour and hard fail | Removed (F-02) |
+| Fast swoop-in of circles | Frame-counted, abrupt entrance | Removed (F-02) |
 | Frame-counted circle movement | Speed varies with screen refresh rate | **Still in the code:** `src/circle.js` moves by a fixed amount per frame |
-| Colour names and "psychology" strings | Unsupported claims (section 2) | **Still in the code:** `src/colorManager.js` |
+| Colour names and "psychology" strings | Unsupported claims (section 2) | Removed (F-02) |
 
 The rule is unchanged: none of these may remain as built at release (section 11).
 
@@ -330,7 +330,7 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 - [ ] Children: decide the Google Play target audience and check Families policy, together with the 12+ storyline rating (deferred by the owner).
 - [ ] Tech lead: how Reduce motion follows the Android system setting.
 - [x] The low-time bar pulse is kept under Reduce motion, changing brightness, colour or opacity only. Recorded in `docs/game-design.md` (Story mode, Low time).
-- [ ] Remove the prototype effects and strings marked "still in the code" in section 4: the canvas shake, the per-tap background tint, the red "Game Over!", the swoop-in, frame-counted circle movement, and the colour names and "psychology" strings.
+- [ ] Remove the one prototype effect still marked "still in the code" in section 4: frame-counted circle movement (foundations tasks F-07 and F-09). The shake, per-tap tint, red "Game Over!", swoop-in, colour names and "psychology" strings were removed in F-02.
 - [ ] Game artist: symbol drawings checked against the solid-silhouette rule (section 4) before they go in.
 - [ ] Review final store copy, the shortcut label, colour names and accessibility labels against section 2.
 - [ ] Review Stage 2 and Stage 3 art and lines against section 7 once written.
