@@ -32,6 +32,7 @@ Current layout; update this table when files are added, moved or removed.
 
 | Path | Purpose |
 |---|---|
+| `public/` | Static files copied as-is to the site root: `manifest.json`, `icon-192.png`, `icon-512.png`, `favicon.png` |
 | `index.html` | Markup, inline CSS, main menu, pause overlay, HUD |
 | `src/main.js` | Bootstrap, canvas resize, menu wiring |
 | `src/game.js` | Game loop, levels, input, pause, fixed background |
