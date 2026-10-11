@@ -24,10 +24,11 @@ npm run dev       # http://localhost:5174
 npm run dev:phone # LAN-accessible; use only when testing on a phone
 npm run build     # outputs to dist/
 npm run preview   # serve the production build
+npm test          # unit tests in tests/unit/ (Node's built-in runner, needs Node 22+)
 npm run lint      # Biome lint of src/ and index.html (check only, changes no file)
 npm run format    # Biome formatter, rewrites src/ in place
 ```
-Lint and format exist (Biome). The test script does not exist yet; it is being added.
+Lint and format use Biome. Tests use Node's built-in runner, with no test package; game logic must be testable without a canvas or DOM.
 
 ## Structure
 Current layout; update this table when files are added, moved or removed.
@@ -43,6 +44,7 @@ Current layout; update this table when files are added, moved or removed.
 | `src/colorManager.js` | Colour palette (neutral ids and hex) |
 | `src/uiManager.js` | DOM HUD updates |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
+| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` |
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
