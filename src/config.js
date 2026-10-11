@@ -19,3 +19,6 @@ export const SYMBOL_SIZE = 0.55;
 // Target swatch is about 1.5 times a play circle (design); shrunk to fit beside the Pause button.
 export const SWATCH_SIZE = 96;
 export const SWATCH_FRAME_WIDTH = 3;
+
+// Longest single frame the loop will deliver, in seconds. Longer gaps are dropped (D-003). Placeholder.
+export const MAX_FRAME_SECONDS = 0.1;

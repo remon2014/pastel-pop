@@ -43,8 +43,9 @@ Current layout; update this table when files are added, moved or removed.
 | `src/symbols.js` | Placeholder canvas-path symbols (star, cloud, kite, leaf, moon) |
 | `src/colorManager.js` | Colour palette (neutral ids and hex) |
 | `src/uiManager.js` | DOM HUD updates |
+| `src/core/loop.js` | The one game loop: the only caller of `requestAnimationFrame`; elapsed seconds, capped, stops when hidden |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
-| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` |
+| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`) |
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
