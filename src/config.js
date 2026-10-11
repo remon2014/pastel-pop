@@ -1,8 +1,4 @@
 // src/config.js
-export const CIRCLE_RADIUS = 50;
-export const BASE_SPEED = 2;
-export const SPEED_PER_LEVEL = 0.5;
-
 // Speeds are in play-area widths per second (D-003). 1.0x is one width in 4 seconds.
 export const BASE_SPEED_WIDTHS = 0.25;
 // Each level adds this much to the speed multiplier: level 1 is 1.0x, level 2 is 1.2x, and so on.
