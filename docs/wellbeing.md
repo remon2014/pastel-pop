@@ -144,7 +144,7 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 
 | Item | Allowance | Bound |
 |---|---|---|
-| Wrong tap | One small, short, decaying screen shake, plus the chunk leaving the time bar | A few pixels, 200 ms or less. No red flash. Under Reduce motion the shake becomes a brief dim |
+| Wrong tap | One small, short, decaying screen shake, plus the chunk leaving the time bar | A few pixels, 200 ms or less. One shake at a time: repeated wrong taps never stack or extend it. No red flash. Under Reduce motion the shake becomes a brief dim |
 | Low time | The time bar itself may pulse, and a tick sound may quicken as time runs out | Bar only, never the screen. At most 2 pulses a second. No saturated red flashing. The tick is on the effects slider and is not a sudden loud sound |
 | Other pulses | Allowed | At most 2 a second |
 | Pops | Bigger and brighter pixel bursts | Local to the circle. Never a full-screen flash. Passes the 10-taps-a-second test |
@@ -180,6 +180,7 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 | 7 | Story restart: a quick fade of about 0.5 to 1 s before the level restarts. Revised the same day; it replaces the earlier 1 to 2 s automatic beat |
 | 8 | Children, target audience and Families policy: deferred to the store rating question |
 | 9 | Sensory rules split into two tiers. Safety rules (Tier 1) stay game-wide. Comfort rules (Tier 2) apply to Calm mode only, so Story mode can feel frantic as intended. Story mode allowances are in section 6 |
+| 10 | Story wrong-tap shake: one at a time. Repeated wrong taps never stack or extend it |
 
 ## 10. Open checks before release
 
@@ -200,7 +201,6 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 - [ ] Children: decide the Google Play target audience and check Families policy, together with the 12+ storyline rating (deferred by the owner).
 - [ ] Tech lead: how Reduce motion follows the Android system setting.
 - [ ] Designer to confirm: the low-time bar pulse is kept under Reduce motion.
-- [ ] Advisor suggestion, not yet agreed: repeated wrong taps do not stack or extend the Story shake (one shake at a time). This is a comfort point, not a flash matter.
 - [ ] Review final store copy and the shortcut label against section 2.
 - [ ] Review Stage 2 and Stage 3 art and lines against section 7 once written.
 
@@ -229,7 +229,7 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 - [ ] The game never instructs breathing
 
 **Story mode (section 6)**
-- [ ] Wrong-tap shake is a few pixels, 200 ms or less, decaying; brief dim under Reduce motion; no red flash
+- [ ] Wrong-tap shake is a few pixels, 200 ms or less, decaying, one at a time (never stacked or extended); brief dim under Reduce motion; no red flash
 - [ ] Low-time pulse is on the bar only, at most 2 a second, not saturated red
 - [ ] Tick sound is on the effects slider and never a sudden loud sound
 - [ ] Other pulses at most 2 a second

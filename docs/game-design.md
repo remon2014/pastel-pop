@@ -60,7 +60,7 @@ This is where the game gets frantic.
 - **Level length:** 30 to 45 seconds per level, so a stage takes about 4 to 5 minutes.
 - **Content note:** on first entry to Story mode, a light note such as "A story about loss and hope" is shown. The same note appears in the store text.
 - **Time bar:** the one visible resource. A wrong tap removes a visible chunk of it (starting value: 3 seconds); the chunk slides or fades away over about 300 to 500 ms, with no red flash.
-- **Wrong tap:** one small, short, decaying screen shake (a few pixels, 200 ms or less) together with the chunk leaving the time bar. With Reduce motion on, the shake is replaced by a brief dim. Never a red flash.
+- **Wrong tap:** one small, short, decaying screen shake (a few pixels, 200 ms or less) together with the chunk leaving the time bar. Only one shake runs at a time: repeated wrong taps never stack or extend it. With Reduce motion on, the shake is replaced by a brief dim. Never a red flash.
 - **Low time:** the time bar itself, not the screen, may pulse at most 2 times a second, and a tick sound may quicken as time runs out. The tick is on the effects slider. No saturated red flashing.
 - **Pops:** bigger and brighter pixel bursts than in Calm, always local to the circle and never a full-screen flash.
 - **Other pulses:** at most 2 a second anywhere in Story mode.

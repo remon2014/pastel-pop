@@ -14,7 +14,18 @@
       "Bash(git switch *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "WebFetch(domain:www.nice.org.uk)",
+      "WebFetch(domain:www2.hse.ie)",
+      "WebFetch(domain:rethink.org)",
+      "WebFetch(domain:www.mentalhealth.org.uk)",
+      "WebFetch(domain:learn.microsoft.com)",
+      "WebFetch(domain:www.w3.org)",
+      "WebFetch(domain:w3c.github.io)",
+      "WebFetch(domain:link.springer.com)",
+      "WebFetch(domain:thescholarship.ecu.edu)",
+      "WebFetch(domain:support.google.com)",
+      "WebFetch(domain:www.mind.org.uk)"
     ],
     "ask": [
       "Bash(npm install *)",
@@ -24,8 +35,7 @@
       "Bash(git merge *)",
       "Bash(git rebase *)",
       "Bash(git checkout *)",
-      "Bash(rm *)",
-      "WebFetch"
+      "Bash(rm *)"
     ],
     "deny": [
       "Bash(git push --force *)",
