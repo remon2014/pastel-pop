@@ -1,5 +1,3 @@
-import { BACKGROUND_COLOR } from './config.js';
-
 export class ColorManager {
   constructor() {
     // 🧠 Store the original psychological base palette
@@ -45,8 +43,6 @@ export class ColorManager {
       popshock: [ { name: "Blush Pink", hex: "#F5B0C2" }, { name: "Hot Magenta", hex: "#FC1577" }, { name: "Fire Red", hex: "#EB3402" }, { name: "Electric Blue", hex: "#00249E" } ],
       joy: [ { name: "Punch Pink", hex: "#D02C8F" }, { name: "Cherry Blaze", hex: "#EE3F46" }, { name: "Lemon Zest", hex: "#EDC100" }, { name: "Spring Green", hex: "#A6C871" } ],
       summer: [ { name: "Beach Yellow", hex: "#FEDE24" }, { name: "Tangerine", hex: "#FD6326" }, { name: "Cotton Candy", hex: "#FBC1C9" }, { name: "Cactus Bloom", hex: "#D8C508" } ],
-      rain: [ { name: 'Glossy Cyan', hex: '#00e5ff' }, { name: 'Glossy Purple', hex: '#d500f9' }, { name: 'Glossy Lime', hex: '#76ff03' }, { name: 'Shiny White', hex: '#ffffff' }
-],
     };
 
     this.emotionalSchemes = [
@@ -100,101 +96,5 @@ export class ColorManager {
   getEmotionalScheme(emotionalState) {
     const scheme = this.emotionalSchemes.find(s => s.name === emotionalState);
     return scheme || this.emotionalSchemes[0];
-  }
-
-  drawBackground(ctx, level, canvas, mode = 'classic', frameCount = 0) {
-    if (mode === 'rain') {
-      // Dark base
-      ctx.fillStyle = '#0a0a0a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Moving radial light glow
-      const x = canvas.width / 2 + Math.sin(frameCount * 0.005) * 100;
-      const y = canvas.height / 2 + Math.cos(frameCount * 0.007) * 80;
-
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, canvas.width * 0.6);
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
-      gradient.addColorStop(0.4, 'rgba(200, 200, 255, 0.03)');
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
-
-    // Default background
-    ctx.fillStyle = BACKGROUND_COLOR;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    if (level > 3) {
-      const gradient = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0,
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.7
-      );
-      gradient.addColorStop(0, 'rgba(255,255,255,0)');
-      gradient.addColorStop(0.7, 'rgba(252,252,252,0)');
-      gradient.addColorStop(1, 'rgba(248,248,248,0.4)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-  }
-
-  getRippleEnhancement(colorHex) {
-    // 🧪 Rain mode enhancements for glossy look
-    if (['#00e5ff', '#d500f9', '#76ff03', '#ffffff'].includes(colorHex.toLowerCase())) {
-      return {
-        shadowColor: '#ffffff',
-        shadowBlur: 18,
-        glowFactor: 1.5,
-        pulseRate: 0.015
-      };
-    }
-
-    const color = this.baseColors.find(c => c.hex === colorHex);
-    if (!color) return {
-      shadowColor: this.adjustColorLuminance(colorHex, -0.2),
-      shadowBlur: 8,
-      glowFactor: 1.1,
-      pulseRate: 0.03
-    };
-
-    switch (color.name) {
-      case 'serene coral': return { shadowColor: this.adjustColorLuminance(colorHex, -0.15), shadowBlur: 12, glowFactor: 1.25, pulseRate: 0.04 };
-      // ...rest as is
-    }
-  }
-
-
-  adjustColorLuminance(hex, lum) {
-    hex = String(hex).replace(/[^0-9a-f]/gi, '');
-    if (hex.length < 6) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-    let rgb = "#", c;
-    for (let i = 0; i < 3; i++) {
-      c = parseInt(hex.substr(i * 2, 2), 16);
-      c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
-      rgb += ("00" + c).substr(c.length);
-    }
-    return rgb;
-  }
-
-  getEnhancedColor(colorHex, opacity) {
-    const rgb = this.hexToRgb(colorHex);
-    const enhancement = this.getRippleEnhancement(colorHex);
-    return {
-      color: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`,
-      glow: enhancement.glowFactor,
-      shadow: enhancement.shadowBlur,
-      shadowColor: enhancement.shadowColor,
-      pulseRate: enhancement.pulseRate
-    };
-  }
-
-  hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
   }
 }
