@@ -1,6 +1,11 @@
 import { Game } from './game.js';
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('dev')) {
+    const { startDev } = await import('./dev/index.js');
+    if (startDev(location.search)) return;
+  }
+
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 

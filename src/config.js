@@ -22,3 +22,6 @@ export const SWATCH_FRAME_WIDTH = 3;
 
 // Longest single frame the loop will deliver, in seconds. Longer gaps are dropped (D-003). Placeholder.
 export const MAX_FRAME_SECONDS = 0.1;
+
+// Dev level (src/dev/): window the measured frames per second is averaged over, in milliseconds.
+export const DEV_FPS_WINDOW_MS = 1000;
