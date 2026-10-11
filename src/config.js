@@ -10,6 +10,8 @@ export const LEVEL_SPEED_STEP = 0.2;
 export const CIRCLE_DIAMETER_DP = 64;
 export const CIRCLE_REFERENCE_WIDTH_DP = 360;
 export const CIRCLE_MIN_DIAMETER_DP = 48;
+// PROVISIONAL cap so circles do not fill a wide window; revisit when F-11 makes the play area a portrait column.
+export const CIRCLE_MAX_DIAMETER_DP = 112;
 
 // Calm supporting shades (docs/game-design.md, "Supporting shades").
 export const DUSK = '#332C2E';

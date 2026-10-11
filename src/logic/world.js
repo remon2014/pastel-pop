@@ -6,6 +6,7 @@
 import {
   BASE_SPEED_WIDTHS,
   CIRCLE_DIAMETER_DP,
+  CIRCLE_MAX_DIAMETER_DP,
   CIRCLE_MIN_DIAMETER_DP,
   CIRCLE_REFERENCE_WIDTH_DP,
   LEVEL_SPEED_STEP,
@@ -16,7 +17,8 @@ import {
 export function circleRadius(widthDp) {
   const fraction = CIRCLE_DIAMETER_DP / 2 / CIRCLE_REFERENCE_WIDTH_DP;
   const floor = CIRCLE_MIN_DIAMETER_DP / 2 / widthDp;
-  return Math.max(fraction, floor);
+  const cap = CIRCLE_MAX_DIAMETER_DP / 2 / widthDp;
+  return Math.max(Math.min(fraction, cap), floor);
 }
 
 // Speed multiplier for a level (1.0 at level 1).

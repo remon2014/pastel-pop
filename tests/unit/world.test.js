@@ -99,10 +99,20 @@ test('circle size is 64 dp across at 360 dp wide', () => {
   assert.ok(Math.abs(circleRadius(360) * 2 * 360 - 64) < 1e-9);
 });
 
-test('circle size is never under 48 dp across for widths 320 to 1280 dp', () => {
-  for (let width = 320; width <= 1280; width += 10) {
+test('circle size is never under 48 dp across, including on very narrow screens', () => {
+  for (let width = 200; width <= 1280; width += 10) {
     assert.ok(circleRadius(width) * 2 * width >= 48 - 1e-9, `width ${width}`);
   }
+});
+
+test('circle size is held at the 48 dp floor on a 240 dp wide screen', () => {
+  assert.ok(Math.abs(circleRadius(240) * 2 * 240 - 48) < 1e-9);
+});
+
+test('circle size stops growing at the provisional 112 dp maximum on wide screens', () => {
+  assert.ok(Math.abs(circleRadius(1280) * 2 * 1280 - 112) < 1e-9);
+  assert.ok(Math.abs(circleRadius(630) * 2 * 630 - 112) < 1e-9);
+  assert.ok(circleRadius(600) * 2 * 600 < 112);
 });
 
 test('spawning places every circle fully inside the bounds', () => {

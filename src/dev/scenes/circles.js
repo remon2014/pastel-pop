@@ -38,7 +38,7 @@ function button(label, onClick) {
 // Mounts the scene and returns its read-only numbers for window.__pastelPopDev.
 // A "crossing" is the time (on the clock of summed elapsed seconds) between two wall bounces.
 // The circle's centre travels (width - 2 x radius) between bounces, so the expected time is
-// exactly (width - 2 x radius) / speed: 3.92 s for the default bounds at 1.0x.
+// exactly (width - 2 x radius) / speed: 3.84 s for the default bounds at 1.0x.
 export default function mountCirclesScene(root) {
   const canvas = document.createElement('canvas');
   canvas.className = 'dev-canvas';
