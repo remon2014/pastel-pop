@@ -24,6 +24,7 @@
       "Bash(git merge *)",
       "Bash(git rebase *)",
       "Bash(git checkout *)",
+      "Bash(rm *)",
       "WebFetch"
     ],
     "deny": [
