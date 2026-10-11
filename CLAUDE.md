@@ -13,7 +13,7 @@ The look, feel and design are being significantly reworked. **`docs/game-design.
 
 ## Stack
 - Plain HTML5 Canvas 2D with vanilla ES modules. No game engine and no runtime dependencies. Do not add a framework or engine without asking.
-- Vite is the only dev dependency (dev server on port 5174, LAN-exposed).
+- Vite is the only dev dependency (dev server on port 5174).
 - Menus and HUD are DOM elements layered over the canvas.
 - Planned: Capacitor to wrap the web build into Android/iOS apps.
 
@@ -21,6 +21,7 @@ The look, feel and design are being significantly reworked. **`docs/game-design.
 ```
 npm install
 npm run dev       # http://localhost:5174
+npm run dev:phone # LAN-accessible; use only when testing on a phone
 npm run build     # outputs to dist/
 npm run preview   # serve the production build
 ```

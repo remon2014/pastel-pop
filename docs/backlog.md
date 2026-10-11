@@ -3,8 +3,6 @@
 From the repository audit on 2026-10-11. One line per item; remove items when done.
 
 ## Now: security and broken build
-- Move the SSH key pair `pastel_pop` / `pastel_pop.pub` out of the repo root to `~/.ssh/`; gitignored and never committed, but the dev server can serve files from the root.
-- Dev server is LAN-exposed (`vite.config.js:4`); decide whether `host: true` is still needed once the key is moved.
 - `rain.css` is missing from production builds, so the Rain splash is unstyled; it is loaded by a runtime path (`src/game.js:338`).
 - `sw.js`, `icon-192.png` and `icon-512.png` are missing from production builds; the manifest ships but points at icons that are not there (`manifest.json`, `index.html:5`).
 - Service worker is never registered, and its cache list names dev-only source paths (`sw.js:4`).
