@@ -1,10 +1,12 @@
 # Wellbeing and sensory safety: Pastel Pop
 
-**Status:** v0.3, 2026-10-11. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
+**Status:** v0.4, 2026-10-11. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
 
 **Changed in v0.2:** the sensory rules are split into two tiers by owner decision. Tier 1 (safety) covers the whole game. Tier 2 (comfort) covers Calm mode only. Story mode gains bounded allowances (section 6).
 
 **Changed in v0.3:** the sources in section 3 were checked against their live pages where they could be reached. WCAG, the Xbox guideline, Google Play, HSE, Rethink and the Mental Health Foundation were read. The Shao study, the Fish dissertation, NICE and Mind could not be reached and stay unverified. No rule or value was changed; suggested changes are listed for the owner in section 10.
+
+**Changed in v0.4:** the four proposals from that source check were agreed by the owner and applied: stress wording banned, WCAG flash definitions added, a condition on the low-time bar pulse, and the shared rhythm's basis text reworded.
 
 **Who wrote this:** an AI advisor agent (`wellbeing-advisor`). Its review is not a clinical endorsement and must never be presented as one, in the game, the store listing or anywhere else.
 
@@ -23,8 +25,10 @@
 | "a gentle way to unwind" | "therapy", "treatment", "clinically proven" |
 | "soothing colours and music" | "for your mental health" or any similar claim |
 | "A story about loss and hope" (content note) | "designed with / reviewed by a psychologist" |
+| | "stress management", "stress relief", "helps you manage stress" |
 
 Rules:
+- Stress wording is banned because Google Play names "stress management apps" as an example of a health and fitness app. Google does not mention "calming" or "relaxing" either way (read 2026-10-11).
 - The Calm mode "Purpose" sentence in `docs/game-design.md` (naming anxiety and panic attacks) is internal design intent. It never appears in the store listing, in-game text, screenshots or a shortcut name.
 - The open-into-Calm shortcut or widget is labelled "Calm". Never "panic", "SOS" or similar.
 - Calm mode has no evaluative text at all: no praise, no counts, no messages. Praise for effort belongs to Story mode only.
@@ -117,6 +121,9 @@ Two tiers, by owner decision (section 9, decision 9). Tier 1 is safety and is pa
 Applies to Calm mode, Story mode, menus, the reveal and the gallery.
 
 - **Flash limit:** nothing flashes more than 3 times in any one second. No saturated red flashing.
+  - **What counts as a flash** (WCAG 2.3.1): a pair of opposite brightness changes of 10% or more of the maximum relative luminance, where the darker state is below 0.80.
+  - **Saturated red** means R/(R+G+B) of 0.8 or more.
+  - Flashes are counted across the whole screen. The small-area exception in WCAG is not used.
 - **10-taps-a-second test:** every tap-triggered effect stays within the flash limit at 10 taps a second and with several fingers at once.
 - **No full-screen flash**, and no full-screen colour change triggered per tap.
 - **Reduce motion:** an in-game setting, which also follows the phone's system setting (Android mechanism needs a tech lead check). Behaviour per effect is in the table below.
@@ -135,7 +142,7 @@ Applies to Calm mode, Story mode, menus, the reveal and the gallery.
 | Pop burst | Both | Small fade, no expanding rings |
 | Wrong-tap wobble | Calm | Brief dim of that circle |
 | Swell and settle | Calm | Reduced or off |
-| Low-time bar pulse | Story | Kept: it is a brightness change, not motion, and stays inside the flash limit (advisor's reading; designer to confirm) |
+| Low-time bar pulse | Story | Kept, on one condition: the pulse changes brightness, colour or opacity only, and never the bar's size, shape or position. WCAG 2.3.3 treats a pulse as "not motion" only on that condition. It stays inside the flash limit |
 | Circle drift | Both | Kept: it is the game |
 
 **Retired prototype effects**
@@ -180,7 +187,7 @@ Calm is one endless level with no story, no timer, no score, no streaks, no fail
 
 | Item | Agreed value | Basis |
 |---|---|---|
-| Shared rhythm | 10 s cycle, about 4 s swelling and 6 s settling | Rate (6 a minute) matches the supported pace. The 4/6 split is consistent with self-help guidance on longer out-breaths; whether it was studied is unverified |
+| Shared rhythm | 10 s cycle, about 4 s swelling and 6 s settling | Longer out-breaths appear in HSE and Rethink guidance (confirmed 2026-10-11). The 6-a-minute rate, and whether a 4/6 split was studied, remain unverified until the Shao article is read |
 | Effect of the rhythm on the player | None claimed | **Hope only.** No evidence that an uninstructed visual rhythm changes breathing or mood |
 | Swell amplitude | About 5 to 8% of radius, smooth easing, no hold | Tier 2, design judgement |
 | Touch target | At or above the minimum at the settled size | Accessibility |
@@ -240,6 +247,7 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 | 8 | Children, target audience and Families policy: deferred to the store rating question |
 | 9 | Sensory rules split into two tiers. Safety rules (Tier 1) stay game-wide. Comfort rules (Tier 2) apply to Calm mode only, so Story mode can feel frantic as intended. Story mode allowances are in section 6 |
 | 10 | Story wrong-tap shake: one at a time. Repeated wrong taps never stack or extend it |
+| 11 | Source check proposals, all agreed: stress wording banned; WCAG flash definitions added to the flash limit; the low-time bar pulse may change brightness, colour or opacity only; the shared rhythm's basis text reworded |
 
 ## 10. Open checks before release
 
@@ -262,17 +270,13 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 - [ ] HSE: the 1-to-5 breathing count and "adapted from NHS". Not found on the two HSE pages read.
 - [ ] Rethink: any advice to stop a breathing exercise that causes difficulty. Not found on the two Rethink pages read.
 
-**Proposed changes for the owner** (from the 2026-10-11 source check; nothing below has been applied)
-1. **Section 2, wording.** Add "stress management", "stress relief" and "helps you manage stress" to the Not allowed column. Why: Google Play names "stress management apps" as an example of a health and fitness app. "Calming" and "relaxing" are not mentioned by Google either way and can stay.
-2. **Section 4, flash limit.** Add the WCAG definitions to the rule so the device measurements have a clear pass or fail: a flash is a pair of opposite brightness changes of 10% or more of maximum relative luminance where the darker state is below 0.80; saturated red means R/(R+G+B) of 0.8 or more. Keep counting to 3 a second across the whole screen, and do not adopt the small-area exception. Why: the rule currently says "flash" without saying what counts as one.
-3. **Section 4, Reduce motion table, low-time bar pulse.** Add the condition that the pulse changes brightness, colour or opacity only, and never the bar's size, shape or position. Why: WCAG 2.3.3 treats a pulse as "not motion" only on that condition. With it, the advisor's reading in that row is supported by the source.
-4. **Section 5, shared rhythm, basis text only.** No change to the 10 s cycle or the 4 s / 6 s split. The basis could say that longer out-breaths appear in HSE and Rethink guidance (confirmed), while the 6-a-minute rate and whether a 4/6 split was studied remain unverified until the Shao article is read.
+**Changes from the 2026-10-11 source check:** all four proposals were agreed by the owner and applied (sections 2, 4 and 5; decision 11 in section 9).
 
 **Other**
 - [ ] Play Console: complete the Health apps declaration form accurately. Google says all developers must complete it, whether or not the app has health features.
 - [ ] Children: decide the Google Play target audience and check Families policy, together with the 12+ storyline rating (deferred by the owner).
 - [ ] Tech lead: how Reduce motion follows the Android system setting.
-- [ ] Designer to confirm: the low-time bar pulse is kept under Reduce motion.
+- [x] The low-time bar pulse is kept under Reduce motion, changing brightness, colour or opacity only. Recorded in `docs/game-design.md` (Story mode, Low time).
 - [ ] Review final store copy and the shortcut label against section 2.
 - [ ] Review Stage 2 and Stage 3 art and lines against section 7 once written.
 

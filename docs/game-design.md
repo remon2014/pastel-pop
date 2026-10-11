@@ -61,7 +61,7 @@ This is where the game gets frantic.
 - **Content note:** on first entry to Story mode, a light note such as "A story about loss and hope" is shown. The same note appears in the store text.
 - **Time bar:** the one visible resource. A wrong tap removes a visible chunk of it (starting value: 3 seconds); the chunk slides or fades away over about 300 to 500 ms, with no red flash.
 - **Wrong tap:** one small, short, decaying screen shake (a few pixels, 200 ms or less) together with the chunk leaving the time bar. Only one shake runs at a time: repeated wrong taps never stack or extend it. With Reduce motion on, the shake is replaced by a brief dim. Never a red flash.
-- **Low time:** the time bar itself, not the screen, may pulse at most 2 times a second, and a tick sound may quicken as time runs out. The tick is on the effects slider. No saturated red flashing.
+- **Low time:** the time bar itself, not the screen, may pulse at most 2 times a second, and a tick sound may quicken as time runs out. The pulse changes brightness, colour or opacity only, never the bar's size, shape or position, so it can stay on under Reduce motion. The tick is on the effects slider. No saturated red flashing.
 - **Pops:** bigger and brighter pixel bursts than in Calm, always local to the circle and never a full-screen flash.
 - **Other pulses:** at most 2 a second anywhere in Story mode.
 - **Failure:** when the bar is empty, a kind message appears ("Nearly! Try again"), then a quick fade of about 0.5 to 1 second, and the level restarts. It is not a hard cut and the player does not have to tap. Earlier levels and their mural sections are kept.
@@ -185,7 +185,7 @@ Story mode follows Tier 1 only. Its bounded effects (a short wrong-tap shake, a 
 Pastel Pop is a calming game, not a treatment. These rules cover in-game text, store text, screenshots and shortcut names.
 
 - **Allowed wording:** "relaxing", "calming", "a gentle way to unwind", "soothing colours and music", and wording of that kind.
-- **Never:** "reduces anxiety", "helps panic attacks", "therapy", "treatment", "clinically proven", "for your mental health", or anything similar.
+- **Never:** "reduces anxiety", "helps panic attacks", "therapy", "treatment", "clinically proven", "for your mental health", "stress management", "stress relief", "helps you manage stress", or anything similar.
 - **Internal only:** the Calm mode Purpose sentence (anxious people, panic attacks) and the phrase about falling into breathing with the rhythm are design intent. They never reach players or the store.
 - Never write "designed with" or "reviewed by a psychologist". The reviewer is an AI agent, and its review is not a clinical endorsement.
 - The prototype's colour names and "psychology" strings (for example "mindful blue", "renewal green") are unsupported claims and must not reach players or store text.
