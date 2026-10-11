@@ -61,7 +61,7 @@ Current layout; update this table when files are added, moved or removed.
 - **Static assets go in `public/`.** Vite only copies files from `public/` into the build. Anything in the repo root (icons, `sw.js`, CSS loaded at runtime) is missing from production builds.
 - **Movement must use delta time.** Never move things by a fixed amount per frame; the game must run at the same speed on 60 Hz and 120 Hz screens.
 - **Respect `devicePixelRatio`** when sizing the canvas, and size gameplay elements relative to the screen rather than in fixed pixels.
-- **Mobile first.** Touch targets at least 44px, respect safe areas (notches), handle rotation and resize, and never use `prompt()`, `alert()` or `confirm()`.
+- **Mobile first.** Touch targets at least 48 CSS px, and about 64 CSS px for moving circles (see `docs/game-design.md`, Accessibility); respect safe areas (notches), handle rotation and resize, and never use `prompt()`, `alert()` or `confirm()`.
 - **Keep all text readable** against every background, and never rely on colour alone to convey meaning (colour-blind players).
 - **Never commit or place keys, `.env` files or secrets in the repo.** Report any you find.
 - Keep modules small and single-purpose. Put shared constants in `src/config.js` rather than inlining magic numbers.

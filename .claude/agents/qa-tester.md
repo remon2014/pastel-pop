@@ -54,7 +54,7 @@ Rapid repeated taps, tapping several circles at once, tapping during transitions
 - **Motion:** with Reduce motion on (and with reduced motion emulated in the browser, where the tool allows), non-essential motion such as shake, zoom and parallax stops.
 - **Sound:** no sudden volume jumps; music and effects volumes work separately.
 - **Calm mode:** no timer, score pressure or fail state, and a wrong tap gets only the soft wobble the design defines.
-- **Accessibility:** colours are always paired with a symbol, text is readable against every background, and touch targets are at least 44 CSS pixels.
+- **Accessibility:** colours are always paired with a symbol, text is readable against every background, and every touch target is at least 48 CSS pixels, with moving circles at about 64 CSS pixels (`docs/game-design.md`, Accessibility).
 
 ## Know your limits
 Browser automation isn't a real phone. List these as **manual checks for the owner** on a real device (`npm run dev:phone`) whenever the change touches them: how touch feels, performance and smoothness on a mid- or low-range Android phone, audio timing, vibration, and how flashing and motion actually feel on a small screen.
