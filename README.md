@@ -5,3 +5,6 @@ A fun browser-based game where players click on bouncing pastel-coloured circles
 ## How to Run
 1. Install dependencies: `npm install`
 2. Start dev server: `npm run dev`
+
+## Claude
+Claude is connected to this repository.
