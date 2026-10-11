@@ -55,7 +55,7 @@ Current layout; update this table when files are added, moved or removed.
 | `docs/foundations-plan.md` | Engineering foundations plan: tasks F-01 to F-19 and their progress |
 | `docs/decisions.md` | Log of significant technical decisions (D-001 onward) |
 | `docs/qa-log.md`, `docs/qa-notes.md` | QA verdict per task, and lasting notes for future test sessions |
-| `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor`, `tech-lead`, `gameplay-engineer`, `qa-tester` |
+| `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor`, `tech-lead`, `gameplay-engineer`, `qa-tester`, `code-reviewer` |
 
 ## Rules
 - **Static assets go in `public/`.** Vite only copies files from `public/` into the build. Anything in the repo root (icons, `sw.js`, CSS loaded at runtime) is missing from production builds.
