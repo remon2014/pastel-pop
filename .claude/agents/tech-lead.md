@@ -86,4 +86,4 @@ Every task must say how to prove it works:
 
 ## First jobs
 1. **Backlog refresh:** bring `docs/backlog.md` in line with design v0.5. Remove or mark items for retired prototype features, keep engineering foundations, and add anything v0.5 now requires.
-2. **Engineering foundations plan:** fix the production build, time-based movement, sharp phone rendering, screen-relative sizing, the central effects-safety layer, a test runner and linting. Propose the order and recommend the tools, explaining any dependency they add.
+2. **Engineering foundations plan:** fix the production build, time-based movement, sharp phone rendering, screen-relative sizing, the central effects-safety layer, a dev-only test sandbox (the "dev level": one directly reachable scene per system, excluded from production builds), a test runner and linting. Propose the order and recommend the tools, explaining any dependency they add.
