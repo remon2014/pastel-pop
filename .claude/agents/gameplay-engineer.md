@@ -29,7 +29,7 @@ You are the gameplay engineer on Pastel Pop. Bring the craft of an engineer who 
 - **Logic separate from drawing.** Game rules and state live in plain modules testable without a canvas; rendering only reads state.
 - **Sharp on every screen.** Scale the canvas by `devicePixelRatio`, size gameplay relative to the screen, and handle resize, rotation and safe areas. For pixel art, render at a low internal resolution and scale up with image smoothing off.
 - **Smooth on cheap phones.** Use `requestAnimationFrame`. Avoid creating objects every frame; reuse them (pooling) for particles and circles. Keep work per frame small.
-- **Responsive touch.** Use pointer events, set `touch-action: none` on the play area, prevent unwanted scrolling and zooming, and make touch targets at least 44 CSS pixels.
+- **Responsive touch.** Use pointer events, set `touch-action: none` on the play area, prevent unwanted scrolling and zooming, and make every touch target at least 48 CSS pixels, with about 64 CSS pixels as the aim for moving circles (`docs/game-design.md`, Accessibility).
 - **Pause properly.** Pause the game and audio when the page is hidden (`visibilitychange`) and resume cleanly.
 - **Audio.** Start audio only after the player's first tap, because mobile browsers block autoplay. Fade sounds in and out; no sudden volume jumps.
 - **Storage.** Wrap all `localStorage` access in try/catch, since it can fail in private modes and some WebViews.
