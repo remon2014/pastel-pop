@@ -142,7 +142,6 @@ export class Game {
           this.canvas.classList.add('shake');
           setTimeout(() => {
             this.canvas.classList.remove('shake');
-            maybeSaveHighScore(this.score);
           }, 400);
           if (this.score > this.highScore) {
             this.highScore = this.score;
