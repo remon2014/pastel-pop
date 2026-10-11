@@ -1,6 +1,8 @@
 # Game Design: Pastel Pop
 
-**Status: Draft v0.5.** The owner's vision, updated with the decisions from the first design review, the owner's follow-up answers, the owner-agreed changes from the wellbeing review by the wellbeing advisor, and the owner's decision to split the sensory rules into two tiers (2026-10-11). Items marked "proposal" are the Game Designer's suggestion and not yet agreed. "Open questions" lists the decisions still to make.
+**Status: Draft v0.6.** The owner's vision, updated with the decisions from the first design review, the owner's follow-up answers, the owner-agreed changes from the wellbeing review by the wellbeing advisor, and the owner's decision to split the sensory rules into two tiers (2026-10-11). Items marked "proposal" are the Game Designer's suggestion and not yet agreed. "Open questions" lists the decisions still to make.
+
+**Changed in v0.6 (2026-10-11):** at the owner's request, the colours are renamed and Calm gets a concrete palette and a sharper look and feel. New section "Calm colours, names and symbols"; Calm mode bullets for correct tap, wrong tap, motion, density, target changes, idle and HUD sharpened; the Calm background changes from "mid-tone" to a dim warm dark tone, with the reason. Everything new in v0.6 is the Game Designer's proposal until the owner agrees, and has not yet been reviewed by the wellbeing advisor.
 
 Working title: **Pastel Pop** (may change).
 
@@ -34,14 +36,19 @@ The existing 10 experimental modes are retired and replaced by the two modes bel
 - **Structure:** one perpetual level. No story, no levels, no ending.
 - **Instant start:** one tap from the launch screen, with no further menus, countdown or instructions. Leaving is equally instant, with no confirmation prompt. Players can also choose a way to open straight into Calm (see Launch screen).
 - **No pressure of any kind:** no timer, score, stars, counters, lives or fail state. Nothing on screen can be lost or run out.
-- **Wrong tap:** that circle alone gives one small, slow wobble (a single cycle of about 300 ms or more) and a gentle sound that is quieter than the pop and is not a descending error tone. No penalty, no restart, no lives: all of these are loss signals that work against the purpose. Confirmed by the owner.
-- **Motion:** slow, smooth drifting with no sudden changes of speed or direction. Circles gently swell and settle on a slow shared rhythm. Starting value: a 10-second cycle, about 4 seconds swelling and 6 settling, so a player may fall into breathing with it (internal design intent, never player-facing wording). The game never tells the player to breathe or how.
+- **Correct tap:** registers on touch-down, not on release, so the response is immediate. The circle dissolves where it is, in about 3 stepped frames over about 450 ms: it grows by 1 internal pixel, then breaks into one thin ring of its own colour that reaches no more than a quarter of a radius beyond the circle and fades into the background. The pop uses the circle's own colour only: it never brightens and never turns white. Sound: one soft rounded note taken from a small fixed set of notes that sound pleasant in any order (starting value: 5 notes), chosen at random. The pitch never climbs with consecutive taps, because a rising chain is a streak signal, and Calm has no streaks.
+- **Wrong tap:** that circle alone gives one small, slow wobble (a single cycle of about 300 ms or more, 1 to 2 internal pixels side to side) and a gentle sound that is quieter than the pop and is not a descending error tone. A circle that is already wobbling ignores further wrong taps, so nothing stacks. The circle keeps its place, colour and symbol. No penalty, no restart, no lives: all of these are loss signals that work against the purpose. Confirmed by the owner.
+- **Missed tap:** a tap on empty space does nothing at all: no sound, no mark. The tap area of a circle is about 10% wider than the circle (starting value) and never under the minimum touch size. If a tap lands within reach of two circles, the matching one is taken.
+- **Motion:** slow, smooth drifting with no sudden changes of speed or direction. Starting value: 0.05 play-area widths a second, so a circle would take about 20 seconds to cross the screen (Story level 1 is 0.25). Circles never bounce: they turn away from the edges and from each other over 1 second or more, and they do not overlap, so every symbol stays readable. Circles gently swell and settle on a slow shared rhythm. Starting value: a 10-second cycle, about 4 seconds swelling and 6 settling, so a player may fall into breathing with it (internal design intent, never player-facing wording). The game never tells the player to breathe or how.
 - **Swell:** small, about 5 to 8% of the radius, with smooth easing and no hold. The touch target stays at or above the minimum size when the circle is settled. The target's glow pulses on the same 10-second rhythm, so there is only one rhythm on screen.
-- **Density:** 4 to 6 circles and 3 colours on screen (starting values). Circles never expire or vanish on their own.
-- **Circle arrival:** replacement circles fade or drift in over 1 second or more. At least one circle of the target colour is always on screen.
-- **Target changes:** only after a number of clears, never on a clock. The swatch crossfades over about 2 seconds, with no sound sting and no background tint. Both the old and the new target are accepted during the crossfade.
-- **Palette:** soft, warm and low in saturation, with no alarm colours. The background is a dim warm mid-tone, not white, so it is comfortable at night (design judgement).
-- **Glow:** stepped solid rings only, not fine dither, which can shimmer when it pulses.
+- **Game Designer's concern about pixel steps, noted once:** at the placeholder resolution (180 pixels wide) a circle is about 16 pixels in radius, so a 5 to 8% swell is a single 1-pixel jump, not a swell, and drift at 0.05 widths a second is about 9 whole-pixel steps a second. Both would read as ticking, which Tier 2 rules out. For Calm, the recommendation is to draw sprites as chunky pixels but place and scale them more finely than the pixel grid. If the look chosen on a real phone is strict pixel steps (foundations decision 7), drop the swell and let the target's glow carry the rhythm alone. Needs the tech lead's view on cost.
+- **Density:** 4 to 6 circles on screen, in 3 of the 5 colours (starting values). Each visit to Calm draws its 3 colours at random and keeps them for the whole visit (proposal: see Open questions). Circles never expire or vanish on their own.
+- **Circle arrival:** replacement circles fade or drift in over 1 second or more, and can be tapped as soon as they can be seen. At least one circle of the target colour is always on screen.
+- **Target changes:** only after a number of clears, never on a clock. Starting value: after 8 to 12 clears, varied so it is not counted. The new target is always a colour already on screen. The swatch, colour and symbol together, crossfades over about 2 seconds, with no sound sting and no background tint. Both the old and the new target are accepted during the crossfade.
+- **Idle:** if the player stops tapping, nothing changes. No prompt, no hint, no nudge, no dimming, and nothing that grows more insistent with time. Watching the circles drift is a complete way to use Calm.
+- **HUD:** two things only. The target swatch, top centre below the safe area: one circle about 1.5 times the size of a play circle, with a thin frame and the glow, so it reads as "one of these". One exit control in a top corner, at least 48 dp, drawn in the quiet HUD shade, never animated. No text, no numbers, no settings button (settings live on the launch screen).
+- **Palette:** soft and low in saturation, with no alarm colours, on a dim warm dark background, neither white nor black, so it is comfortable at night (design judgement). The colours, their names, symbols and contrast checks are in "Calm colours, names and symbols".
+- **Glow:** stepped solid rings only, not fine dither, which can shimmer when it pulses. The glow is on the target swatch only, never on the matching circles: finding them is the one small task Calm offers.
 - **Audio:** slow ambient music that loops without a noticeable seam, with no sudden changes in volume or tempo. Music fades in over 1 to 2 seconds on entry. Pop sounds are soft and rounded and sit below the music bed. Overlapping pops are capped so fast tapping cannot stack up volume.
 - **No judging words:** no praise or evaluative text in Calm. Effort praise belongs to Story mode only.
 - **Coming back from a pause:** Calm fades straight back in, with no pause overlay and no countdown.
@@ -131,10 +138,89 @@ Long ago a valley was kept bright by lanterns, each holding one colour of living
 - Pixel art in the style of early-2000s handheld and console games.
 - Crisp pixels: draw at a low internal resolution and scale up with no smoothing, so it stays sharp on every screen.
 - A consistent limited palette per mode: soft and warm for Calm, more saturated and higher-contrast as Story mode intensifies.
-- At most 5 circle colours, each with a bold, distinct symbol silhouette. Symbols must not be clusters of dots or holes.
+- At most 5 circle colours, each with a bold, distinct symbol silhouette. Symbols must not be clusters of dots or holes. The five are named and specified in "Calm colours, names and symbols".
 - Pixel-style fonts and UI to match, kept readable on small screens. If the pixel font is not comfortably readable for story text on a small phone, use a clean readable font for story text.
 - **Glow:** a soft glow in the spirit of the Ori games, done in pixels. Draw it as stepped or dithered rings of two or three lighter palette shades at the internal resolution, never as a smooth blur. Use it only where it means something: the target, the popped light travelling to the mural in the reveal beat, and restored mural sections. No flashing. In Calm mode, pulses are no faster than one every 2 seconds and the glow uses stepped solid rings only. In Story mode, pulses may go up to 2 a second.
 - **Art reference pending:** the owner will provide a visual reference, and the art will be produced in a similar style. The points in this section may be revised once it arrives (see Dependencies).
+
+## Calm colours, names and symbols
+Added in v0.6. Game Designer's proposal. **Every hex value here is a starting value**, worked out on paper: to be tuned on a real phone, in a dark room and in daylight, and revised against the owner's art references when they arrive. The lightness order and the symbol pairing are the parts to keep; the exact shades are not.
+
+### Naming rule
+- **One name per colour, and it is the name of the thing its symbol shows.** Star, Kite, Cloud, Leaf, Moon. A player who cannot tell the colours apart can still say "tap the stars", and a 7-year-old can say every name.
+- Names are plain nouns for ordinary things. They make **no claim about mood, health or the mind**: no "calm", "serene", "mindful", "healing" or similar, and no description of what a colour "does". This replaces the prototype's names.
+- Short, easy to say, easy to translate, and not taken from any other game. None is a Story motif, so Calm stays apart from the story.
+- **Where a player meets a name:** never as text on screen during play; the target is always shown as symbol and colour, with no word. The name is used in the accessibility label on the target swatch, with a plain colour word ("Target: Star, yellow"), and in code and these docs (ids `star`, `kite`, `cloud`, `leaf`, `moon`). The label helps players with low vision; it does not make a moving tap game playable by screen reader alone, and v1.0 does not claim that.
+
+### The five colours
+Five in total, shared with Story mode. Calm shows 3 at a time, because one simple thing to look for is the point of Calm and 3 keeps the search small; 5 in total gives variety between visits and is the most that can be kept apart by lightness as well as hue.
+
+| Name | Hex | Colour word | Symbol, drawn in Ink | Lightness band |
+|---|---|---|---|---|
+| Star | `#EDD894` | yellow | Solid five-point star | Light |
+| Cloud | `#9CC4E4` | blue | Wide, flat-bottomed cloud: one solid mass, never separate dots | Light |
+| Kite | `#E6A08C` | peach | Tall solid diamond, no tail | Middle |
+| Leaf | `#5E9478` | green | Solid pointed oval set on the diagonal, with a short stem | Dark |
+| Moon | `#9A82C2` | purple | Solid crescent | Dark |
+
+- **Symbols:** five different kinds of outline (spiky, wide and lumpy, tall and angular, slanted oval, curved crescent), so they differ as silhouettes and not in detail. At the placeholder resolution a circle is about 32 pixels across; the symbol fills about 16 by 16 pixels with no stroke thinner than 2 pixels. Symbol art is a placeholder until the game artist draws it.
+- **Fills are fully opaque.** The prototype's 60% opacity is retired: it would drop the dark colours below the contrast minimum. A circle is see-through only while it fades in.
+
+### Supporting shades
+| Name | Hex | Used for |
+|---|---|---|
+| Dusk | `#332C2E` | Calm background |
+| Ink | `#2A2426` | Symbols on circles and on the swatch |
+| Glow 1 | `#453B3C` | Outer glow ring around the target swatch |
+| Glow 2 | `#5C4F4C` | Inner glow ring around the target swatch |
+| Dust | `#A3968F` | Quiet HUD: the exit control |
+| Cream | `#D9CEC2` | Swatch frame (1 pixel, with a 1-pixel gap of Dusk inside it), and any text Calm ever needs |
+
+- That is 11 colours in all for Calm, which suits a limited pixel-art palette. There is no pure white and no pure black.
+- **No outline colour:** the fill itself carries the contrast against Dusk, so circles need no outline to be seen. The artist may add shading later.
+- **Glow:** two solid rings, each 2 internal pixels wide, around the swatch. Over the 10-second rhythm the outer ring eases in and out by opacity; its pixels never move or blur. The glow is decoration and carries no information, so it is deliberately low in contrast.
+
+### Checks
+Contrast is the WCAG 2.x contrast ratio, computed by hand from the hex values above (relative luminance L in brackets). **Minimums designed to:** 3:1 for a circle against the background and for a symbol against its circle (the WCAG AA figure for graphics needed to understand content), and 4.5:1 for text (WCAG AA), aiming for 7:1. Circles move, so the aim is to sit clear of 3:1, not on it. As a night-comfort ceiling (design judgement), nothing exceeds about 10:1 against Dusk.
+
+| Element | L | Against Dusk (L 0.027) | Ink symbol on it (L 0.019) |
+|---|---|---|---|
+| Star | 0.693 | 9.6:1 | 10.8:1 |
+| Cloud | 0.522 | 7.4:1 | 8.3:1 |
+| Kite | 0.439 | 6.3:1 | 7.1:1 |
+| Moon | 0.267 | 4.1:1 | 4.6:1 |
+| Leaf | 0.249 | 3.9:1 | 4.3:1 |
+| Cream (text, frame) | 0.628 | 8.8:1 | n/a |
+| Dust (exit control) | 0.316 | 4.7:1 | n/a |
+| Glow 2 / Glow 1 | 0.084 / 0.047 | 1.7:1 / 1.3:1 (decoration only) | n/a |
+
+**Why the background is dark and not a mid-tone.** The earlier draft asked for a "dim warm mid-tone". That cannot work with soft colours: against a true mid-tone (L about 0.18) even pure white only reaches 4.6:1, and soft colours would fall between about 1.3:1 and 3.3:1. The prototype's near-white background fails the same way from the other side, as QA saw. A background has to sit near one end, and for night use it should be the dark end. Dusk is dim and warm but well short of black.
+
+**Colour-vision differences.** Reasoned from the usual confusion patterns, not yet tested with a simulator or with colour-blind players.
+- Protan and deutan vision loses the red-green difference and keeps yellow against blue. Star, Kite and Leaf fall on the yellowish side and can look alike in hue; Cloud and Moon fall on the bluish side.
+- Tritan vision loses the blue-yellow difference. Star, Kite and Moon fall on the pinkish side; Cloud and Leaf fall on the blue-green side.
+- So every pair that can look alike in hue is put in a different lightness band. Contrast between the two colours of each such pair:
+
+| Pair | Alike for | Lightness contrast |
+|---|---|---|
+| Star and Kite | protan, deutan, tritan | 1.5:1 |
+| Kite and Leaf | protan, deutan | 1.6:1 |
+| Star and Leaf | protan, deutan | 2.5:1 |
+| Cloud and Moon | protan, deutan | 1.8:1 |
+| Cloud and Leaf | tritan | 1.9:1 |
+| Kite and Moon | tritan | 1.5:1 |
+| Star and Moon | tritan | 2.3:1 |
+
+- Reds look darker with protan vision, which pulls Kite towards Leaf. A rough estimate using the green-cone response gives Kite and Leaf 1.5:1 and Star and Kite 1.6:1, so the bands hold. Estimate only.
+- **Limits, stated plainly.** A 1.5:1 lightness step is visible side by side but is not a dependable cue on moving circles. Three pairs sit in the same band and are separated by hue only (Leaf and Moon 1.06:1, Kite and Cloud 1.2:1, Star and Cloud 1.3:1); each of those pairs differs on the axis every one of the three vision types keeps. In greyscale there are only three bands, so Leaf and Moon look the same. **The symbol is the guarantee; hue and lightness are helpers.** This is why the symbol is on every circle and the swatch, with no setting to turn it off.
+
+**Other rules.**
+- No alarm colours and no saturated red: the reddest colour is Kite, with R/(R+G+B) of 0.43 against the Tier 1 line of 0.8.
+- Glow steps are tiny changes in brightness (at most 0.06 in relative luminance, against the 0.10 that WCAG counts as a flash) on a 10-second cycle.
+- A pop is one fall in brightness and never a brighten-then-fade.
+
+### Story mode
+Story uses the same five names, symbols and hue families, so nothing has to be relearned between modes. Its fills are more saturated and its backgrounds are set stage by stage when Story is specified. Two things carry over unchanged: the lightness order (Star and Cloud light, Kite middle, Leaf and Moon dark) and Kite staying well under the saturated-red line.
 
 ## Feel
 - Every tap gives instant feedback at the circle itself: a pixel burst or pop, a sound, and optional light vibration. In Calm the burst is small and quiet; in Story mode it is bigger and brighter. All feedback stays within the Sensory safety rules below.
@@ -171,11 +257,14 @@ Story mode follows Tier 1 only. Its bounded effects (a short wrong-tap shake, a 
 - No travelling lights; the reveal becomes a plain crossfade.
 - Story mode's wrong-tap shake becomes a brief dim.
 - Calm mode's wrong-tap wobble becomes a brief dim, and the Calm swell is reduced or off.
+- Calm's dim (proposal, for the wellbeing advisor to check): the circle eases about 6% of the way towards the background colour and back over about 600 ms, one dim per circle at a time. It is kept this small on purpose: a dim and its return are a pair of brightness changes, and with up to 6 circles a fast tapper could trigger more than 3 in a second. At 6% the change on Star, the lightest colour, works out at about 0.07 in relative luminance, under the 0.10 that counts as a flash (about 0.10 at 8%, so 8% is too much). The cue is faint; the sound carries most of it. To be measured on a phone.
+- Calm's pop becomes a plain fade of the circle over about 450 ms, with no ring.
 
 **Noted once, plainly:** Story mode is intentionally less comfortable for anxious or motion-sensitive players. Calm mode and the Reduce motion setting are the answers to that.
 
 ## Accessibility
-- **Never colour alone:** each colour also has a distinct shape or pixel symbol, shown on both the target and every circle, so colour-blind players can match by symbol. The game must be playable in greyscale.
+- **Never colour alone:** each colour also has a distinct shape or pixel symbol, shown on both the target and every circle, so colour-blind players can match by symbol. The game must be playable in greyscale. The symbols cannot be switched off. Contrast minimums and the colour-vision reasoning are in "Calm colours, names and symbols".
+- The target swatch carries an accessibility label with the colour's name and a plain colour word, for example "Target: Star, yellow".
 - Large touch targets, comfortable for one-handed play. Circles are sized relative to the screen, never smaller than 48 dp across, with about 64 dp as the aim for moving circles (starting value).
 - Settings: separate volume sliders for music and for effects (Story mode's tick is on the effects slider), and vibration on or off. All choices, including mute, are remembered.
 - **Reduce motion** setting, which also follows the phone's own system setting and applies in both modes (see Sensory safety for what it changes). How the system setting is read on Android needs a tech lead check.
@@ -188,7 +277,7 @@ Pastel Pop is a calming game, not a treatment. These rules cover in-game text, s
 - **Never:** "reduces anxiety", "helps panic attacks", "therapy", "treatment", "clinically proven", "for your mental health", "stress management", "stress relief", "helps you manage stress", or anything similar.
 - **Internal only:** the Calm mode Purpose sentence (anxious people, panic attacks) and the phrase about falling into breathing with the rhythm are design intent. They never reach players or the store.
 - Never write "designed with" or "reviewed by a psychologist". The reviewer is an AI agent, and its review is not a clinical endorsement.
-- The prototype's colour names and "psychology" strings (for example "mindful blue", "renewal green") are unsupported claims and must not reach players or store text.
+- The prototype's colour names and "psychology" strings (for example "mindful blue", "renewal green") are unsupported claims and must not reach players or store text. The colours are now Star, Kite, Cloud, Leaf and Moon. Colour names never describe a mood or an effect on the player, in the game, the code or the store text.
 
 ## Version 1.0 scope
 v1.0 is a public launch, not a test slice.
@@ -218,7 +307,7 @@ v1.0 is a public launch, not a test slice.
 - Online features, accounts or cloud saves.
 
 ## Dependencies
-- **Art reference:** the owner will provide visual references step by step, when asked. Pending.
+- **Art reference:** the owner will provide visual references step by step, when asked. Pending. Waiting on it: every hex value in "Calm colours, names and symbols", the five symbol drawings, the glow ring widths, and the internal resolution that decides how the swell and slow drift look.
 - **Game-artist agent:** to be created, to produce original art in the style of the owner's reference. Blocks all final art; the Look section is provisional until then.
 - **Music and sound:** the owner will upload music when asked. Every track and sound must come with a licence that allows commercial use in a published app. Record the source, licence and any required attribution for each one. Calm and Story mode need different music.
 - **Wellbeing reference:** `docs/wellbeing.md` holds the measurable sensory rules, the wording lists and the evidence behind them. This doc states the rules; that file is the reference for the detail.
@@ -231,3 +320,10 @@ v1.0 is a public launch, not a test slice.
 3. **Look after the art reference:** confirm pixel art, the internal resolution and the glow treatment once the owner's references arrive.
 4. **Star thresholds:** the 1, 2 and 3 star rule in Story mode is still a proposal.
 5. **Name:** "Pastel Pop" stays as the working title. Before release, check for clashing names on the store.
+6. **Colour names (v0.6):** one name per colour, taken from its symbol (Star, Kite, Cloud, Leaf, Moon), or separate shade names as well (for example Honey, Clay, Sky, Fern, Plum)? Recommendation: one name. A second set gives players nothing and is one more thing to translate and keep free of claims.
+7. **Calm background (v0.6):** agree the change from "mid-tone" to the dim dark tone Dusk. Recommendation: agree; a mid-tone cannot meet the contrast minimum with soft colours. `docs/wellbeing.md` section 5 still says "mid-tone" and needs correcting by the wellbeing advisor once agreed.
+8. **Which colours a Calm visit shows (v0.6):** (a) 3 of the 5 drawn at random each visit; (b) the same 3 every visit; (c) colours changing slowly within a visit. Recommendation: (a). It costs nothing to build and gives quiet variety. (c) needs a new rule for retiring a colour without circles vanishing, so it is parked for later.
+9. **Smooth or pixel-stepped movement in Calm (v0.6):** see the concern under Calm mode, Motion. Decided on a real phone under foundations decision 7; needs the tech lead's cost. Recommendation: fine placement for Calm, or no swell.
+10. **Reduce motion wrong-tap dim in Calm (v0.6):** is a dim small enough to stay under the flash size (about 6%) a clear enough cue, or should it be larger and counted by the effects layer's flash limit? Also whether Tier 2's "no colour change faster than a 1-second fade" is meant to cover tap feedback. For the wellbeing advisor.
+11. **Screen sleep in Calm (v0.6):** a player who only watches will have the phone dim on its own timer. Recommendation for v1.0: follow the phone's setting and check in playtests; keeping the screen awake needs a tech lead check and the owner's yes.
+12. **Checks still to do on the palette (v0.6):** view it through a colour-vision simulator and, if possible, with colour-blind players; view it on a real phone at night and in daylight; confirm a first-time player understands the swatch with no words.
