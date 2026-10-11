@@ -1,6 +1,7 @@
 import { Circle } from './circle.js';
 import { UIManager } from './uiManager.js';
 import { PALETTE } from './colorManager.js';
+import { browserHost, createLoop } from './core/loop.js';
 import { getDistance } from './utils.js';
 import { CIRCLE_RADIUS, BACKGROUND_COLOR, BASE_SPEED, SPEED_PER_LEVEL } from './config.js';
 
@@ -13,7 +14,7 @@ export class Game {
     this.level = 1;
     this.currentTargetColor = null;
     this.isPaused = false;
-    this.frameId = null;
+    this.loop = createLoop(this.update.bind(this), browserHost());
     this.circles = [];
 
     this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
@@ -29,26 +30,14 @@ export class Game {
     this.isPaused = false;
 
     this.initLevel();
-    this.startLoop();
+    this.loop.start();
   }
 
   stop() {
-    this.stopLoop();
+    this.loop.stop();
     this.isPaused = false;
     this.circles = [];
     this.ui.hidePauseMenu();
-  }
-
-  startLoop() {
-    this.stopLoop();
-    this.frameId = requestAnimationFrame(this.update.bind(this));
-  }
-
-  stopLoop() {
-    if (this.frameId !== null) {
-      cancelAnimationFrame(this.frameId);
-      this.frameId = null;
-    }
   }
 
   initLevel() {
@@ -113,7 +102,7 @@ export class Game {
       return;
     }
     this.isPaused = true;
-    this.stopLoop();
+    this.loop.stop();
     this.ui.setPauseLabel(true);
     this.ui.showPauseMenu();
   }
@@ -122,10 +111,10 @@ export class Game {
     this.isPaused = false;
     this.ui.hidePauseMenu();
     this.ui.setPauseLabel(false);
-    this.startLoop();
+    this.loop.start();
   }
 
-  update() {
+  update(_elapsedSeconds) {
     this.ctx.fillStyle = BACKGROUND_COLOR;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -133,7 +122,5 @@ export class Game {
       circle.update(this.canvas);
       circle.draw(this.ctx);
     });
-
-    this.frameId = requestAnimationFrame(this.update.bind(this));
   }
 }
