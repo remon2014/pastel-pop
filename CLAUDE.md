@@ -36,6 +36,7 @@ Current layout; update this table when files are added, moved or removed.
 | `src/main.js` | Bootstrap, canvas resize, menu wiring |
 | `src/game.js` | Game loop, levels, input, pause, fixed background |
 | `src/circle.js` | Circle entity (bounce, draw) |
+| `src/symbols.js` | Placeholder canvas-path symbols (star, cloud, kite, leaf, moon) |
 | `src/colorManager.js` | Colour palette (neutral ids and hex) |
 | `src/uiManager.js` | DOM HUD updates |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
