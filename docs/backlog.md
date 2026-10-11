@@ -103,7 +103,7 @@ Not a plan and not in build order within a group. Each needs the foundations abo
 - **Tech-lead check, not yet done:** which Android mechanism opens straight into Calm: home-screen widget, app shortcut or in-app setting (GD Open questions 2).
 - **Tech-lead check, not yet done:** vibration behaviour on Android, and the cost of the pixel-art glow on low-end phones (GD Dependencies).
 - **Calm tuning values:** wait on playtests, then on the wellbeing advisor (GD Calm mode, closing note).
-- **Unverified evidence sources** (Shao, Fish, NICE, Mind): owned by the wellbeing advisor; does not block building (WB 10).
+- **One evidence question still open:** whether the Shao breathing study covered a 4 s in / 6 s out ratio. The four sources themselves (Shao, Fish, NICE, Mind) were verified by the owner on 2026-10-11; owned by the wellbeing advisor; does not block building (WB 10).
 
 ## Retired with the prototype
 **Done (F-01 and F-02, merged 2026-10-11).** The 10 experimental modes, Rain, both mode dropdowns, the named leaderboard and its `prompt()`, the score, high score and time bonus, game over, the per-tap tint, the shake, the swoop-in, the ripple and glitch effects, and the colour names and "psychology" strings are deleted (GD Core loop; GD Sensory safety Tier 1; WB 4 retired effects table). What remains in `src/game.js` is plain scaffolding, to be replaced as Calm and Story are built (F-18 removes whatever is left).
