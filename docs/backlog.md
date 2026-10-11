@@ -5,11 +5,11 @@ Refreshed 2026-10-11 against `docs/game-design.md` Draft v0.5 and `docs/wellbein
 References: **GD** = `docs/game-design.md` section, **WB** = `docs/wellbeing.md` section. Design values quoted here are starting values; the design doc is the source of truth.
 
 ## Now: broken production build
-Planned as F-03 and F-04 in `docs/foundations-plan.md` (proposed, awaiting the owner's approval). The plan proposes deleting the retired prototype code first (F-01, F-02; see "Retired with the prototype" below and D-001), so `rain.css` is deleted rather than moved.
+Planned as F-03 and F-04 in `docs/foundations-plan.md` (approved by the owner 2026-10-11). The retired prototype code is deleted first (F-01, F-02; see "Retired with the prototype" below and D-001), so `rain.css` is deleted rather than moved.
 
 - `sw.js`, `icon-192.png` and `icon-512.png` sit in the repo root and are missing from `dist/`; move static assets into `public/` (CLAUDE.md rule).
 - The manifest ships, but hashed into `dist/assets/`, so its relative icon paths and `start_url` resolve to the wrong place (`manifest.json:4`, `manifest.json:10`, `index.html:5`).
-- Service worker is never registered anywhere, and its cache list names dev-only source paths and Google Fonts (`sw.js:4`); proposed: delete it (D-002, F-03).
+- Service worker is never registered anywhere, and its cache list names dev-only source paths and Google Fonts (`sw.js:4`); decided: delete it (D-002, F-03).
 - `favicon.ico` is a 1.1 MB 1024×1024 PNG with the wrong extension, and it does ship in the build; replace with a real small icon. Compress `icon-512.png` (233 kB).
 - Unused scaffold file `public/vite.svg` is copied into every build; `src/javascript.svg` is also unused.
 - Manual cache-busting query on the module script (`index.html:344`); Vite already hashes builds.
@@ -27,9 +27,9 @@ The design's tuning values mean nothing until these are in place (GD Dependencie
 - Touch input reads only the first active finger (`e.touches[0]`, `src/game.js:152`), so a second finger's tap lands at the first finger's position; the safety tests assume several fingers at once (GD Sensory safety Tier 1; WB 4).
 - No central effects layer. Build one that every visual and sound effect goes through, enforcing: at most 3 flashes a second counted across the whole screen, no saturated red flashing, no full-screen flash or per-tap full-screen colour change, pulses on one shared clock, one shake at a time, Reduce motion substitutions, time-based effects only (GD Sensory safety; WB 4, including the Reduce motion table).
 - Game rules are tangled with drawing and DOM updates in `src/game.js`; separate them so rules can be tested without a canvas (tech-lead principle; needed for the tests below).
-- No tests: add a test runner and a `test` script (F-06; proposed: Node's built-in runner, no package, D-007). First coverage: time bar and wrong-tap cost, star rules, story assist, target selection and target changes, save and load, the effects-layer limits.
-- No lint or formatting: add `lint` and `format` scripts (F-05; proposed tool: `@biomejs/biome`, with ESLint and Prettier as the alternative, D-008).
-- No CI: run build, lint and tests on pull requests (no `.github/` directory exists). Not in the foundations plan; needs the owner's approval as an outside service.
+- No tests: add a test runner and a `test` script (F-06; decided: Node's built-in runner, no package, D-007). First coverage: time bar and wrong-tap cost, star rules, story assist, target selection and target changes, save and load, the effects-layer limits.
+- No lint or formatting: add `lint` and `format` scripts (F-05; decided: `@biomejs/biome`, D-008).
+- No CI: run build, lint and tests on pull requests (no `.github/` directory exists). Not in the foundations plan; deferred by the owner 2026-10-11, to be raised as its own proposal.
 - No dev-only test sandbox: build the dev level, one scene per system behind `?dev=`, absent from production builds (F-08, D-006).
 - Vite is on 6.4.4; latest is 8.3.4, two majors ahead (`package.json` asks for `^6.3.5`).
 - Google Fonts is the only external network call and fails offline (`index.html:7`, also listed in `sw.js:13`); self-host or drop it, since the game must work fully offline (GD Audience). The replacement fonts are a design choice (GD Look).

@@ -1,6 +1,6 @@
 # Engineering foundations plan
 
-**Status:** proposed 2026-10-11 by the tech lead. Nothing here is approved yet. Approval authorises local work and local commits only.
+**Status:** approved by the owner 2026-10-11. The owner accepted the tech lead's recommendation on decisions 1 to 7 in section 6; decision 8 (automatic checks on GitHub) is deferred. Approval authorises local work and local commits only.
 **Grounded in:** the code on branch `docs/foundations-plan` (commit `1aecd4d`), `docs/game-design.md` Draft v0.5 (GD), `docs/wellbeing.md` v0.4 (WB), `docs/backlog.md`.
 **Decisions referenced:** `docs/decisions.md` D-001 to D-009.
 
@@ -119,6 +119,8 @@ Not blocking: each has a placeholder constant. Answers are needed before the fir
 
 ## 6. Decisions needed from the owner
 
+**Outcome, 2026-10-11:** the owner accepted the recommendation on decisions 1 to 7. Decision 8 is deferred and will be raised again as its own proposal. Decision 7 stays open by design: build pixel-stepped, then choose at F-19 on a real phone.
+
 Tools first. The game keeps zero runtime dependencies under every option: all packages below are dev-only, used on the development machine and never shipped to players.
 
 | # | Decision | Options | Recommendation | Cost of deciding later |
@@ -137,6 +139,5 @@ Not asked here, noted for later: upgrading Vite from 6.4.4 to 8.x. It is an exis
 ## 7. What this plan is blocked on
 
 - **Nothing outside the project blocks it.** The art reference, music, store rating, and the two Android tech checks do not hold up any task; each has a placeholder or sits outside foundations.
-- **It needs your approval of the plan and decisions 1 to 4** before the first task starts.
-- **If decisions are delayed:** F-06 (tests, no package), F-07 to F-17 can proceed without decision 4; only F-05 waits on it. F-03 and F-04 can proceed without decision 1, with `rain.css` moved rather than deleted. F-01 and F-02 wait on decision 1. The service worker part of F-03 waits on decision 2.
+- **Decisions 1 to 7 are settled** (see section 6), so no task waits on the owner. F-05 adds `@biomejs/biome` as approved under D-008.
 - **Still open, not blocking:** how Reduce motion reads the Android setting inside the app, how to open straight into Calm, vibration on Android, the cost of the pixel-art glow. All four need Capacitor or final art first.
