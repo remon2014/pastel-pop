@@ -83,7 +83,7 @@ export class Game {
 
     const selected = remainingColors[Math.floor(Math.random() * remainingColors.length)];
     this.currentTargetColor = selected.id;
-    this.ui.setTargetSwatch(selected.hex);
+    this.ui.setTargetSwatch(selected);
   }
 
   handleClick(e) {

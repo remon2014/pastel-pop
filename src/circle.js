@@ -1,5 +1,6 @@
 // circle.js
-import { CIRCLE_OPACITY, CIRCLE_RADIUS } from './config.js';
+import { CIRCLE_RADIUS } from './config.js';
+import { drawSymbol } from './symbols.js';
 
 export class Circle {
   constructor(x, y, color, dx, dy) {
@@ -27,16 +28,7 @@ export class Circle {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fillStyle = this.color.hex;
-    ctx.globalAlpha = CIRCLE_OPACITY;
     ctx.fill();
-
-    // Optional soft outline
-    ctx.globalAlpha = 0.1;
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.closePath();
-    ctx.globalAlpha = 1;
+    drawSymbol(ctx, this.color.id, this.x, this.y, this.radius);
   }
 }

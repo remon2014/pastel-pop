@@ -3,7 +3,7 @@
   <head>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#a3c4dc" />
+    <meta name="theme-color" content="#332C2E" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500&display=swap" rel="stylesheet">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,6 +16,8 @@
         width: 100vw;
         height: 100vh;
         font-family: 'Inter', sans-serif;
+        background: #332C2E;
+        color: #D9CEC2;
       }
 
       canvas#gameCanvas {
@@ -42,16 +44,22 @@
       }
 
       #infoPanel {
-        padding: 20px;
-        pointer-events: none;
+        display: flex;
+        justify-content: center;
+        padding-top: max(20px, env(safe-area-inset-top));
       }
 
-      #targetSwatch {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        border: 2px solid rgba(0, 0, 0, 0.15);
-        background-color: transparent;
+      #targetCanvas {
+        display: block;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
       }
 
       /* 🎮 Main Menu Styles */
@@ -62,7 +70,7 @@
         z-index: 20;
         width: 100vw;
         height: 100vh;
-        background: rgba(255, 255, 255, 0.96);
+        background: #332C2E;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -76,47 +84,26 @@
         font-size: 48px;
         font-weight: 700;
         margin: 0;
-        background: linear-gradient(90deg, #ffb6c1, #b5d8ff, #b2f2bb);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-fill-color: transparent;
+        color: #D9CEC2;
       }
 
-      /* ✅ Material-style pastel button */
+      /* Flat buttons: Cream text on Glow 1 (7.0:1), Glow 2 on hover (5.1:1) */
       .button-17 {
         appearance: none;
-        background-color: #f0f7ff;
+        background-color: #453B3C;
         border: none;
         border-radius: 24px;
-        box-shadow: rgba(0, 0, 0, .2) 0 3px 5px -1px,
-                    rgba(0, 0, 0, .14) 0 6px 10px 0,
-                    rgba(0, 0, 0, .12) 0 1px 18px 0;
-        color: #3c4043;
+        color: #D9CEC2;
         cursor: pointer;
         font-family: "Inter", sans-serif;
         font-size: 16px;
         font-weight: 500;
-        height: 48px;
+        min-height: 48px;
         padding: 0 24px;
-        transition: box-shadow 280ms cubic-bezier(.4, 0, .2, 1),
-                    transform 270ms cubic-bezier(0, 0, .2, 1) 0ms;
-        will-change: transform, opacity;
-      }
-
-      .button-17.black {
-        background-color: #333;
-        color: #fff;
-      }
-
-      .button-17.black:hover {
-        background-color: #000;
-        color: #fff;
       }
 
       .button-17:hover {
-        background: #e0efff;
-        color: #174ea6;
+        background-color: #5C4F4C;
       }
 
       .overlay {
@@ -125,7 +112,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.96);
+        background: #332C2E;
         display: none;
         align-items: center;
         justify-content: center;
@@ -139,6 +126,11 @@
         gap: 12px;
       }
 
+      .pause-menu h2 {
+        margin: 0;
+        color: #D9CEC2;
+      }
+
     </style>
   </head>
 
@@ -147,7 +139,10 @@
     <button id="pauseBtn" class="button-17" style="position:absolute; top:20px; right:20px; z-index:15;">Pause</button>
     <div id="gameUI">
       <div id="infoPanel">
-        <div id="targetSwatch" role="img" aria-label="Target colour"></div>
+        <div>
+          <canvas id="targetCanvas" aria-hidden="true"></canvas>
+          <span id="targetLabel" class="visually-hidden" aria-live="polite"></span>
+        </div>
       </div>
 
     </div>
@@ -162,7 +157,7 @@
   <div id="pauseOverlay" class="overlay">
     <div class="pause-menu">
       <h2>Game Paused</h2>
-      <button id="continueBtn" class="button-17 black">Continue Playing</button>
+      <button id="continueBtn" class="button-17">Continue Playing</button>
       <button id="backToMainBtn" class="button-17">Return to Main Menu</button>
     </div>
   </div>
