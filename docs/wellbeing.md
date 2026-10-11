@@ -1,12 +1,14 @@
 # Wellbeing and sensory safety: Pastel Pop
 
-**Status:** v0.4, 2026-10-11. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
+**Status:** v0.5, 2026-10-11. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
 
 **Changed in v0.2:** the sensory rules are split into two tiers by owner decision. Tier 1 (safety) covers the whole game. Tier 2 (comfort) covers Calm mode only. Story mode gains bounded allowances (section 6).
 
 **Changed in v0.3:** the sources in section 3 were checked against their live pages where they could be reached. WCAG, the Xbox guideline, Google Play, HSE, Rethink and the Mental Health Foundation were read. The Shao study, the Fish dissertation, NICE and Mind could not be reached and stay unverified. No rule or value was changed; suggested changes are listed for the owner in section 10.
 
 **Changed in v0.4:** the four proposals from that source check were agreed by the owner and applied: stress wording banned, WCAG flash definitions added, a condition on the low-time bar pulse, and the shared rhythm's basis text reworded.
+
+**Changed in v0.5:** the owner agreed all recommendations from the review of the Calm proposal in `docs/game-design.md` v0.6 (decisions 12 to 20 in section 9). Colour names and the Dusk background are recorded; Calm gets four flash-limit caps in Tier 1 (ring pops, circle arrivals, the Reduce motion dim, entering and leaving Calm); the Tier 2 fade rule is scoped; section 5 gains rows for palette, correct tap, motion, idle and screen sleep; the retired-effects table now says what has been deleted and what is still in the code. Nothing in this version has been built or measured: the new caps are reasoned from the specification and must be proved on a device (section 10).
 
 **Who wrote this:** an AI advisor agent (`wellbeing-advisor`). Its review is not a clinical endorsement and must never be presented as one, in the game, the store listing or anywhere else.
 
@@ -33,7 +35,11 @@ Rules:
 - The open-into-Calm shortcut or widget is labelled "Calm". Never "panic", "SOS" or similar.
 - Calm mode has no evaluative text at all: no praise, no counts, no messages. Praise for effort belongs to Story mode only.
 - "Nearly! Try again" is fine, in Story mode only.
-- The prototype's colour names and "psychology" strings in `src/colorManager.js` ("mindful blue", "renewal green", "Creates mental space and peaceful clarity") are unsupported claims. None may reach player-facing or store text.
+- **Colour names:** the five colours are Star, Cloud, Kite, Leaf and Moon (owner decision 12). Each colour has one name, the plain noun for the thing its symbol shows. There is no second set of shade names (decision 17).
+- A colour name never describes a mood or an effect on the player, in the game, the code, the accessibility labels or the store text. No "calm", "serene", "mindful", "healing" or similar.
+- Names are not shown as text during play. They may appear in accessibility labels with a plain colour word, for example "Target: Star, yellow".
+- The exit control's accessibility label is neutral: "Leave Calm". Never "Quit", "Give up", "End session" or anything that makes stopping sound like failing. This is design judgement, in line with the principle that stopping must feel complete.
+- The prototype's colour names and "psychology" strings ("mindful blue", "renewal green", "Creates mental space and peaceful clarity") are unsupported claims. None may reach player-facing or store text. They were removed from the code on 2026-10-11 (foundations task F-02); a search of `src/` and `index.html` finds none.
 - All store copy is reviewed against this section before release.
 
 ## 3. Evidence
@@ -130,7 +136,18 @@ Applies to Calm mode, Story mode, menus, the reveal and the gallery.
 - **Sound:** no sudden loud sounds. Separate music and effects sliders. Overlapping sounds are capped so fast tapping cannot stack volume. Music fades in on entering a mode and out on leaving, so no mode starts at full volume. The mute choice is remembered.
 - **Time-based effects:** all effects run on time, not frame counts, so limits hold on 60, 90 and 120 Hz screens.
 - **Patterns:** symbols and patterns are never clusters of dots or holes.
+- **Symbols:** Star, Cloud, Kite, Leaf and Moon are drawn as solid silhouettes with no inner dots or holes. Cloud is one solid mass, never separate puffs or dots. Basis: XAG 123 names clusters of bumps or small holes (trypophobia). A single hole is not a cluster, so "no inner holes at all" goes further than the guideline; that part is design judgement, chosen because each symbol is repeated on every circle and several circles are on screen together.
 - **Retired prototype effects** stay retired as they were built (table below). Story mode may have new, bounded effects (section 6).
+
+**How Calm stays inside the flash limit** (owner decisions 14, 15 and 16)
+
+A circle in Calm is light on a dark background: Star has a relative luminance of about 0.69 and Dusk about 0.03 (figures from `docs/game-design.md`, computed by hand from the hex values). A circle appearing and then disappearing is therefore a full general flash under the WCAG definition, and several circles can do it at once. The four caps below are how Calm passes by flash count. They are the advisor's reasoning from the specification, not a measurement.
+
+- **Ring pops (count cap):** no more than 3 ring pops begin in any one second, across the whole screen. Extra pops in that second use the plain fade with no ring. The pop never brightens the circle and never turns white.
+- **Arrivals:** no more than 2 circles begin arriving in any one second. A circle's fade-in followed by its pop counts as one flash.
+- **Reduce motion dim (luminance cap):** the dim changes relative luminance by no more than about 0.07 on the lightest colour, which keeps it under the 0.10 that counts as a general flash. The cap is on luminance, not on a fixed percentage, so it is recomputed whenever a hex value changes. With the starting values this is about 6% of the way towards Dusk on Star (designer's figure; the advisor's rough hand calculation gives about 0.07 as well).
+- **Entering and leaving Calm:** never a large full-screen brightness step. The launch screen background stays close to Dusk in luminance, and the move between the two is a fade. One step is not a flash by itself under WCAG; the rule is here because it is the largest brightness change a player can cause, and a player can go in and out repeatedly.
+- These caps are counted together with everything else on screen, and are enforced in one place in the effects layer so that fast tapping with several fingers cannot get round them.
 
 **Reduce motion table**
 
@@ -139,24 +156,32 @@ Applies to Calm mode, Story mode, menus, the reveal and the gallery.
 | Wrong-tap screen shake | Story | Replaced by a brief dim |
 | Popped light travelling to the mural | Story | Removed |
 | Reveal (colour flowing into the mural) | Story | Plain crossfade |
-| Pop burst | Both | Small fade, no expanding rings |
-| Wrong-tap wobble | Calm | Brief dim of that circle |
+| Pop burst | Story | Small fade, no expanding rings |
+| Pop | Calm | Plain fade of the circle over about 450 ms, no ring |
+| Wrong-tap wobble | Calm | Brief dim of that circle: it eases a little towards the background and back over about 600 ms. At most about 0.07 change in relative luminance on the lightest colour. One dim per circle at a time; a circle already dimming ignores further wrong taps. The cue is faint on purpose and the sound carries most of it |
 | Swell and settle | Calm | Reduced or off |
+| Target glow | Calm | Kept: it changes opacity only and its pixels never move, so it is not motion under WCAG 2.3.3 |
 | Low-time bar pulse | Story | Kept, on one condition: the pulse changes brightness, colour or opacity only, and never the bar's size, shape or position. WCAG 2.3.3 treats a pulse as "not motion" only on that condition. It stays inside the flash limit |
 | Circle drift | Both | Kept: it is the game |
 
 **Retired prototype effects**
 
-| Effect | Where | Why |
+State of the code checked on 2026-10-11, after foundations tasks F-01 and F-02 were merged, by searching `src/` and `index.html`. The files `src/particle.js`, `src/rainEffect.js`, `src/gameModes.js`, `src/leaderboard.js` and `rain.css` no longer exist. "Still in the code" means the effect was found on that date.
+
+| Effect | Why it was retired | State on 2026-10-11 |
 |---|---|---|
-| Uncontrolled canvas shake (±4 px, 0.4 s) | `index.html` (`.shake`), `src/game.js` | No off switch, not bounded |
-| Glitch particles | `src/particle.js` `createGlitch` | Erratic jittering dots |
-| Per-tap full-screen tint | `src/game.js` `fadeToBackgroundColor` | Whole-screen colour tied to tap rate |
-| Frame-counted lifetimes | `src/particle.js`, `src/circle.js` | Speed varies with screen refresh rate |
-| Red "Game Over!" on one wrong tap | `index.html`, `src/game.js` | Alarm colour and hard fail |
-| Rain mode bursts | `rain.css`, `src/rainEffect.js` | White on near-black, highest contrast in the code |
-| Large ripple rings | `src/particle.js` `createRipple` | Rings up to 260 px on every tap; not local to the circle |
-| Fast swoop-in of circles | `src/circle.js` `animateIn` | Frame-counted, abrupt entrance |
+| Glitch particles (erratic jittering dots) | Erratic jittering dots | Removed: the particle file is deleted |
+| Large ripple rings (up to 260 px on every tap) | Not local to the circle | Removed: the particle file is deleted |
+| Rain mode bursts | White on near-black, the highest contrast in the prototype | Removed: the Rain files are deleted |
+| Frame-counted particle lifetimes | Speed varies with screen refresh rate | Removed with the particle file |
+| Uncontrolled canvas shake (±4 px, 0.4 s) | No off switch, not bounded | Removed (F-02) |
+| Full-screen background tint on each correct tap | Whole-screen colour tied to tap rate | Removed (F-02) |
+| Red "Game Over!" on one wrong tap | Alarm colour and hard fail | Removed (F-02) |
+| Fast swoop-in of circles | Frame-counted, abrupt entrance | Removed (F-02) |
+| Frame-counted circle movement | Speed varies with screen refresh rate | **Still in the code:** `src/circle.js` moves by a fixed amount per frame |
+| Colour names and "psychology" strings | Unsupported claims (section 2) | Removed (F-02) |
+
+The rule is unchanged: none of these may remain as built at release (section 11).
 
 ### Tier 2: Calm mode only (comfort; design judgement, not safety)
 
@@ -165,8 +190,8 @@ Applies to Calm mode, Story mode, menus, the reveal and the gallery.
 - No blinking, ticking or urgency cues of any kind.
 - Small, quiet tap feedback. Effects sit below the music bed.
 - Soft arrival of circles.
-- No colour change faster than a 1 second fade.
-- Glow uses stepped solid rings, not fine dither.
+- No colour change faster than a 1 second fade for anything the player did not trigger at that spot: background, swatch and target changes, circle arrival, glow, HUD and screen transitions. Feedback on the tapped circle itself may be faster (pop about 450 ms; Reduce motion dim about 600 ms), provided it stays on that circle, never brightens it, and runs once per circle at a time. Reason (design judgement): a change the player caused, where they are looking, is expected and does not startle; a change elsewhere on screen is not expected. Feedback slower than about half a second would also stop feeling like a response to the tap.
+- Glow uses stepped solid rings, not fine dither. The glow is on the target swatch only.
 - No spiders, snakes, needles, deep water or heights in Calm art.
 
 All Calm-specific values in section 5 stay as they are.
@@ -192,17 +217,25 @@ Calm is one endless level with no story, no timer, no score, no streaks, no fail
 | Swell amplitude | About 5 to 8% of radius, smooth easing, no hold | Tier 2, design judgement |
 | Touch target | At or above the minimum at the settled size | Accessibility |
 | Target glow | Pulses on the same 10 s rhythm, so there is only one rhythm | Tier 2, design judgement |
-| Density | 4 to 6 circles, 3 colours | Single-focus task: self-help guidance; casual-game evidence is weak |
-| Circle arrival | Fade or drift in over 1 s or more; a target-colour circle is always on screen | Tier 2, design judgement |
-| Target change | After a number of clears, never on a clock; swatch-only crossfade of about 2 s; no sting, no background tint; old and new targets both accepted during the crossfade | Tier 2, design judgement |
-| Wrong tap | One small slow wobble (about 300 ms or more) on that circle only; sound quieter than the pop | Owner decision; no penalty of any kind |
-| Music | Fades in over 1 to 2 s, including from the open-into-Calm shortcut | Tier 1 (no sudden loud sound); the length is design judgement |
-| Background | Dim warm mid-tone, not white | Tier 2, design judgement |
+| Density | 4 to 6 circles, in 3 of the 5 colours. The 3 are drawn at random for each visit to Calm and kept for the whole visit. Circles never expire or vanish on their own | Owner decision 17. Single-focus task: self-help guidance (Rethink, Mental Health Foundation); casual-game evidence is weak and unverified. That 3 is the right number is design judgement |
+| Palette | Star `#EDD894`, Cloud `#9CC4E4`, Kite `#E6A08C`, Leaf `#5E9478`, Moon `#9A82C2`. Soft and low in saturation, fully opaque fills, no pure white, no pure black, no saturated red (the reddest, Kite, has R/(R+G+B) of about 0.43 against the Tier 1 line of 0.8). The symbol is on every circle and the swatch and cannot be switched off | Owner decision 12; hex values remain starting values. Contrast figures are in `docs/game-design.md`, computed by hand, not measured on a screen. No evidence is claimed that any colour calms: the palette is design judgement |
+| Correct tap | Registers on touch-down. The circle dissolves where it is over about 450 ms, in its own colour only: it never brightens and never turns white. One thin ring reaching no more than a quarter of a radius beyond the circle. One soft note from a small fixed set, chosen at random; the pitch never climbs with consecutive taps | Tier 1 for the ring cap (section 4). No rising pitch because a rising chain is a streak signal: design judgement, following the no-streaks principle |
+| Circle arrival | Fade or drift in over 1 s or more; no more than 2 begin arriving in any one second; a target-colour circle is always on screen | Tier 1 for the arrival cap (owner decision 15); the rest is Tier 2, design judgement |
+| Target change | After a number of clears, never on a clock; the new target is always a colour already on screen; swatch-only crossfade of about 2 s; no sting, no background tint; old and new targets both accepted during the crossfade. Assistive technology is told politely: the new label is announced once, after any speech already in progress, never interrupting and never repeated | Tier 2, design judgement. The polite announcement is owner decision 19 |
+| Wrong tap | One small slow wobble (a single cycle of about 300 ms or more) on that circle only; sound quieter than the pop and not a descending error tone. A circle that is already wobbling ignores further wrong taps and makes no sound, so nothing stacks | Owner decisions; no penalty of any kind. Silence on a repeat tap also keeps the Tier 1 rule that fast tapping cannot stack volume |
+| Missed tap | A tap on empty space does nothing: no sound, no mark | Design judgement |
+| Motion | Slow, smooth drift (starting value 0.05 play-area widths a second) with no sudden change of speed or direction. Circles never bounce: they turn away from edges and from each other over 1 s or more, and do not overlap. No visible ticking: if movement or the swell would show as whole-pixel jumps, place and scale more finely than the pixel grid, or drop the swell and let the glow carry the rhythm | Tier 2, design judgement. Circle drift is ambient, so it is outside WCAG 2.3.3 |
+| Idle | Nothing changes if the player stops tapping. No prompt, hint, nudge or dimming by the game, and nothing that grows more insistent with time. Watching is a complete way to use Calm | Design judgement, following the no-pressure principle |
+| Screen sleep | Follows the phone's own setting. No wake lock in v1.0. Three conditions: music pauses when the screen sleeps; waking returns quietly to Calm exactly as it was left, with music fading back in and no overlay or countdown; the game itself never dims the screen | Owner decision 18. Reasons (design judgement): overriding the phone's sleep timer costs battery and takes a choice away from the player; music carrying on from a dark phone could startle |
+| Music | Fades in over 1 to 2 s, including from the open-into-Calm shortcut and after the screen wakes | Tier 1 (no sudden loud sound); the length is design judgement |
+| Background | Dusk `#332C2E`: a dim, warm, dark tone, neither white nor black. Never tinted by play | Owner decision 12; the hex is a starting value. A mid-tone was dropped because soft colours cannot reach 3:1 contrast against it (the designer's hand calculation in `docs/game-design.md`). "Comfortable at night" is design judgement, to be checked on a real phone in a dark room |
+| Entering and leaving | Never a large full-screen brightness step (section 4) | Owner decision 16 |
+| HUD | The target swatch and one exit control only. No text, no numbers. The exit control is never animated; its accessibility label is "Leave Calm" | Owner decision 19 for the label; the rest is Tier 2, design judgement |
 | Vibration | Off by default | Owner decision |
 | Start and exit | One tap in, instant out, no confirmation; returning from the background fades straight back in with no overlay or countdown | Owner decision |
 | Breathing interlude | Not in v1.0 | Owner decision, 2026-10-11 |
 
-**Launch screen:** quiet. The Story button does not animate quickly, and no Story music plays there.
+**Launch screen:** quiet. The Story button does not animate quickly, and no Story music plays there. Its background stays close to Dusk in luminance, so that going into Calm and coming back is never a large full-screen brightness step (owner decision 16). How close is "close" is not yet a number: it is set by measurement (section 10).
 
 ## 6. Story mode
 
@@ -248,6 +281,15 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 | 9 | Sensory rules split into two tiers. Safety rules (Tier 1) stay game-wide. Comfort rules (Tier 2) apply to Calm mode only, so Story mode can feel frantic as intended. Story mode allowances are in section 6 |
 | 10 | Story wrong-tap shake: one at a time. Repeated wrong taps never stack or extend it |
 | 11 | Source check proposals, all agreed: stress wording banned; WCAG flash definitions added to the flash limit; the low-time bar pulse may change brightness, colour or opacity only; the shared rhythm's basis text reworded |
+| 12 | Colour names Star, Cloud, Kite, Leaf and Moon, and the Dusk background `#332C2E`: agreed. All hex values remain starting values |
+| 13 | Tier 2 fade rule scoped: no colour change faster than a 1 second fade for anything the player did not trigger at that spot. Feedback on the tapped circle itself may be faster (pop about 450 ms; Reduce motion dim about 600 ms), provided it stays on that circle, never brightens it, and runs once per circle at a time |
+| 14 | Ring pops: the count cap is chosen, not the opacity cap. No more than 3 ring pops begin in any one second; extra pops use the plain fade |
+| 15 | Arrivals: no more than 2 circles begin arriving in any one second. A circle's fade-in followed by its pop counts as one flash |
+| 16 | Reduce motion dim is a luminance cap: at most about 0.07 change in relative luminance on the lightest colour, recomputed when a hex changes. Entering and leaving Calm is never a large full-screen brightness step; the launch screen background stays close to Dusk in luminance |
+| 17 | Each Calm visit shows 3 of the 5 colours, drawn at random. One name per colour; no second set of shade names |
+| 18 | Screen sleep follows the phone's setting; no wake lock in v1.0. Conditions: music pauses on sleep; quiet resume to Calm as left; the game itself does not dim |
+| 19 | Artist and interface brief agreed: solid silhouettes with no inner dots or holes; a neutral exit label ("Leave Calm"); polite announcement of target changes; a wrong tap on an already-wobbling circle is silent |
+| 20 | "Agree with all recommendations" from the review of `docs/game-design.md` v0.6. Decisions 12 to 19 are that agreement, as relayed by the coordinator |
 
 ## 10. Open checks before release
 
@@ -255,6 +297,17 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 - [ ] The 10-taps-a-second test on every tap-triggered effect, with several fingers, including Story's bigger pop bursts.
 - [ ] The low-time bar pulse at 2 a second.
 - [ ] The bar pulse, other Story pulses and pop bursts running together (flashes add up).
+- [ ] Calm ring pops at 10 taps a second with several fingers: no more than 3 rings begin in any one second, and the extra pops fall back to the plain fade.
+- [ ] Calm arrivals: no more than 2 circles begin arriving in any one second, including straight after a burst of fast pops and on first entry to Calm.
+- [ ] Calm in total: fade-ins, pops and glow counted together across the screen stay at or under 3 flashes in any one second during the fastest tapping a tester can manage. Analyse a screen recording; do not rely on reading the code.
+- [ ] Reduce motion dim: the relative luminance change on the lightest colour is at most about 0.07, measured from the colours actually drawn. Repeat whenever a hex value changes.
+- [ ] Reduce motion dim: is so faint a cue still noticed, with sound on and with sound off? If not, bring it back for review; do not simply enlarge it.
+- [ ] Entering and leaving Calm, and waking from screen sleep: no large full-screen brightness step. Measure the launch screen background against Dusk, and set a number for "close" from that.
+- [ ] Glow steps stay under 0.10 change in relative luminance (the design gives at most 0.06, by hand).
+- [ ] Palette and Dusk on a real phone in a dark room at low brightness and outdoors in daylight: circles and symbols stay clear, nothing glares. Phone screens differ, so use more than one phone if possible.
+- [ ] Palette through a colour-vision simulator and in greyscale, and with colour-blind players if possible. The design's reasoning on this is not yet tested.
+- [ ] Drift and swell show no visible ticking or whole-pixel jumps at the chosen internal resolution.
+- [ ] Screen sleep: music stops when the screen sleeps and fades back in on waking, with no sudden sound.
 
 **Re-verify against live sources**
 - [x] WCAG 2.3.1 area and luminance thresholds. Read 2026-10-11 (section 3). The wording allows a small-area pass, but its size estimate is for a desktop screen and it warns about close viewing. So the instruction stands: nobody relies on "small area" as the reason a pulse or burst is safe.
@@ -277,7 +330,9 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 - [ ] Children: decide the Google Play target audience and check Families policy, together with the 12+ storyline rating (deferred by the owner).
 - [ ] Tech lead: how Reduce motion follows the Android system setting.
 - [x] The low-time bar pulse is kept under Reduce motion, changing brightness, colour or opacity only. Recorded in `docs/game-design.md` (Story mode, Low time).
-- [ ] Review final store copy and the shortcut label against section 2.
+- [ ] Remove the one prototype effect still marked "still in the code" in section 4: frame-counted circle movement (foundations tasks F-07 and F-09). The shake, per-tap tint, red "Game Over!", swoop-in, colour names and "psychology" strings were removed in F-02.
+- [ ] Game artist: symbol drawings checked against the solid-silhouette rule (section 4) before they go in.
+- [ ] Review final store copy, the shortcut label, colour names and accessibility labels against section 2.
 - [ ] Review Stage 2 and Stage 3 art and lines against section 7 once written.
 
 ## 11. Release checklist
@@ -289,19 +344,28 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 - [ ] Reduce motion works per the table and follows the system setting
 - [ ] No sudden loud sounds; music and effects sliders; no volume stacking; music fades in and out
 - [ ] All effects time-based; checked at 60 and 120 Hz
-- [ ] No symbol or pattern is a cluster of dots or holes
-- [ ] No retired prototype effect remains as built
+- [ ] No symbol or pattern is a cluster of dots or holes; the five symbols are solid silhouettes with no inner dots or holes
+- [ ] Calm: no more than 3 ring pops begin in any one second (extras use the plain fade); no more than 2 circles begin arriving in any one second
+- [ ] Calm: the Reduce motion dim changes relative luminance by at most about 0.07 on the lightest colour, recomputed for the final hex values
+- [ ] Entering and leaving Calm is never a large full-screen brightness step; the launch screen background is close to Dusk in luminance
+- [ ] No retired prototype effect remains as built, and none of the prototype's colour names or "psychology" strings remain in the code
 - [ ] No medical or therapeutic claims, and no psychologist endorsement, in game or store listing
 - [ ] No mood or health data, no Calm analytics, no notifications
 
 **Calm mode (Tier 2 and section 5)**
 - [ ] No timer, score, counter, fail state, streak or evaluative text
 - [ ] No screen shake; no blinking, ticking or urgency cues
-- [ ] Pulses no faster than one every 2 s; no colour change faster than a 1 s fade
-- [ ] Small, quiet tap feedback; effects below the music bed; circles arrive softly
-- [ ] One tap in, instant out, quiet resume
+- [ ] Pulses no faster than one every 2 s
+- [ ] No colour change faster than a 1 s fade for anything the player did not trigger at that spot: background, swatch and target changes, circle arrival, glow, HUD and screen transitions
+- [ ] Feedback on the tapped circle (pop about 450 ms; Reduce motion dim about 600 ms) stays on that circle, never brightens it, and runs once per circle at a time
+- [ ] Small, quiet tap feedback; effects below the music bed; circles arrive softly; pop pitch never climbs with consecutive taps
+- [ ] A wrong tap on an already-wobbling (or already-dimming) circle does nothing and is silent; a tap on empty space does nothing
+- [ ] One tap in, instant out, quiet resume; the exit label is "Leave Calm"
+- [ ] Idle changes nothing; screen sleep follows the phone's setting with no wake lock; music pauses on sleep; the game itself never dims
+- [ ] Each visit shows 3 of the 5 colours; names are Star, Cloud, Kite, Leaf and Moon and describe no mood or effect; symbols cannot be switched off
+- [ ] Target changes are announced politely to assistive technology, once, never interrupting
 - [ ] No story content or story imagery; no common phobia triggers in art
-- [ ] Rhythm, density, target change and wrong tap match section 5
+- [ ] Rhythm, density, palette, background, motion, target change and wrong tap match section 5
 - [ ] The game never instructs breathing
 
 **Story mode (section 6)**
@@ -322,3 +386,4 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 | 2026-10-11 | `docs/game-design.md` Draft v0.3; prototype files `index.html`, `rain.css`, `src/particle.js`, `game.js`, `circle.js`, `rainEffect.js`, `colorManager.js` | AI advisor agent (not a clinical endorsement) | No safety breach in the design as written. Three sets of missing guarantees raised and accepted: measurable flash rule, Reduce motion, retired prototype effects. Owner decisions 1 to 8 recorded. No source re-checked live. Not read: `src/uiManager.js`, `gameModes.js`, `main.js`, `leaderboard.js`, `config.js`, `utils.js`, `docs/backlog.md` |
 | 2026-10-11 | Owner's two-tier split and the Story mode allowances, as relayed by the coordinator (v0.2 of this file) | AI advisor agent (not a clinical endorsement) | No allowance breaches the flash limit as specified; no blocker. Three build conditions recorded in section 4. Decision 7 revised and decision 9 added. Assessed from the specification only: nothing built, nothing measured, no source re-checked live, and `docs/game-design.md` not re-read because it was being edited in parallel |
 | 2026-10-11 | The section 3 sources, against their live pages (v0.3 of this file) | AI advisor agent (not a clinical endorsement) | Read: WCAG 2.2 SC 2.3.1 and 2.3.3 with glossary, XAG 123, Google Play health and Families policies, HSE, Rethink, Mental Health Foundation. Not reached, still unverified: Shao et al. (redirect to a sign-in host), Fish (not found on the ECU site), NICE CG113 (HTTP 403), Mind (HTTP 403). No blocker found. No rule or value changed; four proposed changes listed in section 10. Pages were read as tool summaries with short quotes, not as full raw text, except XAG 123. Only this file was read; nothing built or measured |
+| 2026-10-11 | The Calm proposal in `docs/game-design.md` Draft v0.6 (colours, names, symbols, tap feedback, motion, idle, screen sleep), and the owner's agreement to all recommendations (v0.5 of this file) | AI advisor agent (not a clinical endorsement) | No blocker in the design as written. Four flash-limit caps for Calm added to Tier 1 (ring pops, arrivals, Reduce motion dim, entering and leaving Calm); Tier 2 fade rule scoped; decisions 12 to 20 recorded. All caps are reasoned from the specification and hand-computed luminance figures: nothing built, nothing measured, no source re-checked live for this version. Contrast and colour-vision figures are the designer's and were not independently recomputed, except a rough hand check of the dim on Star. Code searched (`src/`, `index.html`) only to correct the retired-effects table: five prototype files are deleted, but the shake, per-tap tint, "Game Over!", swoop-in and "psychology" strings were still present on branch `docs/calm-palette`. `docs/game-design.md` v0.7 not read: it was being edited in parallel |
