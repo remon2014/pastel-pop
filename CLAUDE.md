@@ -24,8 +24,10 @@ npm run dev       # http://localhost:5174
 npm run dev:phone # LAN-accessible; use only when testing on a phone
 npm run build     # outputs to dist/
 npm run preview   # serve the production build
+npm run lint      # Biome lint of src/ and index.html (check only, changes no file)
+npm run format    # Biome formatter, rewrites src/ in place
 ```
-No test or lint scripts exist yet; they are being added.
+Lint and format exist (Biome). The test script does not exist yet; it is being added.
 
 ## Structure
 Current layout; update this table when files are added, moved or removed.
@@ -41,6 +43,7 @@ Current layout; update this table when files are added, moved or removed.
 | `src/colorManager.js` | Colour palette (neutral ids and hex) |
 | `src/uiManager.js` | DOM HUD updates |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
+| `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
 | `docs/backlog.md` | Known issues and priorities |

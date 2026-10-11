@@ -61,20 +61,14 @@ export class Game {
       const x = Math.random() * (this.canvas.width - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
       const y = Math.random() * (this.canvas.height - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
 
-      this.circles.push(new Circle(
-        x,
-        y,
-        color,
-        (Math.random() - 0.5) * speed,
-        (Math.random() - 0.5) * speed
-      ));
+      this.circles.push(new Circle(x, y, color, (Math.random() - 0.5) * speed, (Math.random() - 0.5) * speed));
     }
 
     this.selectNewTargetColor();
   }
 
   selectNewTargetColor() {
-    const remainingColors = [...new Set(this.circles.map(c => c.color))];
+    const remainingColors = [...new Set(this.circles.map((c) => c.color))];
     if (remainingColors.length === 0) {
       this.level++;
       this.initLevel();
@@ -135,7 +129,7 @@ export class Game {
     this.ctx.fillStyle = BACKGROUND_COLOR;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.circles.forEach(circle => {
+    this.circles.forEach((circle) => {
       circle.update(this.canvas);
       circle.draw(this.ctx);
     });
