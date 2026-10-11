@@ -1,35 +1,23 @@
 import { Circle } from './circle.js';
 import { UIManager } from './uiManager.js';
-import { ColorManager } from './colorManager.js';
+import { PALETTE } from './colorManager.js';
 import { getDistance } from './utils.js';
-import { CIRCLE_RADIUS, BASE_SPEED, SPEED_PER_LEVEL } from './config.js';
+import { CIRCLE_RADIUS, BACKGROUND_COLOR, BASE_SPEED, SPEED_PER_LEVEL } from './config.js';
 
 export class Game {
   constructor(canvas, ctx) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.ui = new UIManager();
-    this.colors = new ColorManager();
-
-    this.currentBackgroundColor = '#ffffff';
-    this.targetBackgroundColor = '#ffffff';
-    this.backgroundTransitionStart = null;
-    this.prevBackgroundColor = '#ffffff';
-    this.transitionDuration = 1000;
 
     this.level = 1;
-    this.score = 0;
-    this.highScore = localStorage.getItem('pastelPopHighScore') || 0;
     this.currentTargetColor = null;
-    this.gameOver = false;
     this.isPaused = false;
-    this.startTime = Date.now();
+    this.frameId = null;
     this.circles = [];
 
-    // Event listeners
     this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
     this.ui.continueBtn.addEventListener('click', () => this.resumeGame());
-    this.ui.backToMainBtn.addEventListener('click', () => window.location.reload());
 
     this.canvas.addEventListener('click', this.handleClick.bind(this));
     this.canvas.addEventListener('touchstart', this.handleTouch.bind(this));
@@ -38,81 +26,64 @@ export class Game {
   start() {
     this.ui.resetUI();
     this.level = 1;
-    this.score = 0;
-    this.gameOver = false;
     this.isPaused = false;
-    this.startTime = Date.now();
 
     this.initLevel();
-    this.update();
+    this.startLoop();
   }
 
-  resetGame() {
-    this.ui.resetUI();
-    this.level = 1;
-    this.score = 0;
-    this.gameOver = false;
+  stop() {
+    this.stopLoop();
     this.isPaused = false;
-    this.startTime = Date.now();
+    this.circles = [];
+    this.ui.hidePauseMenu();
+  }
 
-    this.initLevel();
-    this.update();
+  startLoop() {
+    this.stopLoop();
+    this.frameId = requestAnimationFrame(this.update.bind(this));
+  }
+
+  stopLoop() {
+    if (this.frameId !== null) {
+      cancelAnimationFrame(this.frameId);
+      this.frameId = null;
+    }
   }
 
   initLevel() {
     this.circles = [];
-    const usedColors = this.colors.getUsedColors(this.level);
-    if (!usedColors || usedColors.length === 0) {
-      console.error('❌ No usable colors in current palette. Aborting level init.');
-      return;
-    }
-
     const numCircles = 5 + this.level * 2;
     const speed = BASE_SPEED + this.level * SPEED_PER_LEVEL;
 
     for (let i = 0; i < numCircles; i++) {
-      const color = usedColors[Math.floor(Math.random() * usedColors.length)];
-      const targetX = Math.random() * (this.canvas.width - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
-      const targetY = Math.random() * (this.canvas.height - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
+      const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+      const x = Math.random() * (this.canvas.width - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
+      const y = Math.random() * (this.canvas.height - CIRCLE_RADIUS * 2) + CIRCLE_RADIUS;
 
       this.circles.push(new Circle(
-        targetX,
-        targetY,
+        x,
+        y,
         color,
         (Math.random() - 0.5) * speed,
-        (Math.random() - 0.5) * speed,
-        this.canvas.width,
-        this.canvas.height
+        (Math.random() - 0.5) * speed
       ));
     }
 
     this.selectNewTargetColor();
-    this.startTime = Date.now();
   }
 
   selectNewTargetColor() {
-    const remainingColors = [...new Set(this.circles.map(c => c?.color?.name).filter(Boolean))];
+    const remainingColors = [...new Set(this.circles.map(c => c.color))];
     if (remainingColors.length === 0) {
-      const timeBonus = Math.max(0, 1000 - (Date.now() - this.startTime)) / 100;
-      this.score += Math.floor(10 * this.level + timeBonus);
       this.level++;
       this.initLevel();
       return;
     }
 
-    const selectedName = remainingColors[Math.floor(Math.random() * remainingColors.length)];
-    this.currentTargetColor = selectedName;
-
-    const usedColors = this.colors.getUsedColors(this.level);
-    const selectedColor = usedColors.find(c => c.name === selectedName);
-    if (selectedColor) {
-      this.ui.targetColorName.textContent = selectedColor.name;
-      this.ui.targetColorName.style.color = selectedColor.hex;
-      const pale = this.getPaleHex(selectedColor.hex);
-      this.fadeToBackgroundColor(pale);
-    }
-
-    this.ui.update(this.level, this.score, this.highScore, this.currentTargetColor);
+    const selected = remainingColors[Math.floor(Math.random() * remainingColors.length)];
+    this.currentTargetColor = selected.id;
+    this.ui.setTargetSwatch(selected.hex);
   }
 
   handleClick(e) {
@@ -128,143 +99,47 @@ export class Game {
   }
 
   handleInput(x, y) {
-    if (this.gameOver || this.isPaused) return;
+    if (this.isPaused) return;
 
     for (let i = this.circles.length - 1; i >= 0; i--) {
       const circle = this.circles[i];
       if (getDistance(x, y, circle.x, circle.y) <= circle.radius) {
-        if (circle.color.name === this.currentTargetColor) {
+        if (circle.color.id === this.currentTargetColor) {
           this.circles.splice(i, 1);
-          this.score += 5;
           this.selectNewTargetColor();
-        } else {
-          this.gameOver = true;
-          this.canvas.classList.add('shake');
-          setTimeout(() => {
-            this.canvas.classList.remove('shake');
-          }, 400);
-          if (this.score > this.highScore) {
-            this.highScore = this.score;
-            localStorage.setItem('pastelPopHighScore', this.highScore);
-          }
-          this.ui.showGameOver();
         }
-        this.ui.update(this.level, this.score, this.highScore, this.currentTargetColor);
         return;
       }
     }
   }
 
   togglePause() {
-    this.isPaused = !this.isPaused;
-    this.ui.setPauseLabel(this.isPaused);
     if (this.isPaused) {
-      this.ui.showPauseMenu();
-    } else {
-      this.ui.hidePauseMenu();
-      this.update();
+      this.resumeGame();
+      return;
     }
+    this.isPaused = true;
+    this.stopLoop();
+    this.ui.setPauseLabel(true);
+    this.ui.showPauseMenu();
   }
 
   resumeGame() {
     this.isPaused = false;
     this.ui.hidePauseMenu();
     this.ui.setPauseLabel(false);
-    this.update();
+    this.startLoop();
   }
 
   update() {
-    if (this.gameOver || this.isPaused) return;
-
-    const now = performance.now();
-    const transitionDuration = 1000;
-
-    this.updateBackgroundTransition();
-    let bgColor = this.currentBackgroundColor;
-
-    if (this.backgroundTransitionStart) {
-      const progress = Math.min((now - this.backgroundTransitionStart) / transitionDuration, 1);
-      const eased = 0.5 - 0.5 * Math.cos(Math.PI * progress);
-      const from = this.hexToRgb(this.currentBackgroundColor);
-      const to = this.hexToRgb(this.targetBackgroundColor);
-      const r = Math.round(from.r + (to.r - from.r) * eased);
-      const g = Math.round(from.g + (to.g - from.g) * eased);
-      const b = Math.round(from.b + (to.b - from.b) * eased);
-      bgColor = `rgb(${r}, ${g}, ${b})`;
-      if (progress >= 1) {
-        this.currentBackgroundColor = this.targetBackgroundColor;
-        this.backgroundTransitionStart = null;
-      }
-    }
-
-    this.ctx.fillStyle = bgColor;
+    this.ctx.fillStyle = BACKGROUND_COLOR;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.circles.forEach(circle => {
-      circle.update(this.canvas, performance.now());
+      circle.update(this.canvas);
       circle.draw(this.ctx);
     });
 
-    requestAnimationFrame(this.update.bind(this));
-  }
-
-  fadeToBackgroundColor(newHex) {
-    if (newHex.toLowerCase() === this.currentBackgroundColor.toLowerCase()) return;
-    this.prevBackgroundColor = this.currentBackgroundColor;
-    this.targetBackgroundColor = newHex;
-    this.backgroundTransitionStart = performance.now();
-  }
-
-  updateBackgroundTransition() {
-    if (this.backgroundTransitionStart === null) return;
-    const now = performance.now();
-    const elapsed = now - this.backgroundTransitionStart;
-    const t = Math.min(elapsed / this.transitionDuration, 1);
-    this.currentBackgroundColor = this.lerpColor(this.prevBackgroundColor, this.targetBackgroundColor, t);
-    if (t >= 1) {
-      this.backgroundTransitionStart = null;
-    }
-  }
-
-  lerpColor(a, b, t) {
-    const ar = parseInt(a.slice(1, 3), 16);
-    const ag = parseInt(a.slice(3, 5), 16);
-    const ab = parseInt(a.slice(5, 7), 16);
-    const br = parseInt(b.slice(1, 3), 16);
-    const bg = parseInt(b.slice(3, 5), 16);
-    const bb = parseInt(b.slice(5, 7), 16);
-    return `#${[
-      Math.round(ar + (br - ar) * t).toString(16).padStart(2, '0'),
-      Math.round(ag + (bg - ag) * t).toString(16).padStart(2, '0'),
-      Math.round(ab + (bb - ab) * t).toString(16).padStart(2, '0')
-    ].join('')}`;
-  }
-
-  hexToRgb(hex) {
-    const bigint = parseInt(hex.replace('#', ''), 16);
-    return {
-      r: (bigint >> 16) & 255,
-      g: (bigint >> 8) & 255,
-      b: bigint & 255
-    };
-  }
-
-  getPaleHex(hex) {
-    const { r, g, b } = this.hexToRgb(hex);
-    const paleR = Math.round(r + (255 - r) * 0.7);
-    const paleG = Math.round(g + (255 - g) * 0.7);
-    const paleB = Math.round(b + (255 - b) * 0.7);
-    return this.rgbToHex(paleR, paleG, paleB);
-  }
-
-  rgbToHex(r, g, b) {
-    return (
-      "#" + [r, g, b]
-        .map(x => {
-          const hex = x.toString(16);
-          return hex.length === 1 ? "0" + hex : hex;
-        })
-        .join("")
-    );
+    this.frameId = requestAnimationFrame(this.update.bind(this));
   }
 }

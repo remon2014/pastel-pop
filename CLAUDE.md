@@ -34,9 +34,9 @@ Current layout; update this table when files are added, moved or removed.
 |---|---|
 | `index.html` | Markup, inline CSS, main menu, pause overlay, HUD |
 | `src/main.js` | Bootstrap, canvas resize, menu wiring |
-| `src/game.js` | Game loop, levels, input, scoring, pause, background fades |
-| `src/circle.js` | Circle entity (fly-in, bounce, draw) |
-| `src/colorManager.js` | Palettes |
+| `src/game.js` | Game loop, levels, input, pause, fixed background |
+| `src/circle.js` | Circle entity (bounce, draw) |
+| `src/colorManager.js` | Colour palette (neutral ids and hex) |
 | `src/uiManager.js` | DOM HUD updates |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |

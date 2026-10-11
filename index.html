@@ -46,51 +46,12 @@
         pointer-events: none;
       }
 
-      #targetColor,
-      #level,
-      #score,
-      #highScore {
-        font-size: 14px;
-        font-weight: 300;
-        color: #333;
-        margin-bottom: 6px;
-      }
-
-      #targetColorName {
-        font-weight: 600;
-        font-size: 18px;
-        margin-left: 6px;
-      }
-
-      #gameOverPanel {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        pointer-events: auto;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-      }
-
-      #gameOver {
-        font-size: 28px;
-        color: #d32f2f;
-        font-weight: 600;
-        margin-bottom: 16px;
-        display: none;
-      }
-
-      #restartBtn {
-        background: #333;
-        color: white;
-        font-size: 14px;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 100px;
-        cursor: pointer;
-        display: none;
+      #targetSwatch {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 2px solid rgba(0, 0, 0, 0.15);
+        background-color: transparent;
       }
 
       /* 🎮 Main Menu Styles */
@@ -153,64 +114,9 @@
         color: #fff;
       }
 
-      /* Even spacing between Game Over buttons */
-      #gameOverPanel .button-17 {
-        margin-top: 10px;
-      }
       .button-17:hover {
         background: #e0efff;
         color: #174ea6;
-      }
-
-      #menuHighScore {
-        font-size: 16px;
-        font-weight: 400;
-        color: #777;
-        margin: 0;
-      }
-
-      #backToMenuBtn {
-        display: none;
-      }
-      @media (max-width: 768px) {
-        #infoPanel {
-          padding: 12px;
-        }
-
-        #targetColorName {
-          font-size: 22px;
-        }
-
-        #gameOver {
-          font-size: 22px;
-        }
-
-        #restartBtn {
-          font-size: 16px;
-          padding: 12px 24px;
-        }
-
-        #menuBtn {
-          display: none; /* initially hidden until game starts */
-        }
-
-        .button-17 {
-          font-size: 16px;
-          padding: 12px 24px;
-        }
-      }
-
-      @keyframes shake {
-        0%   { transform: translate(0px, 0px); }
-        20%  { transform: translate(-4px, 4px); }
-        40%  { transform: translate(4px, -4px); }
-        60%  { transform: translate(-4px, 2px); }
-        80%  { transform: translate(2px, -4px); }
-        100% { transform: translate(0px, 0px); }
-      }
-
-      .shake {
-        animation: shake 0.4s ease-in-out;
       }
 
       .overlay {
@@ -241,26 +147,15 @@
     <button id="pauseBtn" class="button-17" style="position:absolute; top:20px; right:20px; z-index:15;">Pause</button>
     <div id="gameUI">
       <div id="infoPanel">
-        <div id="targetColor">
-          target: <span id="targetColorName">lavender</span>
-        </div>
-        <div id="level">level: 1</div>
-        <div id="score">score: 0</div>
-        <div id="highScore">high score: 0</div>
+        <div id="targetSwatch" role="img" aria-label="Target colour"></div>
       </div>
 
-      <div id="gameOverPanel">
-        <div id="gameOver">Game Over!</div>
-        <button id="restartBtn" class="button-17 black">Restart Game</button>
-        <button id="backToMenuBtn" class="button-17">Main Menu</button>
-      </div>
     </div>
 
     <!-- 🎮 Main Menu -->
     <div id="mainMenu">
       <h1>Pastel Pop</h1>
       <button id="startGameBtn" class="button-17" role="button">Start Game</button>
-      <div id="menuHighScore">High Score: 0</div>
     </div>
 
       <!-- 🛑 Pause Overlay -->
