@@ -46,7 +46,7 @@ Current layout; update this table when files are added, moved or removed.
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
 | `docs/backlog.md` | Known issues and priorities |
-| `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor` |
+| `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor`, `tech-lead` |
 
 ## Rules
 - **Static assets go in `public/`.** Vite only copies files from `public/` into the build. Anything in the repo root (icons, `sw.js`, CSS loaded at runtime) is missing from production builds.
