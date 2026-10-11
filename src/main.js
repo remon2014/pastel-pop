@@ -1,8 +1,4 @@
 import { Game } from './game.js';
-import { renderLeaderboard } from './leaderboard.js';
-import { GAME_MODES } from './gameModes.js';
-
-window.renderLeaderboard = renderLeaderboard;
 
 window.addEventListener('DOMContentLoaded', () => {
   console.log('📋 DOM Ready');
@@ -28,14 +24,9 @@ window.addEventListener('DOMContentLoaded', () => {
   // Load high score
   const savedHighScore = localStorage.getItem('pastelPopHighScore') || 0;
   menuHighScore.textContent = `High Score: ${savedHighScore}`;
-  renderLeaderboard();
 
   // Start Game button
   startGameBtn.addEventListener('click', () => {
-    const selectedMode = document.getElementById('modeSelect').value;
-    game.selectedMode = selectedMode;
-    game.modeConfig = GAME_MODES[selectedMode];
-
     document.getElementById('mainMenu').style.display = 'none';
     pauseBtn.style.display = 'inline-block';
     ui.setPauseLabel(false);

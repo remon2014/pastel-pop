@@ -12,7 +12,6 @@ export class UIManager {
     this.pauseBtn = document.getElementById('pauseBtn');
     this.pauseOverlay = document.getElementById('pauseOverlay');
     this.continueBtn = document.getElementById('continueBtn');
-    this.changeModeBtn = document.getElementById('changeModeBtn');
     this.backToMainBtn = document.getElementById('backToMainBtn');
   }
 

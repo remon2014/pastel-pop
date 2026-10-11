@@ -1,12 +1,8 @@
 import { Circle } from './circle.js';
 import { UIManager } from './uiManager.js';
 import { ColorManager } from './colorManager.js';
-import { ParticleManager } from './particle.js';
 import { getDistance } from './utils.js';
-import { CIRCLE_RADIUS } from './config.js';
-import { maybeSaveHighScore } from './leaderboard.js';
-import { GAME_MODES } from './gameModes.js';
-import { triggerRainSplash } from './rainEffect.js';
+import { CIRCLE_RADIUS, BASE_SPEED, SPEED_PER_LEVEL } from './config.js';
 
 export class Game {
   constructor(canvas, ctx) {
@@ -14,16 +10,12 @@ export class Game {
     this.ctx = ctx;
     this.ui = new UIManager();
     this.colors = new ColorManager();
-    this.particles = new ParticleManager();
 
     this.currentBackgroundColor = '#ffffff';
     this.targetBackgroundColor = '#ffffff';
     this.backgroundTransitionStart = null;
     this.prevBackgroundColor = '#ffffff';
     this.transitionDuration = 1000;
-
-    this.selectedMode = 'classic';
-    this.modeConfig = GAME_MODES[this.selectedMode];
 
     this.level = 1;
     this.score = 0;
@@ -37,7 +29,6 @@ export class Game {
     // Event listeners
     this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
     this.ui.continueBtn.addEventListener('click', () => this.resumeGame());
-    this.ui.changeModeBtn.addEventListener('click', () => this.changeModeFromPause());
     this.ui.backToMainBtn.addEventListener('click', () => window.location.reload());
 
     this.canvas.addEventListener('click', this.handleClick.bind(this));
@@ -46,27 +37,11 @@ export class Game {
 
   start() {
     this.ui.resetUI();
-    this.particles.clear();
     this.level = 1;
     this.score = 0;
     this.gameOver = false;
     this.isPaused = false;
     this.startTime = Date.now();
-
-    const modeDropdown = document.getElementById('modeSelect');
-    if (modeDropdown) {
-      this.selectedMode = modeDropdown.value;
-      this.modeConfig = GAME_MODES[this.selectedMode];
-
-      // 🔍 Fix: Match palette name for rain mode
-      const paletteName = this.modeConfig.palette || null;
-      this.colors.colors = this.colors.getUsedColors(this.level, paletteName);
-
-      // 🌧️ Dynamically load Rain CSS
-      if (this.selectedMode === 'rain') {
-        this.loadRainCSS();
-      }
-    }
 
     this.initLevel();
     this.update();
@@ -74,7 +49,6 @@ export class Game {
 
   resetGame() {
     this.ui.resetUI();
-    this.particles.clear();
     this.level = 1;
     this.score = 0;
     this.gameOver = false;
@@ -87,14 +61,14 @@ export class Game {
 
   initLevel() {
     this.circles = [];
-    const usedColors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+    const usedColors = this.colors.getUsedColors(this.level);
     if (!usedColors || usedColors.length === 0) {
       console.error('❌ No usable colors in current palette. Aborting level init.');
       return;
     }
 
     const numCircles = 5 + this.level * 2;
-    const speed = this.modeConfig.baseSpeed + this.level * this.modeConfig.speedMultiplier;
+    const speed = BASE_SPEED + this.level * SPEED_PER_LEVEL;
 
     for (let i = 0; i < numCircles; i++) {
       const color = usedColors[Math.floor(Math.random() * usedColors.length)];
@@ -129,7 +103,7 @@ export class Game {
     const selectedName = remainingColors[Math.floor(Math.random() * remainingColors.length)];
     this.currentTargetColor = selectedName;
 
-    const usedColors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
+    const usedColors = this.colors.getUsedColors(this.level);
     const selectedColor = usedColors.find(c => c.name === selectedName);
     if (selectedColor) {
       this.ui.targetColorName.textContent = selectedColor.name;
@@ -160,17 +134,10 @@ export class Game {
       const circle = this.circles[i];
       if (getDistance(x, y, circle.x, circle.y) <= circle.radius) {
         if (circle.color.name === this.currentTargetColor) {
-          if (this.selectedMode === 'rain') {
-            triggerRainSplash(x, y);
-          } else {
-            this.particles.createRipple(circle.x, circle.y, circle.color.hex);
-          }
-
           this.circles.splice(i, 1);
           this.score += 5;
           this.selectNewTargetColor();
         } else {
-          this.particles.createGlitch(circle.x, circle.y);
           this.gameOver = true;
           this.canvas.classList.add('shake');
           setTimeout(() => {
@@ -207,27 +174,6 @@ export class Game {
     this.update();
   }
 
-  changeModeFromPause() {
-    const dropdown = document.getElementById('modeSelectPause');
-    const newMode = dropdown.value;
-
-    this.selectedMode = newMode;
-    this.modeConfig = GAME_MODES[this.selectedMode];
-
-    this.level = 1;
-    this.score = 0;
-    this.gameOver = false;
-    this.isPaused = false;
-
-    this.ui.resetUI();
-    this.particles.clear();
-    this.colors.colors = this.colors.getUsedColors(this.level, this.modeConfig.palette);
-
-    this.initLevel();
-    this.update();
-  }
-
-
   update() {
     if (this.gameOver || this.isPaused) return;
 
@@ -252,15 +198,8 @@ export class Game {
       }
     }
 
-    if (this.selectedMode === 'rain') {
-      this.colors.drawBackground(this.ctx, this.level, this.canvas, 'rain', performance.now());
-    } else {
-      this.ctx.fillStyle = bgColor;
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-
-    this.particles.update();
-    this.particles.draw(this.ctx);
+    this.ctx.fillStyle = bgColor;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.circles.forEach(circle => {
       circle.update(this.canvas, performance.now());
@@ -329,15 +268,4 @@ export class Game {
         .join("")
     );
   }
-
-  loadRainCSS() {
-    if (!document.getElementById('rain-style')) {
-      const link = document.createElement('link');
-      link.id = 'rain-style';
-      link.rel = 'stylesheet';
-      link.href = './rain.css'; // Adjust path if needed
-      document.head.appendChild(link);
-    }
-  }
-
 }
