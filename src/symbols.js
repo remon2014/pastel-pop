@@ -28,7 +28,12 @@ function drawCloud(ctx, cx, cy, s) {
 }
 
 function drawKite(ctx, cx, cy, s) {
-  polygon(ctx, [[cx, cy - s], [cx + s * 0.55, cy - s * 0.1], [cx, cy + s], [cx - s * 0.55, cy - s * 0.1]]);
+  polygon(ctx, [
+    [cx, cy - s],
+    [cx + s * 0.55, cy - s * 0.1],
+    [cx, cy + s],
+    [cx - s * 0.55, cy - s * 0.1],
+  ]);
 }
 
 function drawLeaf(ctx, cx, cy, s) {
