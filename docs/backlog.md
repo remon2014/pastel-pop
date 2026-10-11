@@ -4,41 +4,34 @@ Refreshed 2026-10-11 against `docs/game-design.md` Draft v0.5 and `docs/wellbein
 
 References: **GD** = `docs/game-design.md` section, **WB** = `docs/wellbeing.md` section. Design values quoted here are starting values; the design doc is the source of truth.
 
-## Now: broken production build
-Planned as F-03 and F-04 in `docs/foundations-plan.md` (approved by the owner 2026-10-11). The retired prototype code is deleted first (F-01, F-02; see "Retired with the prototype" below and D-001), so `rain.css` is deleted rather than moved.
+## Done: production build (F-01 to F-04, merged 2026-10-11)
+Static files are in `public/`, the service worker and the fake 1.1 MB favicon are gone, the manual cache-busting query is removed, and Google Fonts is dropped, so the game makes no outside network call. The build is about 308 kB. Left over:
 
-- `sw.js`, `icon-192.png` and `icon-512.png` sit in the repo root and are missing from `dist/`; move static assets into `public/` (CLAUDE.md rule).
-- The manifest ships, but hashed into `dist/assets/`, so its relative icon paths and `start_url` resolve to the wrong place (`manifest.json:4`, `manifest.json:10`, `index.html:5`).
-- Service worker is never registered anywhere, and its cache list names dev-only source paths and Google Fonts (`sw.js:4`); decided: delete it (D-002, F-03).
-- `favicon.ico` is a 1.1 MB 1024×1024 PNG with the wrong extension, and it does ship in the build; replace with a real small icon. Compress `icon-512.png` (233 kB).
-- Unused scaffold file `public/vite.svg` is copied into every build; `src/javascript.svg` is also unused.
-- Manual cache-busting query on the module script (`index.html:344`); Vite already hashes builds.
+- `public/icon-512.png` is still 233 kB; it could not be shrunk with the tools on the machine and no new tool was installed.
+- The build uses root-absolute paths (`/favicon.png`, `/manifest.json`, `/assets/...`). Fine from a site root; a sub-folder or `file://` origin would break them. Settle Vite's `base` setting when Capacitor is wired up.
+- The favicon and icons still show the old "POP" on mint green and do not match the Dusk look; replace with the final art.
 
 ## Next: engineering foundations
-The design's tuning values mean nothing until these are in place (GD Dependencies). Build order and task IDs are in `docs/foundations-plan.md`: lint and tests (F-05, F-06), loop and dev level (F-07, F-08), logic split and units (F-09), rendering (F-10), layout (F-11), input (F-12), settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). Items below with no task ID are not in that plan.
+Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged (2026-10-11): F-01 to F-09** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), and circle logic in screen widths per second. **Left: F-10 to F-19** — rendering (F-10), layout (F-11), input (F-12), settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
 
-- Movement is per frame with no delta time, so speed doubles on 120 Hz screens (`src/circle.js:61`); the loop passes no elapsed time (`src/game.js:231`, `src/game.js:270`). (GD Sensory safety Tier 1; WB 4)
-- Pause then quick resume can start a second game loop, doubling speed (`src/game.js:199`, `src/game.js:207`); the new loop must guarantee a single running loop.
-- Canvas ignores `devicePixelRatio`, so it is blurry on phone screens (`src/main.js:22`).
-- No pixel-art rendering path: draw at a low internal resolution and scale up with smoothing off (GD Look). The exact internal resolution waits on the art reference (see Blocked).
-- Circle radius is a fixed 50 px (`src/config.js:2`); size circles relative to the screen, never under 48 dp, aiming for about 64 dp (GD Accessibility). Speeds are also fixed pixels per frame and must become screen-relative: 1.0x is one screen width in about 4 s (GD Story mode, Level tuning).
-- Resize changes the canvas size but does not reposition circles (`src/main.js:26`).
-- No safe-area handling for notches: no `viewport-fit=cover` and no `env(safe-area-inset-*)` (`index.html:9`).
-- Touch input reads only the first active finger (`e.touches[0]`, `src/game.js:152`), so a second finger's tap lands at the first finger's position; the safety tests assume several fingers at once (GD Sensory safety Tier 1; WB 4).
+- Canvas ignores `devicePixelRatio`, so it is blurry on phone screens; the target swatch canvas has the same problem (F-10).
+- No pixel-art rendering path: draw at a low internal resolution and scale up with smoothing off (GD Look). The exact internal resolution waits on the art reference (see Blocked). (F-10)
+- Circle size is now screen-relative (64 dp at 360 wide, 48 dp floor) with a PROVISIONAL 112 dp maximum for wide windows (`CIRCLE_MAX_DIAMETER_DP`); revisit the maximum when F-11 makes the play area a portrait column, and ask the game designer how size should scale on tablets.
+- No safe-area handling for notches: no `viewport-fit=cover` and no `env(safe-area-inset-*)` in `index.html` (F-11).
+- Touch input reads only the first active finger, so a second finger's tap lands at the first finger's position; the safety tests assume several fingers at once (F-12; GD Sensory safety Tier 1; WB 4).
 - No central effects layer. Build one that every visual and sound effect goes through, enforcing: at most 3 flashes a second counted across the whole screen, no saturated red flashing, no full-screen flash or per-tap full-screen colour change, pulses on one shared clock, one shake at a time, Reduce motion substitutions, time-based effects only (GD Sensory safety; WB 4, including the Reduce motion table).
-- Game rules are tangled with drawing and DOM updates in `src/game.js`; separate them so rules can be tested without a canvas (tech-lead principle; needed for the tests below).
-- No tests: add a test runner and a `test` script (F-06; decided: Node's built-in runner, no package, D-007). First coverage: time bar and wrong-tap cost, star rules, story assist, target selection and target changes, save and load, the effects-layer limits.
-- No lint or formatting: add `lint` and `format` scripts (F-05; decided: `@biomejs/biome`, D-008).
+- Circle movement, bounce and bounds are now in `src/logic/world.js` with tests; target selection, level refill and hit-testing are still inside `src/game.js` with drawing and DOM updates. Move them into `src/logic/` as the real modes are built.
 - No CI: run build, lint and tests on pull requests (no `.github/` directory exists). Not in the foundations plan; deferred by the owner 2026-10-11, to be raised as its own proposal.
-- No dev-only test sandbox: build the dev level, one scene per system behind `?dev=`, absent from production builds (F-08, D-006).
 - Vite is on 6.4.4; latest is 8.3.4, two majors ahead (`package.json` asks for `^6.3.5`).
-- Google Fonts is the only external network call and fails offline (`index.html:7`, also listed in `sw.js:13`); self-host or drop it, since the game must work fully offline (GD Audience). The replacement fonts are a design choice (GD Look).
-- "Return to Main Menu" reloads the whole page (`src/game.js:41`); screen changes must be instant, with no reload (GD Calm mode, Instant start).
-- Prototype colour names and "psychology" strings must not reach players or the store (`src/colorManager.js:10`, `:14`, `:20`, `:53`; comments in `src/particle.js`). (GD Wording and claims; WB 2)
-- Dead code in `src/colorManager.js`: `emotionalSchemes` (`:52`), `dynamicEffects` (`:60`), `getEmotionalScheme` (`:100`), `getRippleEnhancement` with its truncated `switch` (`:142`, `:161`), `getEnhancedColor` (`:180`).
-- Other dead code: unused entrance fields (`src/circle.js:36`), `setRestartHandler` and `targetColorText` (`src/uiManager.js:58`, `:10`), `#menuBtn` style for an element that does not exist (`index.html:193`).
-- Debug `console.log` calls left in (`src/main.js:8`, `sw.js:21`).
 - README is minimal and describes the prototype; rewrite once commands and structure settle.
+- Hit-testing checks only the topmost circle, so a correct tap is swallowed when a non-matching circle overlaps the matching one (found by QA in F-02 and F-07). Calm's design says circles do not overlap and the matching circle wins a tie (GD Calm mode, Missed tap); fix with F-12 or when Calm is built.
+- The pause overlay covers the Pause button, so only "Continue Playing" resumes; and the Pause button shows faintly behind the main menu on first load because its markup is not hidden until Start (found by QA in F-01 and F-02; F-11).
+- The target swatch is about 1 times a play circle, not the 1.5 times the design asks for, because a larger one overlaps the Pause button at 360 wide; game circles can also pass under it (F-11).
+- Placeholder UI: button shapes are only 1.26:1 against Dusk (labels are fine), and there is no pressed style, so the hover colour sticks briefly after a touch (found by QA on the palette task).
+- Placeholder symbols are small (8% to 16% of circle area; the leaf is smallest). Judge on a real phone; final symbols come with the pixel art.
+- A first-time player may not realise the swatch is the thing to match: there are no words and the swatch glow is not built (QA note for playtests; GD Open questions 12).
+- `vite.config.js` is not covered by lint or format (only `src/`, `tests/` and `index.html` are).
+- No scene-level tests for the dev level's wiring, readout or read-only object; covered by QA in the browser only.
 
 ## Then: v1.0 game features
 Not a plan and not in build order within a group. Each needs the foundations above.
@@ -113,10 +106,6 @@ Not a plan and not in build order within a group. Each needs the foundations abo
 - **Unverified evidence sources** (Shao, Fish, NICE, Mind): owned by the wellbeing advisor; does not block building (WB 10).
 
 ## Retired with the prototype
-The design retires these (GD Core loop; GD Story mode, Score; GD Sensory safety Tier 1; WB 4 retired effects table). Their individual bugs are no longer tracked; the work left is deleting the code as the new modes replace it.
+**Done (F-01 and F-02, merged 2026-10-11).** The 10 experimental modes, Rain, both mode dropdowns, the named leaderboard and its `prompt()`, the score, high score and time bonus, game over, the per-tap tint, the shake, the swoop-in, the ripple and glitch effects, and the colour names and "psychology" strings are deleted (GD Core loop; GD Sensory safety Tier 1; WB 4 retired effects table). What remains in `src/game.js` is plain scaffolding, to be replaced as Calm and Story are built (F-18 removes whatever is left).
 
-- **Retired:** the 10 experimental modes and their palettes; Rain mode; both mode dropdowns; the named top-5 leaderboard, its `prompt()` name entry and the high score; the points score and time bonus; game over on one wrong tap and the red "Game Over!"; the target shown as a colour name; the per-tap full-screen background tint; the canvas shake, glitch dots, large ripple rings and swoop-in entrance as built; all frame-counted effects.
-- **Whole files to delete:** `src/gameModes.js`, `src/leaderboard.js`, `src/rainEffect.js`, `rain.css`, `src/particle.js` (ripple, glitch and a duplicate `ColorManager` class).
-- **Parts to delete:** in `src/game.js`, the mode, Rain, tint (two overlapping fade implementations), score, time-bonus and game-over code; in `src/colorManager.js`, the mode palettes and Rain background; in `src/circle.js`, `animateIn`; in `src/uiManager.js`, the score, high-score and game-over methods; in `index.html`, the dropdowns, leaderboard, score HUD, "Game Over!" panel, `.shake` animation and both `rain-container` elements; in `src/main.js`, the leaderboard and high-score wiring.
-- **Saved data:** the old `pastelPopHighScore` and `pastelPopLeaderboard` localStorage keys are no longer read once this code goes.
-- Update the structure table in `CLAUDE.md` when these files are removed.
+- **Saved data:** the old `pastelPopHighScore` and `pastelPopLeaderboard` localStorage keys are no longer read or written. A returning prototype player may still have them stored; nothing clears them.

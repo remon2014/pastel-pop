@@ -26,3 +26,6 @@ dist-ssr
 # SSH keys (never commit)
 pastel_pop
 pastel_pop.pub
+
+# Playwright MCP browser-tool logs (QA)
+.playwright-mcp/
