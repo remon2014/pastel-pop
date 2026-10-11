@@ -44,8 +44,10 @@ function drawLeaf(ctx, cx, cy, s) {
 }
 
 function drawMoon(ctx, cx, cy, s) {
-  ctx.arc(cx, cy, s, Math.PI * 0.35, Math.PI * 1.65);
-  ctx.arc(cx + s * 0.5, cy, s * 0.8, Math.PI * 1.35, Math.PI * 0.65, true);
+  // The crescent's mass sits left of its outer arc's centre, so shift it right to look centred.
+  const mx = cx + s * 0.27;
+  ctx.arc(mx, cy, s, Math.PI * 0.35, Math.PI * 1.65);
+  ctx.arc(mx + s * 0.5, cy, s * 0.8, Math.PI * 1.35, Math.PI * 0.65, true);
   ctx.closePath();
 }
 
