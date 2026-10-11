@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# SSH keys (never commit)
+pastel_pop
+pastel_pop.pub
