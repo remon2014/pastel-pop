@@ -8,6 +8,7 @@ import {
   DIM_SECONDS,
   DUSK,
   FLASH_LIMIT,
+  FLASH_BUDGET_WINDOW_SECONDS,
   FLASH_WINDOW_SECONDS,
   PULSE_TICK_SECONDS,
   SHAKE_SECONDS,
@@ -24,6 +25,12 @@ const EPS = 1e-9;
 // Drops starts that have left the 1 s window (now - 1, now], in place.
 function prune(starts, now) {
   while (starts.length > 0 && starts[0] <= now - FLASH_WINDOW_SECONDS + EPS) starts.shift();
+  return starts;
+}
+
+// Flash logs use the closed budget window [now - W, now]: only starts strictly older than W leave it.
+function pruneBudget(starts, now) {
+  while (starts.length > 0 && starts[0] < now - FLASH_BUDGET_WINDOW_SECONDS - EPS) starts.shift();
   return starts;
 }
 
@@ -48,8 +55,8 @@ export function createLimiter() {
   let pulseStoppedAt = -Infinity;
 
   const tickOf = (t) => Math.floor(t / PULSE_TICK_SECONDS + EPS);
-  const used = (now) => prune(beats, now).length + prune(taps, now).length;
-  const pulseRecent = (now) => pulses.size > 0 || now < pulseStoppedAt + FLASH_WINDOW_SECONDS - EPS;
+  const used = (now) => pruneBudget(beats, now).length + pruneBudget(taps, now).length;
+  const pulseRecent = (now) => pulses.size > 0 || now <= pulseStoppedAt + FLASH_BUDGET_WINDOW_SECONDS + EPS;
 
   // Decide every pulse beat up to `now`, in time order. A beat that does not fit is skipped.
   function advance(now) {
@@ -78,11 +85,13 @@ export function createLimiter() {
   function flashFreeAt(now) {
     const logged = [...beats, ...taps].sort((x, y) => x - y);
     let at = now;
-    if (logged.length >= FLASH_LIMIT) at = logged[logged.length - FLASH_LIMIT] + FLASH_WINDOW_SECONDS;
+    // The window is closed, so a flash may start only just after the oldest one has left it.
+    const free = (t) => t + FLASH_BUDGET_WINDOW_SECONDS + 2 * EPS;
+    if (logged.length >= FLASH_LIMIT) at = free(logged[logged.length - FLASH_LIMIT]);
     if (pulseRecent(now) && taps.length >= TAP_FLASHES_WITH_PULSE) {
-      at = Math.max(at, taps[taps.length - TAP_FLASHES_WITH_PULSE] + FLASH_WINDOW_SECONDS);
+      at = Math.max(at, free(taps[taps.length - TAP_FLASHES_WITH_PULSE]));
     }
-    if (pulses.size === 0) at = Math.max(at, pulseStoppedAt + FLASH_WINDOW_SECONDS);
+    if (pulses.size === 0) at = Math.max(at, free(pulseStoppedAt));
     return at;
   }
 

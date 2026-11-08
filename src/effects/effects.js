@@ -3,6 +3,7 @@
 import {
   ARRIVAL_SECONDS,
   DIM_SECONDS,
+  FLASH_BUDGET_WINDOW_SECONDS,
   FLASH_WINDOW_SECONDS,
   MAX_BEAT_LATENESS,
   PLAIN_FADE_SECONDS,
@@ -49,6 +50,9 @@ function offsetFor(effect) {
   return 0;
 }
 
+// Looks that move or expand: Reduce motion turned on mid-effect removes them (WB 6 rule 6).
+const CUT_ON_REDUCE_MOTION = new Set(['shake.full', 'wobble.full', 'pop.full']);
+
 function prune(times, now) {
   while (times.length > 0 && times[0] <= now - FLASH_WINDOW_SECONDS + EPS) times.shift();
 }
@@ -81,11 +85,12 @@ export function createEffects() {
     let i = flashes.length;
     while (i > 0 && flashes[i - 1] > at) i--;
     flashes.splice(i, 0, at);
-    while (flashes[0] <= flashes[flashes.length - 1] - 2 * FLASH_WINDOW_SECONDS) flashes.shift();
+    while (flashes[0] <= flashes[flashes.length - 1] - 2 * FLASH_BUDGET_WINDOW_SECONDS) flashes.shift();
     for (const end of flashes) peaks.flashes = Math.max(peaks.flashes, flashesIn(end));
   }
 
-  const flashesIn = (end) => flashes.filter((t) => t <= end + EPS && t > end - FLASH_WINDOW_SECONDS + EPS).length;
+  const flashesIn = (end) =>
+    flashes.filter((t) => t <= end + EPS && t >= end - FLASH_BUDGET_WINDOW_SECONDS - EPS).length;
 
   // A flash is a brightening that pays the budget: a Story arrival, a full pop or burst, a pulse beat.
   // A Calm arrival and its pop are one flash, paid by the pop (the limiter's rule).
@@ -125,6 +130,16 @@ export function createEffects() {
     return answer;
   }
 
+  // Reduce motion just turned on: motion stops from the next drawn frame, nothing replaces it, and
+  // fades, dims and the bar pulse run to their end. A quiet fade keeps fading but stops shrinking.
+  function cutMotion() {
+    for (let i = active.length - 1; i >= 0; i--) {
+      const effect = active[i];
+      if (CUT_ON_REDUCE_MOTION.has(`${effect.kind}.${effect.form}`)) active.splice(i, 1);
+      else if (effect.kind === 'pop' && effect.form === 'quiet') effect.form = 'fade';
+    }
+  }
+
   function update(now) {
     clock = Math.max(clock, now);
     for (const [id, wait] of [...held]) {
@@ -161,7 +176,10 @@ export function createEffects() {
     // Applies effective Reduce motion now and on every change; returns the unsubscribe.
     bindSettings(settings) {
       limiter.setReduceMotion(settings.effectiveReduceMotion());
-      return settings.subscribe((on) => limiter.setReduceMotion(on));
+      return settings.subscribe((on) => {
+        limiter.setReduceMotion(on);
+        if (on) cutMotion();
+      });
     },
     stopPulse: (id, now) => limiter.stopPulse(id, now),
     forget: (circleId) => limiter.forget(circleId),

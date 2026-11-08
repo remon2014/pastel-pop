@@ -68,6 +68,10 @@ export const DEV_VOLUME_STEP = 0.1;
 // Flash limit: at most this many flashes in any one second, across the whole screen (WB 4).
 export const FLASH_LIMIT = 3;
 export const FLASH_WINDOW_SECONDS = 1;
+// Flash budget window (WB 6 rule 5): a flash may begin at t only if fewer than FLASH_LIMIT began in the closed
+// span [t - W, t], W = 1 s plus this margin. The margin covers MAX_BEAT_LATENESS (a frame of draw jitter).
+export const FLASH_WINDOW_MARGIN_SECONDS = 0.05;
+export const FLASH_BUDGET_WINDOW_SECONDS = FLASH_WINDOW_SECONDS + FLASH_WINDOW_MARGIN_SECONDS;
 // Pulses: Story at most 2 a second, Calm at most one every 2 seconds (WB 4, 6).
 export const STORY_PULSE_MAX_RATE = 2;
 // Pulse beats sit on shared ticks this far apart; a pulse period is a whole number of ticks (owner, F-14).

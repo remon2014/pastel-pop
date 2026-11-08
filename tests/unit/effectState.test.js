@@ -174,6 +174,25 @@ describe('effect state', () => {
     }
   });
 
+  test('a beat seen more than MAX_BEAT_LATENESS after its tick is not drawn; one inside it is', () => {
+    const fx = createEffects();
+    ask(fx, 'pulse', 'story', 0, { rate: 2 });
+    fx.update(0.43);
+    fx.update(0.5 + MAX_BEAT_LATENESS + 0.03);
+    assert.equal(fx.active.filter((e) => e.kind === 'pulse').length, 0, 'drawn late: dropped');
+    fx.update(1.0 + MAX_BEAT_LATENESS - 0.01);
+    assert.equal(fx.active.filter((e) => e.kind === 'pulse').length, 1, 'within the threshold: drawn');
+  });
+
+  test('after a long gap two overdue beats are not drawn together in one frame', () => {
+    const fx = createEffects();
+    ask(fx, 'pulse', 'story', 0, { rate: 2 });
+    fx.update(0.01);
+    fx.update(1.083);
+    assert.equal(fx.active.filter((e) => e.kind === 'pulse').length, 0);
+    assert.equal(fx.flashCount(), 0);
+  });
+
   test('a beat taken late but older than a logged tap keeps the layer count at 3 or below', () => {
     const fx = createEffects();
     ask(fx, 'pulse', 'story', 0, { rate: 2 });
@@ -183,5 +202,107 @@ describe('effect state', () => {
     fx.update(1.5);
     assert.equal(fx.peaks.flashes, 3);
     assert.equal(fx.flashCount(), 3);
+  });
+
+  describe('Reduce motion turned on mid-effect', () => {
+    const bound = () => {
+      const settings = fakeSettings(false);
+      const fx = createEffects();
+      fx.bindSettings(settings);
+      return { settings, fx };
+    };
+    const peakOffset = (fx, from) => {
+      let max = 0;
+      for (let t = from; t < from + 0.7; t += 0.01) {
+        fx.update(t);
+        max = Math.max(max, Math.abs(fx.shakeOffset()));
+      }
+      return max;
+    };
+
+    test('a running shake stops at once and no dim replaces it', () => {
+      const { settings, fx } = bound();
+      ask(fx, 'shake', 'story', 0);
+      fx.update(0.03);
+      assert.notEqual(fx.shakeOffset(), 0, 'the shake is moving');
+      settings.change(true);
+      assert.equal(fx.shakeOffset(), 0);
+      assert.equal(fx.shakesRunning(), 0);
+      assert.equal(peakOffset(fx, 0.04), 0);
+      assert.equal(fx.active.filter((e) => e.form === 'dim').length, 0, 'no substitute dim');
+    });
+
+    test('a running wobble, Calm ring and Story burst are removed with no replacement', () => {
+      const { settings, fx } = bound();
+      ask(fx, 'wobble', 'calm', 0);
+      ask(fx, 'pop', 'calm', 0, { circleId: 'p1' });
+      ask(fx, 'pop', 'story', 0, { circleId: 'p2' });
+      fx.update(0.03);
+      assert.notEqual(fx.wobbleOffset('a'), 0);
+      settings.change(true);
+      fx.update(0.04);
+      assert.equal(fx.wobbleOffset('a'), 0);
+      assert.equal(fx.active.length, 0);
+    });
+
+    test('a quiet fade keeps fading without shrinking and runs to its end', () => {
+      const { settings, fx } = bound();
+      for (let i = 0; i < 3; i++) ask(fx, 'pop', 'story', i * 0.01, { circleId: `p${i}` });
+      assert.equal(ask(fx, 'pop', 'story', 0.04, { circleId: 'q' }).form, 'quiet');
+      fx.update(0.05);
+      settings.change(true);
+      fx.update(0.06);
+      assert.equal(fx.active.filter((e) => e.form === 'quiet').length, 0, 'no shrink left');
+      assert.ok(fx.active.some((e) => e.kind === 'pop' && e.form === 'fade' && e.circleId === 'q'));
+      fx.update(0.6);
+      assert.equal(fx.active.length, 0, 'everything ran to its end');
+    });
+
+    test('a plain fade is not cut', () => {
+      const { settings, fx } = bound();
+      for (let i = 0; i < 3; i++) ask(fx, 'pop', 'calm', i * 0.01, { circleId: `c${i}` });
+      assert.equal(ask(fx, 'pop', 'calm', 0.04, { circleId: 'plain' }).form, 'plainFade');
+      fx.update(0.05);
+      const count = fx.active.filter((e) => e.form === 'plainFade').length;
+      assert.equal(count, 1);
+      settings.change(true);
+      fx.update(0.06);
+      assert.equal(fx.active.filter((e) => e.form === 'plainFade').length, count);
+    });
+
+    test('the bar pulse is not cut', () => {
+      const { settings, fx } = bound();
+      ask(fx, 'pulse', 'story', 0, { rate: 2 });
+      fx.update(0.5);
+      settings.change(true);
+      fx.update(0.55);
+      assert.equal(fx.active.filter((e) => e.kind === 'pulse').length, 1);
+    });
+
+    test('a change event that leaves Reduce motion off does not cut a running shake', () => {
+      const { settings, fx } = bound();
+      ask(fx, 'shake', 'story', 0);
+      fx.update(0.03);
+      const offset = fx.shakeOffset();
+      settings.change(false);
+      assert.equal(fx.shakeOffset(), offset);
+      assert.equal(fx.shakesRunning(), 1);
+    });
+
+    test('turning Reduce motion off never changes a running effect', () => {
+      const { settings, fx } = bound();
+      settings.change(true);
+      ask(fx, 'shake', 'story', 0);
+      fx.update(0.1);
+      const dim = fx.active[0];
+      const copy = { ...dim };
+      settings.change(false);
+      assert.equal(fx.active[0], dim);
+      assert.deepEqual({ ...dim }, copy);
+      fx.update(0.3);
+      assert.equal(dim.form, 'dim');
+      assert.equal(fx.shakeOffset(), 0);
+      assert.equal(fx.active.length, 1, 'the dim runs to its end');
+    });
   });
 });
