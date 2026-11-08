@@ -8,6 +8,7 @@ import {
   DIM_SECONDS,
   DUSK,
   FLASH_LIMIT,
+  FLASH_BUDGET_WINDOW_SECONDS,
   FLASH_WINDOW_SECONDS,
   PULSE_TICK_SECONDS,
   SHAKE_SECONDS,
@@ -18,7 +19,6 @@ import {
   WOBBLE_SECONDS,
 } from '../config.js';
 import { dimFraction } from './colors.js';
-import { createPulseClock } from './pulseClock.js';
 
 const EPS = 1e-9;
 
@@ -28,8 +28,13 @@ function prune(starts, now) {
   return starts;
 }
 
+// Flash logs use the closed budget window [now - W, now]: only starts strictly older than W leave it.
+function pruneBudget(starts, now) {
+  while (starts.length > 0 && starts[0] < now - FLASH_BUDGET_WINDOW_SECONDS - EPS) starts.shift();
+  return starts;
+}
+
 export function createLimiter() {
-  const clock = createPulseClock();
   const pulses = new Map();
   const arrivals = [];
   const shakes = [];
@@ -50,8 +55,8 @@ export function createLimiter() {
   let pulseStoppedAt = -Infinity;
 
   const tickOf = (t) => Math.floor(t / PULSE_TICK_SECONDS + EPS);
-  const used = (now) => prune(beats, now).length + prune(taps, now).length;
-  const pulseRecent = (now) => pulses.size > 0 || now < pulseStoppedAt + FLASH_WINDOW_SECONDS - EPS;
+  const used = (now) => pruneBudget(beats, now).length + pruneBudget(taps, now).length;
+  const pulseRecent = (now) => pulses.size > 0 || now <= pulseStoppedAt + FLASH_BUDGET_WINDOW_SECONDS + EPS;
 
   // Decide every pulse beat up to `now`, in time order. A beat that does not fit is skipped.
   function advance(now) {
@@ -80,11 +85,10 @@ export function createLimiter() {
   function flashFreeAt(now) {
     const logged = [...beats, ...taps].sort((x, y) => x - y);
     let at = now;
-    if (logged.length >= FLASH_LIMIT) at = logged[logged.length - FLASH_LIMIT] + FLASH_WINDOW_SECONDS;
-    if (pulseRecent(now) && taps.length >= TAP_FLASHES_WITH_PULSE) {
-      at = Math.max(at, taps[taps.length - TAP_FLASHES_WITH_PULSE] + FLASH_WINDOW_SECONDS);
-    }
-    if (pulses.size === 0) at = Math.max(at, pulseStoppedAt + FLASH_WINDOW_SECONDS);
+    // The window is closed, so a flash may start only just after the oldest one has left it.
+    const free = (t) => t + FLASH_BUDGET_WINDOW_SECONDS + 2 * EPS;
+    if (logged.length >= FLASH_LIMIT) at = free(logged[logged.length - FLASH_LIMIT]);
+    if (pulses.size === 0) at = Math.max(at, free(pulseStoppedAt));
     return at;
   }
 
@@ -105,9 +109,12 @@ export function createLimiter() {
     let at = now;
     if (arrivals.length >= perSecond) at = arrivals[arrivals.length - perSecond] + FLASH_WINDOW_SECONDS;
     // Story arrivals pay a flash; in Calm the pop pays for the arrival and itself.
-    if (!calm && !canFlash(now)) at = Math.max(at, flashFreeAt(now));
+    // While a pulse runs it owns the budget: the circle arrives quietly (no brightness) and pays nothing.
+    const quiet = !calm && pulseRecent(now);
+    if (!calm && !quiet && !canFlash(now)) at = Math.max(at, flashFreeAt(now));
     if (at > now + EPS) return { form: 'waitUntil', at };
     arrivals.push(now);
+    if (quiet) return { form: 'quiet' };
     if (!calm) taps.push(now);
     return { form: 'full' };
   }
@@ -150,7 +157,6 @@ export function createLimiter() {
   };
 
   return {
-    clock,
     get dimFraction() {
       return dim;
     },
@@ -166,6 +172,10 @@ export function createLimiter() {
     takeBeats(now) {
       advance(now);
       return fired.splice(0);
+    },
+    // A circle has left: its reaction entry is no longer needed.
+    forget(circleId) {
+      reacting.delete(circleId);
     },
     stopPulse(id, now) {
       advance(now);

@@ -1,6 +1,7 @@
 import { CREAM, DUSK, GLOW_1, GLOW_2 } from '../config.js';
 import { parseDevQuery } from './sceneName.js';
 import mountCirclesScene from './scenes/circles.js';
+import mountEffectsScene from './scenes/effects.js';
 import mountInputScene from './scenes/input.js';
 import mountLayoutScene from './scenes/layout.js';
 import mountLoopScene from './scenes/loop.js';
@@ -14,6 +15,11 @@ const SCENES = [
   { name: 'render', title: 'Render: test card, internal size, scale, pixel ratio', mount: mountRenderScene },
   { name: 'layout', title: 'Layout: play column, safe areas, HUD, resize', mount: mountLayoutScene },
   { name: 'input', title: 'Input: pointer taps, hit test, auto-tapper', mount: mountInputScene },
+  {
+    name: 'effects',
+    title: 'Effects: flash budget, shake, pulse, Reduce motion, auto-tapper',
+    mount: mountEffectsScene,
+  },
   { name: 'settings', title: 'Settings: Reduce motion, volumes, vibration, mute, storage', mount: mountSettingsScene },
 ];
 

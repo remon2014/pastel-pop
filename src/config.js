@@ -68,12 +68,17 @@ export const DEV_VOLUME_STEP = 0.1;
 // Flash limit: at most this many flashes in any one second, across the whole screen (WB 4).
 export const FLASH_LIMIT = 3;
 export const FLASH_WINDOW_SECONDS = 1;
+// Flash budget window (WB 6 rule 5): a flash may begin at t only if fewer than FLASH_LIMIT began in the closed
+// span [t - W, t], W = 1 s plus this margin. The margin covers MAX_BEAT_LATENESS (a frame of draw jitter).
+export const FLASH_WINDOW_MARGIN_SECONDS = 0.05;
+export const FLASH_BUDGET_WINDOW_SECONDS = FLASH_WINDOW_SECONDS + FLASH_WINDOW_MARGIN_SECONDS;
 // Pulses: Story at most 2 a second, Calm at most one every 2 seconds (WB 4, 6).
 export const STORY_PULSE_MAX_RATE = 2;
 // Pulse beats sit on shared ticks this far apart; a pulse period is a whole number of ticks (owner, F-14).
 export const PULSE_TICK_SECONDS = 0.5;
-// While a pulse runs (or ran in the last second), taps get at most this many flashes per window.
-export const TAP_FLASHES_WITH_PULSE = 1;
+// While a pulse runs (or ran within the last window), taps get this many flashes: none. A 2-a-second pulse
+// fills the closed 1.05 s window on its own, so the pulse stays steady and taps and Story arrivals go quiet.
+export const TAP_FLASHES_WITH_PULSE = 0;
 export const CALM_PULSE_MAX_RATE = 0.5;
 // Calm: at most 2 circles begin arriving in any one second (WB 4).
 export const CALM_ARRIVALS_PER_SECOND = 2;
@@ -98,3 +103,25 @@ export const PLAIN_FADE_SECONDS = 0.45;
 export const SATURATED_RED_RATIO = 0.8;
 // Colours effects may draw, besides the palette. PLACEHOLDER pulse colour: warm amber, not red.
 export const EFFECT_COLORS = Object.freeze({ lowTimePulse: '#E6C070', targetGlow: '#EDD894' });
+
+// Effects layer (F-15). All PLACEHOLDER looks until the art phase (D-010); timings stay inside the WB bounds above.
+// A pulse beat is drawn for this long (under the tick length); a beat older than this when seen is dropped unseen.
+export const PULSE_BEAT_SECONDS = 0.25;
+// A pulse beat seen later than this after its tick is dropped unseen (the limiter still counted it).
+// Drawn late, a beat could sit closer to other flashes than the limiter's tick-time count allows.
+// 0.04 s is one 30 Hz step (0.033 s, the dev slow loop) plus a margin, so 60 Hz frames (0.017 s) never drop a beat.
+export const MAX_BEAT_LATENESS = 0.04;
+export const ARRIVAL_SECONDS = 0.3;
+export const POP_SECONDS = 0.3;
+export const WOBBLE_PIXELS = 2;
+// Calm pop ring: grows 1 internal px, then one thin ring; never more than a quarter radius beyond the circle.
+export const POP_RING_MAX_RADIUS_FRACTION = 0.25;
+export const POP_GROW_PIXELS = 1;
+// Story burst: this many pixel dots travelling out, staying inside the circle's own area.
+export const BURST_DOTS = 8;
+// Quiet fade may shrink the circle down to this fraction of its size.
+export const QUIET_MIN_SCALE = 0.7;
+// Pulse bar (placeholder time bar at the top of the play area), in internal px and as a fraction of the width.
+export const PULSE_BAR_WIDTH_FRACTION = 0.4;
+export const PULSE_BAR_HEIGHT = 3;
+export const PULSE_BAR_TOP = 2;
