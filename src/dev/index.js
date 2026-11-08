@@ -20,7 +20,7 @@ body{display:block;overflow:auto;height:auto;min-height:100vh;background:${DUSK}
 .dev-readout dt,.dev-readout dd{margin:0}
 .dev-readout dd{font-variant-numeric:tabular-nums}
 .dev-canvas{display:block;width:100%;height:120px;border:1px solid ${GLOW_2};border-radius:8px;margin-bottom:12px}
-.dev-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.dev-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .dev-buttons button{min-width:44px;min-height:44px;padding:8px 16px;font:inherit;color:${CREAM};background:${GLOW_2};border:1px solid ${CREAM};border-radius:8px}
 `;
 
