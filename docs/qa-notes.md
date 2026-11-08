@@ -5,6 +5,7 @@ Short, lasting knowledge for future test sessions. Remove a note when it goes ou
 ## Where to look
 - Dev level: `http://localhost:5174/?dev` lists scenes. `?dev=loop` (press Start first) and `?dev=circles`. Numbers are read-only on `window.__pastelPopDev.<scene>`.
 - Dev scenes do not exist in production: `/?dev=...` on the preview (port 4173) shows the normal start screen, and `grep -r "__pastelPopDev" dist` must find nothing.
+- Forcing a zero-size play area: set `canvas.width/height` to 0 from `evaluate`, wait, then set them back and dispatch `resize` (main.js sets the canvas from `innerWidth/innerHeight`). Resizing the Playwright viewport to height 0 is not needed. Symbols such as the moon also call `arc`, so count circles by first arc per `fillStyle` change or tap by position.
 - The main game exposes nothing on `window`. To read circle positions, hook canvas `arc` and `fillRect` from an init script.
 
 ## Known quirks
