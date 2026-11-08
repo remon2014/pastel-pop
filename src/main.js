@@ -1,4 +1,6 @@
 import { Game } from './game.js';
+import { computeView } from './render/view.js';
+import { INTERNAL_WIDTH_TARGET } from './config.js';
 
 window.addEventListener('DOMContentLoaded', async () => {
   if (import.meta.env.DEV && new URLSearchParams(location.search).has('dev')) {
@@ -16,9 +18,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   const game = new Game(canvas, ctx);
   const ui = game.ui;
 
+  // Sizes the canvas through the view. Keeps the last view when the window has no usable size.
   function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const view = computeView(window.innerWidth, window.innerHeight, window.devicePixelRatio, INTERNAL_WIDTH_TARGET);
+    if (!view) return;
+    canvas.width = view.internalWidth;
+    canvas.height = view.internalHeight;
+    canvas.style.width = `${view.playCssWidth}px`;
+    canvas.style.height = `${view.playCssHeight}px`;
+    game.setView(view);
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
