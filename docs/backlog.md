@@ -14,6 +14,7 @@ Static files are in `public/`, the service worker and the fake 1.1 MB favicon ar
 
 ## Next: engineering foundations
 Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F-01 to F-09 (2026-10-11), F-10 to F-16 (2026-11-08)** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), circle logic in screen widths per second, sharp rendering, the portrait layout with safe areas, pointer input with a pure hit test, settings with safe storage, the effects safety rules as tested logic, the effects layer on screen, and the dev flash meter. **Left: F-16b, F-17 to F-19** — settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
+- F-16b nit: name Calm's target glow explicitly in criterion (1) so its drawer gets the 0.07 luminance test when the glow is built (review, F-16b plan). Game designer: choose the base and peak amber for the pulse bar within 0.07 (F-16b).
 **Before F-10:** R-01 to R-05, five fixes from the F-01 to F-09 retrospective review; deferred review items (S5, N1, N3 to N9, three real-phone questions) are listed in `docs/foundations-plan.md` section 3b.
 
 - No pixel-art rendering path: draw at a low internal resolution and scale up with smoothing off (GD Look). The exact internal resolution waits on the art reference (see Blocked). (F-10)
