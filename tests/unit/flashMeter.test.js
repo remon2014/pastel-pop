@@ -102,7 +102,7 @@ test('flashes just over 1 s apart are not in one window', () => {
 // A bright bar on a dark ground.
 const bar = (left) => (x) => (x >= left && x < left + 4 ? [255, 255, 255] : [0, 0, 0]);
 
-test('a shifted frame reads 0 when the offset is given, and counts raw', () => {
+test('a shifted frame reads 0 when the offset is given', () => {
   const m = createFlashMeter(16, 4);
   const w16 = (left) => {
     const px = new Uint8ClampedArray(16 * 4 * 4);
@@ -118,7 +118,7 @@ test('a shifted frame reads 0 when the offset is given, and counts raw', () => {
     m.addFrame(i / FPS, w16(left), shift);
   }
   assert.equal(m.flashes.total, 0);
-  assert.ok(m.rawFlashes.total > 0);
+  assert.equal(m.rawFlashes.total, 0);
 });
 
 test('saturated red flashing reads as red flashes, grey does not', () => {
@@ -211,4 +211,109 @@ test('a shake whose offset holds steady at a non-zero value reads 0', () => {
     m.addFrame(i++ / FPS, pic(4), 0, true);
   }
   assert.equal(m.flashes.total, 0);
+});
+
+// Area rule (WB 6 rule 7c). A 40 x 40 picture is 100 cells of 4 x 4, so 10% is 10 cells.
+const N = 40;
+function picture(boxes, level) {
+  const px = new Uint8ClampedArray(N * N * 4);
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++) {
+      const lit = level && boxes.some(([bx, by, bw, bh]) => x >= bx && x < bx + bw && y >= by && y < by + bh);
+      px.set([lit ? 255 : 0, lit ? 255 : 0, lit ? 255 : 0, 255], (y * N + x) * 4);
+    }
+  return px;
+}
+// Each box flashes `rate` times a second for `seconds`, all in step.
+function flashBoxes(m, boxes, rate, seconds) {
+  for (let i = 0; i <= seconds * FPS; i++) {
+    const t = i / FPS;
+    m.addFrame(t, picture(boxes, Math.floor(t * rate * 2 + 1e-6) % 2 === 1));
+  }
+}
+const bigEvent = [0, 0, 16, 28]; // 4 x 7 cells = 28%
+
+test('one circle-sized event (about 3%) reads 0 in the meter and is counted in the raw count', () => {
+  const m = createFlashMeter(N, N);
+  flashBoxes(m, [[4, 4, 12, 4]], 2, 2); // 3 cells of 100
+  assert.equal(m.flashes.total, 0);
+  assert.equal(m.rawFlashes.total, 4);
+});
+
+test('concurrent events adding up to over 10% read as one flash', () => {
+  const m = createFlashMeter(N, N);
+  // six cells + six cells in different places, same frames: 12%
+  flashBoxes(
+    m,
+    [
+      [0, 0, 12, 8],
+      [24, 24, 12, 8],
+    ],
+    2,
+    2,
+  );
+  assert.equal(m.flashes.total, 4);
+});
+
+test('events of 6% each that do not overlap in time read 0', () => {
+  const m = createFlashMeter(N, N);
+  const boxA = [0, 0, 12, 8];
+  const boxB = [24, 24, 12, 8];
+  for (let i = 0; i < 40; i++) {
+    const lit = [];
+    if (i >= 2 && i < 6) lit.push(boxA);
+    if (i >= 20 && i < 24) lit.push(boxB);
+    m.addFrame(i / FPS, picture(lit, true));
+  }
+  assert.equal(m.flashes.total, 0);
+  assert.equal(m.rawFlashes.total, 2);
+});
+
+test('events that overlap in time sum their areas', () => {
+  const m = createFlashMeter(N, N);
+  const boxA = [0, 0, 12, 8]; // 6 cells
+  const boxB = [24, 24, 12, 8]; // 6 cells
+  // A is lit for frames 2-8, B for frames 5-11: they overlap in time
+  for (let i = 0; i < 20; i++) {
+    const lit = [];
+    if (i >= 2 && i < 8) lit.push(boxA);
+    if (i >= 5 && i < 11) lit.push(boxB);
+    m.addFrame(i / FPS, picture(lit, true));
+  }
+  assert.equal(m.flashes.total, 1);
+});
+
+test('up, down, up, down in one cell is two flashes, not three', () => {
+  const m = createFlashMeter(N, N);
+  const frames = [0, 255, 0, 255, 0];
+  for (const [i, v] of frames.entries()) m.addFrame(i / FPS, picture([[0, 0, N, N]], v === 255));
+  assert.equal(m.flashes.total, 2);
+});
+
+test('unrelated events in the same frames are not merged in the raw count', () => {
+  const m = createFlashMeter(N, N);
+  flashBoxes(
+    m,
+    [
+      [0, 0, 28, 4], // a bar
+      [4, 28, 8, 4], // a small circle far away
+    ],
+    2,
+    2,
+  );
+  assert.equal(m.rawFlashes.total, 8); // two events per flash, four flashes in 2 s
+  assert.equal(m.flashes.total, 0); // 7 + 2 cells = 9%
+});
+
+test('pulse alone shows every beat in the raw count', () => {
+  const m = createFlashMeter(N, N);
+  flashBoxes(m, [[0, 0, 28, 4]], 2, 3);
+  assert.equal(m.rawFlashes.total, 6);
+});
+
+test('a 5-a-second block over 10% of the area reads 5', () => {
+  const m = createFlashMeter(N, N);
+  flashBoxes(m, [bigEvent], 5, 1);
+  assert.equal(m.flashes.total, 5);
+  assert.equal(m.flashes.highest, 5);
 });

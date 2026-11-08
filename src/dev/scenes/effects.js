@@ -1,3 +1,4 @@
+import { drawCircle } from '../../circle.js';
 import { PALETTE } from '../../colorManager.js';
 import { DUSK, INTERNAL_WIDTH_TARGET } from '../../config.js';
 import { browserHost, createLoop } from '../../core/loop.js';
@@ -51,7 +52,7 @@ const ROWS = [
   'Meter: highest in a second (layer)',
   'Meter: total (layer)',
   'Meter: red flashes (highest / total)',
-  'Meter: shake not compensated, for information (highest / total)',
+  'Meter: raw count, no area test, for information (highest / total)',
   'Highest shake change area (must be 10% or less)',
   'Meter above layer (must stay 0)',
   'Meter ms per frame',
@@ -60,7 +61,7 @@ const ROWS = [
 const CALIBRATION_RATE = 2;
 const CALIBRATION_DARK = '#404040';
 const CALIBRATION_BRIGHT = '#ffffff';
-const CALIBRATION_SIZE = 0.2; // fraction of the internal width
+const CALIBRATION_SIZE = 0.4; // fraction of the internal width: over 10% of the play area (WB 6 rule 7c)
 const MS_PER_SECOND = 1000;
 const onOff = (b) => (b ? 'on' : 'off');
 
@@ -129,7 +130,8 @@ export default function mountEffectsScene(root) {
   };
 
   function pop(circle) {
-    request('pop', circle);
+    const granted = request('pop', circle);
+    circle.ghostId = granted.form === 'full' ? circle.id : null;
     effects.forget(circle.id);
     circle.gone = true;
     circle.respawnAt = now + RESPAWN_SECONDS;
@@ -190,12 +192,29 @@ export default function mountEffectsScene(root) {
     }
   }
 
+  const effectOf = (kind, id) => effects.active.find((e) => e.kind === kind && e.circleId === id);
+
+  // A circle fades in with its arrival and, when its pop has no fade of its own, fades out with its pop.
+  function drawCircleFading(circle) {
+    if (!circle.gone) {
+      const arrival = effectOf('arrival', circle.id);
+      ctx.globalAlpha = arrival ? arrival.progress : 1;
+      drawCircleWithEffects(ctx, effects, circle, view);
+    } else {
+      const pop = circle.ghostId && effectOf('pop', circle.ghostId);
+      if (!pop) return;
+      ctx.globalAlpha = 1 - pop.progress;
+      drawCircle(ctx, circle, view);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function draw() {
     if (!view) return;
     ctx.fillStyle = DUSK;
     ctx.fillRect(0, 0, view.internalWidth, view.internalHeight);
     drawFrame(ctx, effects, view, () => {
-      for (const circle of circles) if (!circle.gone) drawCircleWithEffects(ctx, effects, circle, view);
+      for (const circle of circles) drawCircleFading(circle);
     });
     const drawnAt = performance.now() / MS_PER_SECOND;
     if (calibrationOn) drawCalibration(drawnAt);
@@ -415,6 +434,7 @@ export default function mountEffectsScene(root) {
         redTotal: meter.redFlashes.total,
         shakeAreaHighest: meter.shakeArea.highest,
         rawHighest: meter.rawFlashes.highest,
+        rawTotal: meter.rawFlashes.total,
         above: meterAbove,
         ms: meterMs,
         layerHighest: effects.peaks.flashes,

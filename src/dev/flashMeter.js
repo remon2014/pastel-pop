@@ -5,6 +5,8 @@ export const CHANGE_MIN = 0.1; // a change counts at this size or more from the 
 export const DARKER_LIMIT = 0.8; // a flash needs its darker extreme under this relative luminance
 export const RED_SHARE = 0.8; // saturated red: R / (R + G + B) at or above this
 export const WINDOW_SECONDS = 1; // closed window [t - 1 s, t]
+export const AREA_SHARE = 0.1; // a flash needs more than this share of the play area (WB 6 rule 7c)
+const KEEP_SECONDS = 3; // pairs older than this cannot overlap a new one
 export const SHAKE_AREA_MAX = 0.1; // during a shake, at most this share of the play area may change (WB 6 rule 3)
 const EPS = 1e-9;
 
@@ -14,14 +16,15 @@ for (let i = 0; i < 256; i++) {
   LINEAR[i] = c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
 }
 
-// One cell's tracker. Feed it a value per frame; it reports a flash (its onset time) when two opposite
-// changes of CHANGE_MIN or more happen in a row with the darker extreme under DARKER_LIMIT. It reports every
-// such pair (onFlash(firstStart, secondStart)), overlapping ones too; the group below sorts out which count.
+// One cell's tracker. Feed it a value per frame. It reports a pair (onPair(start, end)) when two opposite
+// changes of CHANGE_MIN or more happen in a row with the darker extreme under DARKER_LIMIT: start is the
+// frame the first change began in, end the frame the second was confirmed. A pair uses up both its changes,
+// so up, down, up, down at one spot is two pairs (WB 6 rule 7c).
 function newTracker(value) {
   return { ext: value, leaveT: null, dir: 0, pending: null };
 }
 
-function step(cell, v, t, onFlash) {
+function step(cell, v, t, onPair) {
   const diff = v - cell.ext;
   if (cell.dir !== 0 && diff * cell.dir > 0) {
     cell.ext = v; // leg goes on
@@ -38,9 +41,11 @@ function step(cell, v, t, onFlash) {
   const change = { dir, start: cell.leaveT, low: Math.min(cell.ext, v) };
   const first = cell.pending;
   if (first && first.dir === -dir && Math.min(first.low, change.low) < DARKER_LIMIT) {
-    onFlash(first.start, change.start);
+    onPair(first.start, t);
+    cell.pending = null;
+  } else {
+    cell.pending = change;
   }
-  cell.pending = change;
   cell.dir = dir;
   cell.ext = v;
   cell.leaveT = null;
@@ -74,26 +79,57 @@ function createCounter() {
   };
 }
 
-// A group of trackers sharing one counter. A flash is stamped with the frame its first change began in, and a
-// change belongs to one flash only: a pair that reuses an already counted change is the same flash seen from
-// another cell (or the other way of pairing the same swings), so screen-wide each flash counts once.
-function createGroup(cellCount) {
+const overlaps = (r, start, end) => r.start <= end + EPS && r.end >= start - EPS;
+
+// A group of cell trackers and the rule that turns their pairs into flashes. Each flash is stamped with the
+// frame its first change began in.
+// 'area' (the meter, WB 6 rule 7c): a pair counts when the cells in all pairs overlapping it in time (onset to
+//   completion) together cover more than AREA_SHARE of the play area; qualifying pairs that overlap a flash
+//   already counted are part of it.
+// 'spread' (raw count, red): no area test. Pairs overlapping in time in touching cells are one flash; pairs
+//   elsewhere are their own, so unrelated events in the same frame are not merged.
+function createGroup(cellCount, cols, mode) {
   const cells = new Array(cellCount).fill(null);
   const counter = createCounter();
-  const used = new Set();
-  const onFlash = (first, second) => {
-    if (used.has(first) || used.has(second)) return;
-    used.add(first);
-    used.add(second);
-    if (used.size > 1200) used.delete(used.values().next().value);
-    counter.add(first);
-  };
+  let pairs = [];
+  let counted = [];
+  const touching = (a, b) =>
+    Math.abs((a % cols) - (b % cols)) <= 1 && Math.abs(Math.floor(a / cols) - Math.floor(b / cols)) <= 1;
+
+  function count(pair) {
+    pair.counted = true;
+    counted.push(pair);
+    counter.add(pair.start);
+  }
+
+  function addPair(cell, start, end) {
+    const pair = { cell, start, end, cells: new Set([cell]), qualified: false };
+    const near = pairs.filter((r) => overlaps(r, start, end));
+    if (mode === 'spread') {
+      if (!near.some((r) => touching(r.cell, cell))) counter.add(start);
+    } else {
+      for (const r of near) {
+        r.cells.add(cell);
+        pair.cells.add(r.cell);
+      }
+      const need = AREA_SHARE * cellCount;
+      for (const r of [...near, pair].sort((x, y) => x.start - y.start)) {
+        if (r.qualified || r.cells.size <= need) continue;
+        r.qualified = true;
+        if (!counted.some((c) => overlaps(c, r.start, r.end))) count(r);
+      }
+    }
+    pairs.push(pair);
+    pairs = pairs.filter((r) => r.end >= end - KEEP_SECONDS);
+    counted = counted.filter((r) => r.end >= end - KEEP_SECONDS);
+  }
+
   return {
     counter,
     feed(values, t) {
       for (let i = 0; i < cellCount; i++) {
         if (cells[i] === null) cells[i] = newTracker(values[i]);
-        else step(cells[i], values[i], t, onFlash);
+        else step(cells[i], values[i], t, (start, end) => addPair(i, start, end));
       }
     },
   };
@@ -101,7 +137,7 @@ function createGroup(cellCount) {
 
 // width, height in internal px. addFrame(t, rgba, shift): t is the drawn time in seconds, rgba the frame's
 // pixels, shift the change in shake offset since the last frame (px), shaking whether a shake is running.
-// shakeArea: share of the play area whose raw luminance changed by CHANGE_MIN or more, in shaking frames. Returns nothing; read the counters.
+// flashes: the meter's count (area rule); rawFlashes: no area test, for information. shakeArea: share of the play area whose raw luminance changed by CHANGE_MIN or more, in shaking frames. Returns nothing; read the counters.
 export function createFlashMeter(width, height) {
   const cols = Math.ceil(width / CELL);
   const rows = Math.ceil(height / CELL);
@@ -113,16 +149,15 @@ export function createFlashMeter(width, height) {
   const sumG = new Float64Array(cellCount);
   const sumB = new Float64Array(cellCount);
   const level = new Float64Array(cellCount);
-  const rawLevel = new Float64Array(cellCount);
   const redLevel = new Float64Array(cellCount);
   let prevLuma = new Float32Array(width * height);
   let luma = new Float32Array(width * height);
   let started = false;
   let changed = 0;
   const shakeArea = { last: 0, highest: 0 };
-  const shaken = createGroup(cellCount);
-  const raw = createGroup(cellCount);
-  const red = createGroup(cellCount);
+  const shaken = createGroup(cellCount, cols, 'area');
+  const raw = createGroup(cellCount, cols, 'spread');
+  const red = createGroup(cellCount, cols, 'spread');
 
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) counts[Math.floor(y / CELL) * cols + Math.floor(x / CELL)]++;
@@ -158,7 +193,6 @@ export function createFlashMeter(width, height) {
     }
     for (let c = 0; c < cellCount; c++) {
       const now = sumNow[c] / counts[c];
-      rawLevel[c] = now;
       level[c] = started && (shaking || dx !== 0) ? level[c] + now - sumPred[c] / counts[c] : now;
       const total = sumR[c] + sumG[c] + sumB[c];
       redLevel[c] = total > 0 && sumR[c] / total >= RED_SHARE ? 1 : 0;
@@ -166,7 +200,7 @@ export function createFlashMeter(width, height) {
     shakeArea.last = shaking ? changed / (width * height) : 0;
     shakeArea.highest = Math.max(shakeArea.highest, shakeArea.last);
     shaken.feed(level, t);
-    raw.feed(rawLevel, t);
+    raw.feed(level, t);
     red.feed(redLevel, t);
     [prevLuma, luma] = [luma, prevLuma];
     started = true;
