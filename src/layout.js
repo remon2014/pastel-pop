@@ -1,6 +1,7 @@
 // Fits the canvas and HUD to the screen: safe-area insets, portrait column, view. The browser side of render/view.js.
 import { INTERNAL_WIDTH_TARGET } from './config.js';
-import { columnRect, computeView } from './render/view.js';
+import { circleRadius } from './logic/world.js';
+import { columnRect, computeView, placeView, swatchPixels } from './render/view.js';
 
 const SIDES = ['top', 'right', 'bottom', 'left'];
 
@@ -20,7 +21,7 @@ export function createInsetReader() {
   };
 }
 
-// Returns { resize }. resize() sizes and places the canvas in the column, sets the --play-* variables the HUD
+// Returns { resize, last }. resize() sizes and places the canvas in the column, sets the --play-* variables the HUD
 // follows, and hands the new view to the game. Keeps the last layout when the window has no usable size.
 // `getInsets` and `getTarget` can be swapped (the dev layout scene does).
 export function createLayout(
@@ -37,10 +38,8 @@ export function createLayout(
     if (!column) return last;
     const view = computeView(column.width, column.height, dpr, getTarget());
     if (!view) return last;
-    // Centre the canvas in the column, on whole device pixels so it stays sharp.
-    const snap = (css) => Math.round(css * view.dpr) / view.dpr;
-    const left = snap(column.left + (column.width - view.playCssWidth) / 2);
-    const top = snap(column.top);
+    const swatchCss = swatchPixels(view, circleRadius(view.playCssWidth)) * view.cssPerInternal;
+    const { left, top, swatchLeft } = placeView(column, view, swatchCss);
     canvas.width = view.internalWidth;
     canvas.height = view.internalHeight;
     const set = (name, px) => document.documentElement.style.setProperty(name, `${px}px`);
@@ -50,6 +49,7 @@ export function createLayout(
     canvas.style.top = `${top}px`;
     set('--play-left', left);
     set('--play-top', top);
+    set('--swatch-left', swatchLeft);
     set('--play-width', view.playCssWidth);
     set('--play-height', view.playCssHeight);
     game.setView(view);

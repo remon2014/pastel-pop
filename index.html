@@ -40,9 +40,11 @@
         pointer-events: none;
       }
 
+      /* layout.js sets --swatch-left so the swatch sits on a whole device pixel. */
       #infoPanel {
-        display: flex;
-        justify-content: center;
+        position: absolute;
+        top: 0;
+        left: var(--swatch-left, 0);
       }
 
       #pauseBtn {
@@ -56,6 +58,7 @@
 
       #targetCanvas {
         display: block;
+        image-rendering: pixelated;
       }
 
       .visually-hidden {

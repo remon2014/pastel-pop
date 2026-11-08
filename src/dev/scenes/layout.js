@@ -118,7 +118,7 @@ export default function mountLayoutScene(root) {
   function refresh() {
     const state = layout.last;
     if (!state) return;
-    const { column, insets, view } = state;
+    const { insets, view } = state;
     readout.set(ROWS[0], String(outside()));
     readout.set(ROWS[1], `${window.innerWidth} x ${window.innerHeight}, ${window.devicePixelRatio}`);
     readout.set(ROWS[2], `${insets.top}, ${insets.right}, ${insets.bottom}, ${insets.left}`);
@@ -139,7 +139,6 @@ export default function mountLayoutScene(root) {
       ROWS[8],
       touching(swatch, pauseBox()) ? 'TOUCHING' : `clear by ${(pauseBox().left - swatch.right).toFixed(1)} px`,
     );
-    return column;
   }
 
   window.addEventListener('resize', relayout);

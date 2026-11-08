@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { circleRadius } from '../../src/logic/world.js';
 import { MAX_COLUMN_ASPECT } from '../../src/config.js';
-import { circlePixels, columnRect, computeView, cssToWorld, swatchPixels } from '../../src/render/view.js';
+import { circlePixels, columnRect, computeView, cssToWorld, placeView, swatchPixels } from '../../src/render/view.js';
 
 const near = (a, b, tol = 1e-9) => assert.ok(Math.abs(a - b) <= tol, `${a} is not near ${b}`);
 
@@ -174,5 +174,27 @@ test('S1 swatch is about 1.5 times a play circle (360x800, dpr 1, 2, 3)', () => 
     const circle = circlePixels(view, { x: 0, y: 0, radius }).size;
     assert.equal(circle, 32);
     assert.equal(swatchPixels(view, radius), 48);
+  }
+});
+
+const onDevicePixel = (css, dpr) => near(css * dpr, Math.round(css * dpr), 1e-6);
+
+test('P1 canvas and swatch land on whole device pixels with fractional insets', () => {
+  for (const [w, h, dpr] of [
+    [393, 852, 3],
+    [412, 915, 3],
+    [1280, 800, 1],
+    [390, 844, 2],
+  ]) {
+    const column = columnRect(w, h, { top: 47.33, right: 0.4, bottom: 34.17, left: 0.4 }, ASPECT);
+    const view = computeView(column.width, column.height, dpr, 180);
+    const swatchCss = swatchPixels(view, circleRadius(view.playCssWidth)) * view.cssPerInternal;
+    const p = placeView(column, view, swatchCss);
+    onDevicePixel(p.left, dpr);
+    onDevicePixel(p.top, dpr);
+    onDevicePixel(p.left + p.swatchLeft, dpr);
+    // Within half a device pixel of true centre, and inside the play area.
+    near(p.swatchLeft, (view.playCssWidth - swatchCss) / 2, 0.5 / dpr + 1e-9);
+    assert.ok(p.swatchLeft >= 0);
   }
 });

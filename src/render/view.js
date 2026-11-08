@@ -61,3 +61,14 @@ export function columnRect(winWidth, winHeight, insets, maxAspect = MAX_COLUMN_A
 export function swatchPixels(view, radius) {
   return Math.round(SWATCH_SCALE * circlePixels(view, { x: 0, y: 0, radius }).size);
 }
+
+// Where the canvas and the target swatch go, in CSS px, on whole device pixels so both stay sharp.
+// The canvas is centred in the column; the swatch is centred on the canvas, top edge to top edge, and its
+// left is given relative to the canvas. swatchCss is the swatch's CSS width.
+export function placeView(column, view, swatchCss) {
+  const snap = (css) => Math.round(css * view.dpr) / view.dpr;
+  const left = snap(column.left + (column.width - view.playCssWidth) / 2);
+  const top = snap(column.top);
+  const swatchLeft = snap(left + (view.playCssWidth - swatchCss) / 2) - left;
+  return { left, top, swatchLeft };
+}
