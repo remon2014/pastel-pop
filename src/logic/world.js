@@ -14,11 +14,21 @@ import {
 
 // Radius in widths for a play area `widthDp` CSS pixels wide: a fixed fraction of the width,
 // but never smaller than the floor diameter in dp.
+// A width that is 0, negative or not finite is treated as the reference width.
 export function circleRadius(widthDp) {
+  if (!(widthDp > 0) || !Number.isFinite(widthDp)) return circleRadius(CIRCLE_REFERENCE_WIDTH_DP);
   const fraction = CIRCLE_DIAMETER_DP / 2 / CIRCLE_REFERENCE_WIDTH_DP;
   const floor = CIRCLE_MIN_DIAMETER_DP / 2 / widthDp;
   const cap = CIRCLE_MAX_DIAMETER_DP / 2 / widthDp;
   return Math.max(Math.min(fraction, cap), floor);
+}
+
+// Play-area height in widths for a canvas of the given pixel size, or `lastHeight` when the canvas
+// has no usable size (0 or not finite, for example while a window is collapsed). This keeps the
+// last good bounds so circles never get NaN or infinite positions.
+export function playAreaHeight(widthPx, heightPx, lastHeight) {
+  const usable = Number.isFinite(widthPx) && Number.isFinite(heightPx) && widthPx > 0 && heightPx > 0;
+  return usable ? heightPx / widthPx : lastHeight;
 }
 
 // Speed multiplier for a level (1.0 at level 1).

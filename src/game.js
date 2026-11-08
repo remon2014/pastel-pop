@@ -2,9 +2,17 @@ import { drawCircle } from './circle.js';
 import { UIManager } from './uiManager.js';
 import { PALETTE } from './colorManager.js';
 import { browserHost, createLoop } from './core/loop.js';
-import { BACKGROUND_COLOR } from './config.js';
+import { BACKGROUND_COLOR, CIRCLE_REFERENCE_WIDTH_DP } from './config.js';
 import { getDistance } from './utils.js';
-import { circleRadius, fitCircles, levelMultiplier, spawnCircle, speedFor, stepCircles } from './logic/world.js';
+import {
+  circleRadius,
+  fitCircles,
+  levelMultiplier,
+  playAreaHeight,
+  spawnCircle,
+  speedFor,
+  stepCircles,
+} from './logic/world.js';
 
 export class Game {
   constructor(canvas, ctx) {
@@ -48,7 +56,7 @@ export class Game {
     this.syncBounds();
     const numCircles = 5 + this.level * 2;
     const speed = speedFor(levelMultiplier(this.level));
-    const radius = circleRadius(this.canvas.width);
+    const radius = circleRadius(this.widthPixels || CIRCLE_REFERENCE_WIDTH_DP);
 
     for (let i = 0; i < numCircles; i++) {
       const circle = spawnCircle(this.bounds, radius, speed, Math.random);
@@ -61,7 +69,8 @@ export class Game {
 
   // The play area is 1 wide and as tall as the canvas aspect. Resizing pulls circles back inside.
   syncBounds() {
-    const height = this.canvas.height / this.canvas.width;
+    if (!(this.canvas.width > 0)) return;
+    const height = playAreaHeight(this.canvas.width, this.canvas.height, this.bounds.height);
     if (height === this.bounds.height && this.canvas.width === this.widthPixels) return;
     this.widthPixels = this.canvas.width;
     this.bounds.height = height;

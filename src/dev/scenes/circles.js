@@ -3,6 +3,7 @@ import { browserHost, createLoop } from '../../core/loop.js';
 import { fitCircles, isInside, speedFor, stepCircles } from '../../logic/world.js';
 import { createFpsCounter } from '../fpsCounter.js';
 import { createReadout } from '../readout.js';
+import { button, READOUT_MS } from '../ui.js';
 
 const DEFAULT_BOUNDS = { width: 1, height: 0.3 };
 const NARROW_WIDTH = 0.5;
@@ -14,7 +15,6 @@ const START_X = 0.5;
 const START_Y = 0.2;
 // Slow frames: logic steps once at least this many seconds have built up (about 30 steps a second).
 const SLOW_STEP_SECONDS = 0.03;
-const READOUT_MS = 250;
 const ROWS = [
   'Slow frames',
   'Steps per second',
@@ -26,14 +26,6 @@ const ROWS = [
   'Radius (widths)',
   'Outside bounds',
 ];
-
-function button(label, onClick) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = label;
-  b.addEventListener('click', onClick);
-  return b;
-}
 
 // Mounts the scene and returns its read-only numbers for window.__pastelPopDev.
 // A "crossing" is the time (on the clock of summed elapsed seconds) between two wall bounces.
