@@ -58,6 +58,10 @@ function drawMoon(ctx, cx, cy, s) {
 
 const DRAWERS = { star: drawStar, cloud: drawCloud, kite: drawKite, leaf: drawLeaf, moon: drawMoon };
 
+export function hasSymbol(id) {
+  return typeof DRAWERS[id] === 'function';
+}
+
 // Draws the symbol for a colour id in Ink, sized relative to the circle radius.
 export function drawSymbol(ctx, id, cx, cy, circleRadius) {
   ctx.beginPath();
