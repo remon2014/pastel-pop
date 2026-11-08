@@ -63,3 +63,34 @@ export const DEFAULT_SETTINGS = Object.freeze({
 });
 // Step the dev scene's volume buttons move by.
 export const DEV_VOLUME_STEP = 0.1;
+
+// Effects safety rules (F-14, docs/wellbeing.md sections 4 to 6). Times are in seconds.
+// Flash limit: at most this many flashes in any one second, across the whole screen (WB 4).
+export const FLASH_LIMIT = 3;
+export const FLASH_WINDOW_SECONDS = 1;
+// Pulses: Story at most 2 a second, Calm at most one every 2 seconds (WB 4, 6).
+export const STORY_PULSE_MAX_RATE = 2;
+export const CALM_PULSE_MAX_RATE = 0.5;
+// Calm: at most 2 circles begin arriving in any one second (WB 4).
+export const CALM_ARRIVALS_PER_SECOND = 2;
+// PLACEHOLDER: Story arrivals per second, until the game designer sets it (WB 6, F-14 test 13).
+export const STORY_ARRIVALS_PER_SECOND = 3;
+// Shake (WB 6): position only, 2 internal px, 200 ms, decaying, 2 swings, 2 starts a second, one at a time.
+export const SHAKE_SECONDS = 0.2;
+export const SHAKE_MAX_PIXELS = 2;
+export const SHAKE_SWINGS = 2;
+export const SHAKE_STARTS_PER_SECOND = 2;
+// Calm wrong-tap wobble (a single cycle of 300 ms or more) and the Reduce motion dim (about 600 ms).
+export const WOBBLE_SECONDS = 0.3;
+export const DIM_SECONDS = 0.6;
+// The dim changes the lightest colour's relative luminance by at most this (Calm and Story, WB 4 and 6).
+export const DIM_LUMINANCE_CAP = 0.07;
+// Story over-budget `quiet` form: opacity fade in the circle's own colour, at most 450 ms (WB 6).
+// PLACEHOLDER: the exact length is the game designer's choice inside that bound.
+export const QUIET_FADE_SECONDS = 0.45;
+// Plain fade used for the Calm pop under Reduce motion and when over the ring cap.
+export const PLAIN_FADE_SECONDS = 0.45;
+// Saturated red is R / (R + G + B) at or above this (WB 4).
+export const SATURATED_RED_RATIO = 0.8;
+// Colours effects may draw, besides the palette. PLACEHOLDER pulse colour: warm amber, not red.
+export const EFFECT_COLORS = Object.freeze({ lowTimePulse: '#E6C070', targetGlow: '#EDD894' });

@@ -1,0 +1,308 @@
+// Written from docs/wellbeing.md sections 4 to 6 and docs/game-design.md (Sensory safety,
+// Reduce motion on), not from the code. Test numbers match the F-14 row in docs/foundations-plan.md.
+import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
+import { PALETTE } from '../../src/colorManager.js';
+import * as config from '../../src/config.js';
+import { createLimiter } from '../../src/effects/limiter.js';
+
+const EPS = 1e-9;
+const FORMS = ['full', 'quiet', 'dim', 'fade', 'plainFade', 'ignored', 'waitUntil', 'refused'];
+const DUSK = '#332C2E';
+
+const rgb = (hex) => [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16));
+const lin = (c) => (c / 255 <= 0.03928 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4);
+const luminance = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+
+// Largest number of events in any window (t - 1 s, t] ending at an event.
+function maxInOneSecond(times) {
+  let max = 0;
+  for (const t of times) {
+    max = Math.max(max, times.filter((x) => x <= t + EPS && x > t - 1 + EPS).length);
+  }
+  return max;
+}
+
+function story() {
+  const l = createLimiter();
+  return { l, req: (kind, now, extra = {}) => l.request({ kind, mode: 'story', now, ...extra }) };
+}
+function calm() {
+  const l = createLimiter();
+  return { l, req: (kind, now, extra = {}) => l.request({ kind, mode: 'calm', now, ...extra }) };
+}
+
+// 3 fingers tapping 10 times a second for 10 s; returns times of granted bright pops.
+function tapStorm(req, seconds = 10) {
+  const granted = [];
+  for (let i = 0; i < seconds * 10; i++) {
+    for (let finger = 0; finger < 3; finger++) {
+      const { form } = req('pop', i / 10, { circleId: finger });
+      assert.ok(FORMS.includes(form), `every tap gets a form, got ${form}`);
+      if (form === 'full') granted.push(i / 10);
+    }
+  }
+  return granted;
+}
+
+describe('effects rules', () => {
+  test('1 flash budget: 10 taps a second with 3 fingers never grants more than 3 flashes in any second', () => {
+    const { req } = story();
+    const granted = tapStorm(req);
+    assert.ok(maxInOneSecond(granted) <= 3);
+    assert.ok(granted.length >= 25, 'taps still get their share of the budget');
+  });
+
+  test('1b flash budget in Calm: ring pops stay at 3 a second, extras become a plain fade', () => {
+    const { req } = calm();
+    const forms = [];
+    const granted = [];
+    for (let i = 0; i < 100; i++) {
+      const { form } = req('pop', i / 10, { circleId: 1 });
+      forms.push(form);
+      if (form === 'full') granted.push(i / 10);
+    }
+    assert.ok(maxInOneSecond(granted) <= 3);
+    assert.ok(forms.every((f) => f === 'full' || f === 'plainFade'));
+    assert.ok(forms.includes('plainFade'));
+  });
+
+  test('2 pulse plus bursts: a 2-a-second pulse and tap bursts together stay at 3 or under', () => {
+    const { l, req } = story();
+    assert.equal(req('pulse', 0, { circleId: 'bar', rate: 2 }).form, 'full');
+    const events = [];
+    for (let k = 0; k <= 20; k++) events.push(k * 0.5);
+    const pops = tapStorm(req);
+    assert.ok(pops.length >= 8, 'bursts still get what the pulse leaves');
+    assert.ok(maxInOneSecond([...events, ...pops]) <= 3);
+    l.stopPulse('bar');
+  });
+
+  test('3 pulse rate: Story allows 2 a second, Calm one every 2 s; faster is refused', () => {
+    assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 2 }).form, 'full');
+    assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 2.5 }).form, 'refused');
+    assert.equal(calm().req('pulse', 0, { circleId: 'a', rate: 0.5 }).form, 'full');
+    assert.equal(calm().req('pulse', 0, { circleId: 'a', rate: 1 }).form, 'refused');
+  });
+
+  test('3b a refused pulse takes no beats from the budget', () => {
+    const { req } = story();
+    req('pulse', 0, { circleId: 'a', rate: 3 });
+    assert.equal(tapStorm(req, 2).length >= 5, true);
+  });
+
+  test('4 one clock: pulses started at different moments beat at the same instants', () => {
+    const { l, req } = story();
+    req('pulse', 0.13, { circleId: 'a', rate: 2 });
+    const a = [0.2, 0.7, 1.31].map((t) => l.clock.nextBeatAfter(t));
+    req('pulse', 0.41, { circleId: 'b', rate: 2 });
+    const b = [0.2, 0.7, 1.31].map((t) => l.clock.nextBeatAfter(t));
+    assert.deepEqual(a, b);
+    assert.deepEqual(a, [0.5, 1, 1.5]);
+    assert.equal(l.clock.beatsIn(0, 1), 2);
+  });
+
+  test('5 shake: a second shake during a shake neither restarts nor extends it; Calm never shakes', () => {
+    const { req } = story();
+    assert.equal(req('shake', 0).form, 'full');
+    assert.notEqual(req('shake', 0.1).form, 'full');
+    assert.notEqual(req('shake', 0.15).form, 'full');
+    assert.equal(req('shake', 0.21).form, 'full', 'the first shake ended on time, not extended');
+    const c = calm();
+    for (let i = 0; i < 40; i++) assert.equal(c.req('shake', i / 10).form, 'refused');
+  });
+
+  test('12 shake bounds: at most 2 start in any second, never overlap, position only and within size limits', () => {
+    const { req } = story();
+    const starts = [];
+    for (let i = 0; i < 200; i++) if (req('shake', i * 0.05).form === 'full') starts.push(i * 0.05);
+    assert.ok(starts.length >= 8);
+    assert.ok(maxInOneSecond(starts) <= 2);
+    for (let i = 1; i < starts.length; i++) assert.ok(starts[i] - starts[i - 1] >= 0.2 - EPS);
+    assert.ok(config.SHAKE_MAX_PIXELS <= 2);
+    assert.ok(config.SHAKE_SECONDS <= 0.2);
+    assert.ok(config.SHAKE_SWINGS <= 2);
+  });
+
+  test('12b a shake does not count as a flash', () => {
+    const { req } = story();
+    req('shake', 0);
+    req('shake', 0.2);
+    const forms = [0, 1, 2].map((i) => req('pop', 0.3, { circleId: i }).form);
+    assert.deepEqual(forms, ['full', 'full', 'full']);
+  });
+
+  describe('6 Reduce motion swaps', () => {
+    test('Story shake becomes dim', () => {
+      const { l, req } = story();
+      l.setReduceMotion(true);
+      assert.equal(req('shake', 0).form, 'dim');
+      l.setReduceMotion(false);
+      assert.equal(req('shake', 1).form, 'full');
+    });
+    test('Calm wobble becomes dim', () => {
+      const { l, req } = calm();
+      l.setReduceMotion(true);
+      assert.equal(req('wobble', 0, { circleId: 1 }).form, 'dim');
+    });
+    test('Story burst becomes small fade, even when the budget is free', () => {
+      const { l, req } = story();
+      l.setReduceMotion(true);
+      assert.equal(req('pop', 0, { circleId: 1 }).form, 'fade');
+    });
+    test('Calm pop becomes a plain fade with no ring', () => {
+      const { l, req } = calm();
+      l.setReduceMotion(true);
+      assert.equal(req('pop', 0, { circleId: 1 }).form, 'plainFade');
+    });
+    test('travelling light is removed, in Story only', () => {
+      const { l, req } = story();
+      assert.equal(req('travelLight', 0).form, 'full');
+      l.setReduceMotion(true);
+      assert.equal(req('travelLight', 1).form, 'ignored');
+    });
+    test('low-time pulse and target glow are unchanged', () => {
+      const s = story();
+      s.l.setReduceMotion(true);
+      assert.equal(s.req('pulse', 0, { circleId: 'bar', rate: 2 }).form, 'full');
+      const c = calm();
+      c.l.setReduceMotion(true);
+      assert.equal(c.req('targetGlow', 0).form, 'full');
+    });
+  });
+
+  test('7 no saturated red: no effect colour has R/(R+G+B) of 0.8 or more', () => {
+    const colours = [...PALETTE.map((c) => c.hex), DUSK, ...Object.values(config.EFFECT_COLORS)];
+    for (const hex of colours) {
+      const [r, g, b] = rgb(hex);
+      assert.ok(r / (r + g + b) < 0.8, `${hex} is saturated red`);
+    }
+    assert.equal(config.SATURATED_RED_RATIO, 0.8);
+  });
+
+  test('8 same results at 60, 90 and 120 steps a second', () => {
+    const TICKS = 360;
+    function run(stepsPerSecond, offsetTicks) {
+      const { l, req } = story();
+      const stepTicks = TICKS / stepsPerSecond;
+      const log = [];
+      const taps = [];
+      req('pulse', 0, { circleId: 'bar', rate: 2 });
+      for (let step = 0; step <= 8 * stepsPerSecond; step++) {
+        const tick = step * stepTicks;
+        const now = tick / TICKS;
+        // Events are due every 36 ticks (0.1 s), shifted by offsetTicks; each runs on the next step.
+        const due = Math.floor((tick - offsetTicks) / 36) - Math.floor((tick - stepTicks - offsetTicks) / 36);
+        if (tick < offsetTicks || due < 1) continue;
+        for (let f = 0; f < 3; f++) {
+          const form = req('pop', now, { circleId: f }).form;
+          log.push(`${tick}:pop:${f}:${form}`);
+          if (form === 'full') taps.push(now);
+        }
+        log.push(`${tick}:shake:${req('shake', now).form}`);
+        log.push(`${tick}:arrival:${JSON.stringify(req('arrival', now))}`);
+      }
+      l.stopPulse('bar');
+      return { log, taps };
+    }
+    const aligned = [60, 90, 120].map((r) => run(r, 0));
+    assert.deepEqual(aligned[1].log, aligned[0].log);
+    assert.deepEqual(aligned[2].log, aligned[0].log);
+    for (const r of [60, 90, 120]) {
+      const { taps } = run(r, 13);
+      const beats = Array.from({ length: 17 }, (_, k) => k * 0.5);
+      assert.ok(maxInOneSecond([...taps, ...beats]) <= 3, `${r} steps a second`);
+    }
+  });
+
+  test('9 Calm arrivals: at most 2 begin in any second, extras wait and none is dropped; arrival plus pop is one flash', () => {
+    const { req } = calm();
+    const wanted = 50;
+    const started = [];
+    const waiting = [];
+    let asked = 0;
+    for (let step = 0; step <= 3000; step++) {
+      const now = step / 100;
+      for (const w of [...waiting]) {
+        const res = req('arrival', now);
+        if (res.form === 'full') {
+          started.push(now);
+          waiting.splice(waiting.indexOf(w), 1);
+        } else {
+          assert.equal(res.form, 'waitUntil');
+          assert.ok(res.at > now);
+        }
+      }
+      if (step % 10 === 0 && asked < wanted) {
+        asked++;
+        const res = req('arrival', now);
+        if (res.form === 'full') started.push(now);
+        else {
+          assert.equal(res.form, 'waitUntil');
+          waiting.push(asked);
+        }
+      }
+    }
+    assert.equal(started.length, wanted, 'every arrival eventually begins');
+    assert.ok(maxInOneSecond(started) <= 2);
+    // Two arrivals just began; the arrival does not take a flash of its own, so 3 pops still fit.
+    const c = calm();
+    c.req('arrival', 0);
+    c.req('arrival', 0.1);
+    const pops = [0, 1, 2].map((i) => c.req('pop', 0.2, { circleId: i }).form);
+    assert.deepEqual(pops, ['full', 'full', 'full']);
+  });
+
+  test('9b waitUntil names the moment the next arrival may begin', () => {
+    const { req } = calm();
+    req('arrival', 0);
+    req('arrival', 0.2);
+    const res = req('arrival', 0.3);
+    assert.equal(res.form, 'waitUntil');
+    assert.ok(Math.abs(res.at - 1) < 1e-6);
+    assert.equal(req('arrival', res.at).form, 'full');
+  });
+
+  test('10 Calm wobble: a circle already wobbling or dimming ignores further wrong taps', () => {
+    const { l, req } = calm();
+    assert.equal(req('wobble', 0, { circleId: 7 }).form, 'full');
+    assert.equal(req('wobble', 0.1, { circleId: 7 }).form, 'ignored');
+    assert.equal(req('wobble', 0.1, { circleId: 8 }).form, 'full');
+    assert.equal(req('wobble', 1, { circleId: 7 }).form, 'full', 'free again once it settles');
+    l.setReduceMotion(true);
+    assert.equal(req('wobble', 2, { circleId: 7 }).form, 'dim');
+    assert.equal(req('wobble', 2.4, { circleId: 7 }).form, 'ignored', 'still dimming at 0.4 s');
+    assert.equal(req('wobble', 3, { circleId: 7 }).form, 'dim');
+  });
+
+  test('11 Reduce motion dim changes the lightest colour by 0.07 relative luminance or less', () => {
+    const { l, req } = calm();
+    const f = l.dimFraction;
+    assert.ok(f > 0 && f < 1);
+    const lightest = PALETTE.map((c) => c.hex).sort((a, b) => luminance(rgb(b)) - luminance(rgb(a)))[0];
+    const from = rgb(lightest);
+    const to = rgb(DUSK);
+    const dimmed = from.map((c, i) => c + (to[i] - c) * f);
+    const change = luminance(from) - luminance(dimmed);
+    assert.ok(change <= 0.07 + 1e-6, `change ${change}`);
+    assert.ok(change > 0.05, 'the dim is still a visible cue, not zero');
+    assert.equal(config.DIM_LUMINANCE_CAP, 0.07);
+    l.setReduceMotion(true);
+    assert.equal(req('wobble', 5, { circleId: 2 }).amount, f);
+    const s = story();
+    s.l.setReduceMotion(true);
+    assert.equal(s.req('shake', 5).amount, f, 'Story shake dim uses the same cap');
+  });
+
+  test('13 Story arrivals count in the flash budget; over-budget bursts go quiet and do not count', () => {
+    const { req } = story();
+    for (let i = 0; i < 3; i++) assert.equal(req('arrival', 0).form, 'full');
+    const wait = req('arrival', 0.1);
+    assert.equal(wait.form, 'waitUntil');
+    assert.ok(wait.at > 0.1);
+    assert.equal(req('pop', 0.1, { circleId: 1 }).form, 'quiet');
+    assert.equal(req('pop', 0.2, { circleId: 2 }).form, 'quiet');
+    assert.equal(req('arrival', 1).form, 'full', 'quiet pops took nothing from the budget');
+    assert.ok(config.QUIET_FADE_SECONDS <= 0.45);
+  });
+});
