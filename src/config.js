@@ -38,3 +38,5 @@ export const DEV_FPS_WINDOW_MS = 1000;
 
 // Internal canvas width in pixels the view aims for (D-004). PROVISIONAL: 180 or 240, to be chosen by eye.
 export const INTERNAL_WIDTH_TARGET = 180;
+// Dev level only: the other target the 180 / 240 comparison buttons switch to.
+export const ALTERNATE_INTERNAL_WIDTH = 240;
