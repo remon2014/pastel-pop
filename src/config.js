@@ -35,3 +35,6 @@ export const MAX_FRAME_SECONDS = 0.1;
 
 // Dev level (src/dev/): window the measured frames per second is averaged over, in milliseconds.
 export const DEV_FPS_WINDOW_MS = 1000;
+
+// Internal canvas width in pixels the view aims for (D-004). PROVISIONAL: 180 or 240, to be chosen by eye.
+export const INTERNAL_WIDTH_TARGET = 180;
