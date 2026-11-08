@@ -166,3 +166,45 @@ test('circles stay finite and inside when a collapsed canvas returns to a real s
   }
   assert.equal(bounds.height, 1.25);
 });
+
+test('isInside is false for a circle poking out of each side', () => {
+  const r = 0.1;
+  const cases = {
+    left: { x: 0.05, y: 0.9 },
+    right: { x: 0.95, y: 0.9 },
+    top: { x: 0.5, y: 0.05 },
+    bottom: { x: 0.5, y: 1.75 },
+  };
+  assert.equal(isInside({ x: 0.5, y: 0.9, radius: r }, BOUNDS), true);
+  for (const [side, pos] of Object.entries(cases)) {
+    assert.equal(isInside({ ...pos, radius: r }, BOUNDS), false, side);
+  }
+});
+
+test('a circle bigger than the play area sits centred and stays put', () => {
+  const bounds = { width: 1, height: 0.5 };
+  const circle = { x: 0.2, y: 0.1, vx: 0.3, vy: 0.2, radius: 0.7 };
+  fitCircles([circle], bounds);
+  assert.equal(circle.x, 0.5);
+  assert.equal(circle.y, 0.25);
+  stepCircle(circle, bounds, 0.5);
+  assert.equal(circle.x, 0.5);
+  assert.equal(circle.y, 0.25);
+  const spawned = spawnCircle(bounds, 0.7, 0.25, seeded(3));
+  assert.equal(spawned.x, 0.5);
+  assert.equal(spawned.y, 0.25);
+});
+
+test('when only the width shrinks, circles are pulled back sideways and not vertically', () => {
+  const circle = { x: 0.9, y: 0.8, vx: 0.1, vy: 0.1, radius: 0.1 };
+  fitCircles([circle], { width: 0.5, height: 1.8 });
+  assert.ok(Math.abs(circle.x - 0.4) < 1e-12);
+  assert.equal(circle.y, 0.8);
+  assert.equal(circle.vx, 0.1);
+});
+
+test('a zero-second step moves nothing', () => {
+  const circle = { x: 0.4, y: 0.7, vx: 0.25, vy: -0.1, radius: 0.1 };
+  stepCircle(circle, BOUNDS, 0);
+  assert.deepEqual(circle, { x: 0.4, y: 0.7, vx: 0.25, vy: -0.1, radius: 0.1 });
+});
