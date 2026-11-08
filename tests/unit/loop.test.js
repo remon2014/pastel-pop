@@ -83,7 +83,9 @@ test('hidden stops updates and returning resumes without a jump', () => {
   env.frame(16);
   env.frame(16);
   assert.equal(env.calls.length, 3);
-  assert.ok(env.calls[2] <= 0.016 + 1e-9, 'first frame after returning delivers no gap');
+  assert.equal(env.calls[1], 0, 'first frame after returning delivers no gap');
+  assert.equal(env.loop.clampedFrames, 0);
+  assert.ok(Math.abs(env.calls[2] - 0.016) < 1e-9);
   assert.equal(env.pending.size, 1);
 });
 
