@@ -1,14 +1,29 @@
 // circle.js
+import { circlePixels } from './render/view.js';
 import { drawSymbol } from './symbols.js';
 
-// Draws a world circle (positions and radius in play-area widths) at `scale` pixels per width.
-export function drawCircle(ctx, circle, scale) {
-  const x = circle.x * scale;
-  const y = circle.y * scale;
-  const radius = circle.radius * scale;
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+// Whole-pixel rows of a filled disc in a size x size square: one { offset, width } per row.
+// arc() blends edge pixels even with smoothing off, so discs are built from whole-pixel rows.
+export function discRows(size) {
+  const radius = size / 2;
+  const rows = [];
+  for (let row = 0; row < size; row++) {
+    const dy = row + 0.5 - radius;
+    const half = Math.sqrt(Math.max(0, radius * radius - dy * dy));
+    // Pixel centres within `half` of the middle: even sizes have centres at +-0.5, +-1.5; odd at 0, +-1.
+    const width = size % 2 === 0 ? 2 * Math.round(half) : 2 * Math.floor(half) + 1;
+    rows.push({ offset: (size - width) / 2, width });
+  }
+  return rows;
+}
+
+// Draws a world circle (positions and radius in play-area widths) onto the internal-resolution canvas.
+export function drawCircle(ctx, circle, view) {
+  const { size, left, top } = circlePixels(view, circle);
   ctx.fillStyle = circle.color.hex;
-  ctx.fill();
-  drawSymbol(ctx, circle.color.id, x, y, radius);
+  const rows = discRows(size);
+  for (let row = 0; row < rows.length; row++) {
+    ctx.fillRect(left + rows[row].offset, top + row, rows[row].width, 1);
+  }
+  drawSymbol(ctx, circle.color.id, left + size / 2, top + size / 2, size / 2);
 }
