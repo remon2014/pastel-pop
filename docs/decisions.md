@@ -19,6 +19,7 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 | D-007 | 2026-10-11 | Test runner: Node's built-in runner, no package | Accepted |
 | D-008 | 2026-10-11 | Lint and format: `@biomejs/biome` | Accepted |
 | D-009 | 2026-10-11 | No browser-test framework yet | Accepted |
+| D-010 | 2026-11-08 | Function before look: placeholder visuals, with rules and timing kept apart from drawing | Accepted |
 
 ---
 
@@ -105,3 +106,18 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 - **Reason:** Nothing is stable enough to automate until F-18, and the package brings browser downloads with it.
 - **Alternatives rejected:** Add it now (cost with no stable behaviour to cover).
 - **Revisit:** after F-18, when QA has high-priority cases that keep needing re-checks.
+
+## D-010: Function before look: placeholder visuals, rules and timing apart from drawing
+
+- **Date:** 2026-11-08. **Status:** Accepted (owner instruction 2026-11-08).
+- **Decision:** From F-15 onwards, every system is built fully working with placeholder visuals and sounds, and its rules and timing are kept apart from how it looks or sounds, so the art can be swapped in later without changing game logic. Roadmap order: foundations F-11 to F-19, then Calm mode fully working with simple shapes and colours, then Story mode stage 1 fully working with placeholder mural sections, and only then art, pixel art, glow, murals, music and polish.
+- **In practice:**
+  - Effect rules, timing and limits (budget, pulse clock, shake, Reduce motion swaps, colour check, voice cap, fades) live in plain modules with no canvas, DOM or Web Audio, as D-003 requires of logic. They output plain effect state: kind, position, start time, progress and strength.
+  - Drawing sits behind one small drawer per effect kind (burst, quiet form, dim, shake, wobble, pulse), chosen from one table. A drawer only reads effect state and draws it; it decides nothing about timing, budget or motion settings. Swapping art means replacing a drawer, not touching the rules.
+  - Sound works the same way: the voice cap, fades and limiter are logic; the placeholder tone for each sound comes from one table that real sounds can replace.
+  - Drawers stay inside `src/effects/`, so D-005 still holds: nothing outside the layer draws a brightness change, shake, dim, wobble or pulse, or plays sound.
+  - Tests cover the rules and the effect state, not the look. Placeholder visuals must still meet every sensory-safety rule in `docs/wellbeing.md`; the F-16 meter checks the pixels whatever the drawer draws.
+  - The same split applies to Calm and Story mode systems: circles, targets, progress and mural sections are real systems with stand-in shapes and colours.
+- **Scope:** F-15 onwards, and all Calm mode and Story mode work until the art phase. F-11 to F-14 are unaffected.
+- **Reason:** Look and feel are still being designed; working systems first lets play and safety be tested early, and keeps art changes from reaching into game logic.
+- **Alternatives rejected:** Build final art alongside each system (art waits on design, and art changes would keep reopening tested logic). Placeholder art drawn inline in the effect logic (the art swap would then touch the rules and their tests).
