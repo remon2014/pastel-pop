@@ -14,12 +14,13 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 | D-002 | 2026-10-11 | Remove the service worker | Accepted |
 | D-003 | 2026-10-11 | Logic separate from rendering, in screen-relative units, on one clamped elapsed-time loop | Accepted |
 | D-004 | 2026-10-11 | One low-resolution canvas, whole-number scale, resolution as one constant | Accepted |
-| D-005 | 2026-10-11 | Central effects-safety layer is the only route for effects and sound | Accepted |
+| D-005 | 2026-10-11 | Central effects-safety layer is the only route for effects and sound | Accepted (amended by D-011) |
 | D-006 | 2026-10-11 | Dev level behind `?dev=` and `import.meta.env.DEV` | Accepted |
 | D-007 | 2026-10-11 | Test runner: Node's built-in runner, no package | Accepted |
 | D-008 | 2026-10-11 | Lint and format: `@biomejs/biome` | Accepted |
 | D-009 | 2026-10-11 | No browser-test framework yet | Accepted |
 | D-010 | 2026-11-08 | Function before look: placeholder visuals, with rules and timing kept apart from drawing | Accepted |
+| D-011 | 2026-11-08 | Soft pulses pay no flash budget; softness is proved by a drawn-luminance test | Accepted (amends D-005) |
 
 ---
 
@@ -59,7 +60,7 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 
 ## D-005: Central effects-safety layer
 
-- **Date:** 2026-10-11. **Status:** Accepted (plan approved by the owner 2026-10-11).
+- **Date:** 2026-10-11. **Status:** Accepted (plan approved by the owner 2026-10-11). Amended by D-011: soft pulses pay no flash budget.
 - **Decision:** `src/effects/` is the only code allowed to draw a brightness change, shake, dim, wobble or pulse, to play sound, or (later) to vibrate. Features request an effect; the layer decides what happens. It enforces, from `docs/wellbeing.md` sections 4 and 6:
   - at most 3 flashes in any one second, counted across the whole screen, with pulses and bursts sharing the same budget;
   - an over-budget request is given a quieter form, never dropped silently and never queued;
@@ -121,3 +122,10 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 - **Scope:** F-15 onwards, and all Calm mode and Story mode work until the art phase. F-11 to F-14 are unaffected.
 - **Reason:** Look and feel are still being designed; working systems first lets play and safety be tested early, and keeps art changes from reaching into game logic.
 - **Alternatives rejected:** Build final art alongside each system (art waits on design, and art changes would keep reopening tested logic). Placeholder art drawn inline in the effect logic (the art swap would then touch the rules and their tests).
+
+## D-011: Soft pulses pay no flash budget
+
+- **Date:** 2026-11-08. **Status:** Accepted (owner approved WB section 6 rule 7a, 2026-11-08). Amends D-005's "pulses and bursts sharing the same budget". Delivered by F-16b.
+- **Decision:** Every pulse the layer draws must change relative luminance by 0.07 or less across its beats, measured on composited drawn colours, not saturated red, at most 2 beats a second (Story) or one every 2 s (Calm). Such a pulse is not a flash, so the limiter logs no flash for a beat and reserves no budget. The guarantee is a unit test that computes each pulse drawer's luminance change from the palette and `src/config.js`; any new pulse drawer joins that test. The shared 0.5 s pulse clock, rate caps and late-beat drop stay. The F-16 meter remains the authority on screen.
+- **Reason:** A steady 2-a-second pulse filled the whole closed 1.05 s budget, forcing quiet taps and quiet Story arrivals during the warning; the wellbeing advisor judged quiet arrivals not truly free and the game designer rejected holding arrivals. A soft pulse removes the conflict and deletes code (`TAP_FLASHES_WITH_PULSE`, quiet arrivals, beat reservation).
+- **Alternatives rejected:** Keep the pulse paying budget with quiet taps and arrivals (unsafe reading of arrivals, poor feel at the climax). Hold arrivals during the pulse (board empties). Slow the pulse to free budget (owner chose a steady 2 a second). A per-pulse "soft" flag checked at run time (two code paths for one rule; the test proves it once).
