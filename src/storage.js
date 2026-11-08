@@ -20,20 +20,27 @@ export function createStorage() {
 }
 
 // The system "reduce motion" preference as { matches(), subscribe(fn) }; subscribe returns an unsubscribe.
-export function createSystemReducedMotion() {
+// matchMedia is passed in for tests; by default it is the browser's. Older Safari only has addListener.
+export function createSystemReducedMotion(matchMedia = (q) => window.matchMedia(q)) {
   let query = null;
   try {
-    query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    query = matchMedia('(prefers-reduced-motion: reduce)');
   } catch {
     query = null;
   }
   return {
     matches: () => Boolean(query?.matches),
     subscribe(fn) {
-      if (!query) return () => {};
       const listener = () => fn();
-      query.addEventListener('change', listener);
-      return () => query.removeEventListener('change', listener);
+      if (typeof query?.addEventListener === 'function') {
+        query.addEventListener('change', listener);
+        return () => query.removeEventListener('change', listener);
+      }
+      if (typeof query?.addListener === 'function') {
+        query.addListener(listener);
+        return () => query.removeListener(listener);
+      }
+      return () => {};
     },
   };
 }
