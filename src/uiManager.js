@@ -1,5 +1,7 @@
 // src/uiManager.js
-import { CREAM, DUSK, SWATCH_SIZE, SWATCH_FRAME_WIDTH } from './config.js';
+import { fillDisc } from './circle.js';
+import { CREAM, DUSK, SWATCH_FRAME_PX, SWATCH_GAP_PX } from './config.js';
+import { swatchPixels } from './render/view.js';
 import { drawSymbol } from './symbols.js';
 
 export class UIManager {
@@ -10,14 +12,14 @@ export class UIManager {
     this.pauseOverlay = document.getElementById('pauseOverlay');
     this.continueBtn = document.getElementById('continueBtn');
     this.backToMainBtn = document.getElementById('backToMainBtn');
-    this.targetCanvas.width = SWATCH_SIZE;
-    this.targetCanvas.height = SWATCH_SIZE;
+    this.targetColor = null;
   }
 
   resetUI() {
     this.hidePauseMenu();
     this.setPauseLabel(false);
-    this.targetCanvas.getContext('2d').clearRect(0, 0, SWATCH_SIZE, SWATCH_SIZE);
+    this.targetColor = null;
+    this.drawSwatch();
     this.targetLabel.textContent = '';
   }
 
@@ -33,25 +35,32 @@ export class UIManager {
     this.pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
   }
 
+  // Sizes the swatch canvas in the play area's pixels (1.5 play circles across) and redraws it.
+  layoutSwatch(view, circleRadius) {
+    const size = swatchPixels(view, circleRadius);
+    this.targetCanvas.width = size;
+    this.targetCanvas.height = size;
+    this.targetCanvas.style.width = `${size * view.cssPerInternal}px`;
+    this.targetCanvas.style.height = `${size * view.cssPerInternal}px`;
+    this.drawSwatch();
+  }
+
   // Draws the target as colour plus symbol in a Cream frame, and updates the polite screen-reader label.
   setTargetSwatch(color) {
-    const ctx = this.targetCanvas.getContext('2d');
-    const c = SWATCH_SIZE / 2;
-    const frame = SWATCH_FRAME_WIDTH;
-    ctx.clearRect(0, 0, SWATCH_SIZE, SWATCH_SIZE);
-    ctx.beginPath();
-    ctx.arc(c, c, c, 0, Math.PI * 2);
-    ctx.fillStyle = CREAM;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(c, c, c - frame, 0, Math.PI * 2);
-    ctx.fillStyle = DUSK;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(c, c, c - frame * 2, 0, Math.PI * 2);
-    ctx.fillStyle = color.hex;
-    ctx.fill();
-    drawSymbol(ctx, color.id, c, c, c - frame * 2);
+    this.targetColor = color;
+    this.drawSwatch();
     this.targetLabel.textContent = `Target: ${color.name}, ${color.colorWord}`;
+  }
+
+  drawSwatch() {
+    const ctx = this.targetCanvas.getContext('2d');
+    const size = this.targetCanvas.width;
+    ctx.clearRect(0, 0, size, size);
+    if (!this.targetColor || size < 1) return;
+    const ring = SWATCH_FRAME_PX + SWATCH_GAP_PX;
+    fillDisc(ctx, 0, 0, size, CREAM);
+    fillDisc(ctx, SWATCH_FRAME_PX, SWATCH_FRAME_PX, size - 2 * SWATCH_FRAME_PX, DUSK);
+    fillDisc(ctx, ring, ring, size - 2 * ring, this.targetColor.hex);
+    drawSymbol(ctx, this.targetColor.id, size / 2, size / 2, size / 2 - ring);
   }
 }

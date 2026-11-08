@@ -5,15 +5,15 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#332C2E" />
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Pastel Pop</title>
     <style>
       html, body {
         margin: 0;
         padding: 0;
         overflow: hidden;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         background: #332C2E;
         color: #D9CEC2;
@@ -29,27 +29,36 @@
         touch-action: none;
       }
 
+      /* The HUD covers exactly the play area; layout.js sets --play-* from the safe-area-trimmed column. */
       #gameUI {
         position: absolute;
-        top: 0;
-        left: 0;
+        left: var(--play-left, 0);
+        top: var(--play-top, 0);
+        width: var(--play-width, 100%);
+        height: var(--play-height, 100%);
         z-index: 10;
-        width: 100%;
-        height: 100%;
         pointer-events: none;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
       }
 
+      /* layout.js sets --swatch-left so the swatch sits on a whole device pixel. */
       #infoPanel {
-        display: flex;
-        justify-content: center;
-        padding-top: max(20px, env(safe-area-inset-top));
+        position: absolute;
+        top: 0;
+        left: var(--swatch-left, 0);
+      }
+
+      #pauseBtn {
+        display: none;
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        min-width: 48px;
+        pointer-events: auto;
       }
 
       #targetCanvas {
         display: block;
+        image-rendering: pixelated;
       }
 
       .visually-hidden {
@@ -67,8 +76,8 @@
         top: 0;
         left: 0;
         z-index: 20;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         background: #332C2E;
         display: flex;
         flex-direction: column;
@@ -106,7 +115,7 @@
       }
 
       .overlay {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         width: 100%;
@@ -135,8 +144,8 @@
 
   <body>
     <canvas id="gameCanvas"></canvas>
-    <button type="button" id="pauseBtn" class="button-17" style="position:absolute; top:20px; right:20px; z-index:15;">Pause</button>
     <div id="gameUI">
+      <button type="button" id="pauseBtn" class="button-17">Pause</button>
       <div id="infoPanel">
         <div>
           <canvas id="targetCanvas" aria-hidden="true"></canvas>

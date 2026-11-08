@@ -29,13 +29,18 @@ function cachedRows(size) {
   return rows;
 }
 
-// Draws a world circle (positions and radius in play-area widths) onto the internal-resolution canvas.
-export function drawCircle(ctx, circle, view) {
-  const { size, left, top } = circlePixels(view, circle);
-  ctx.fillStyle = circle.color.hex;
+// Fills a whole-pixel disc of `size` internal pixels with its top-left corner at (left, top).
+export function fillDisc(ctx, left, top, size, color) {
+  ctx.fillStyle = color;
   const rows = cachedRows(size);
   for (let row = 0; row < rows.length; row++) {
     ctx.fillRect(left + rows[row].offset, top + row, rows[row].width, 1);
   }
+}
+
+// Draws a world circle (positions and radius in play-area widths) onto the internal-resolution canvas.
+export function drawCircle(ctx, circle, view) {
+  const { size, left, top } = circlePixels(view, circle);
+  fillDisc(ctx, left, top, size, circle.color.hex);
   drawSymbol(ctx, circle.color.id, left + size / 2, top + size / 2, size / 2);
 }

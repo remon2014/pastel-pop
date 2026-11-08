@@ -72,6 +72,8 @@ export class Game {
   setView(view) {
     this.view = view;
     this.syncBounds();
+    this.ui.layoutSwatch(view, circleRadius(view.playCssWidth));
+    this.draw();
   }
 
   // The play area is 1 wide and as tall as the view. Resizing pulls circles back inside.
@@ -150,7 +152,11 @@ export class Game {
   update(elapsedSeconds) {
     if (!this.view) return;
     stepCircles(this.circles, this.bounds, elapsedSeconds);
+    this.draw();
+  }
 
+  // Resizing a canvas clears it, so this also runs on resize while paused.
+  draw() {
     this.ctx.fillStyle = BACKGROUND_COLOR;
     this.ctx.fillRect(0, 0, this.view.internalWidth, this.view.internalHeight);
 
