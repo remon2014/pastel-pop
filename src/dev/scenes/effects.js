@@ -110,8 +110,9 @@ export default function mountEffectsScene(root) {
   let lastMeterHighest = 0;
   let meterMs = 0;
 
-  const request = (kind, circle, extra = {}) =>
-    effects.request({
+  const tally = {};
+  const request = (kind, circle, extra = {}) => {
+    const granted = effects.request({
       kind,
       mode,
       now,
@@ -122,6 +123,10 @@ export default function mountEffectsScene(root) {
       color: circle.color.hex,
       ...extra,
     });
+    const key = `${kind}.${granted.form}`;
+    tally[key] = (tally[key] ?? 0) + 1;
+    return granted;
+  };
 
   function pop(circle) {
     request('pop', circle);
@@ -397,6 +402,9 @@ export default function mountEffectsScene(root) {
     },
     get stepsPerSecond() {
       return stepCounter.fps(performance.now());
+    },
+    get tally() {
+      return { ...tally };
     },
     get meter() {
       return {
