@@ -20,6 +20,7 @@ One line per verification, newest last. Verdicts come from the qa-tester agent p
 | 2026-11-08 | R-03 World test gaps | `01983f3` | PASS | 0 | qa-tester | All four mutations (`isInside` true, no oversize handling, no x pull-back, nudge in `stepCircle`) each fail at least one new test; restored |
 | 2026-11-08 | R-04 Every palette id has a symbol | `6b40a2a` | PASS | 0 | qa-tester | Removing `moon` from the drawers fails the test; restored |
 | 2026-11-08 | R-05 Shared dev button and READOUT_MS | `bf203e2` | PASS | 0 | qa-tester | One `button` and one `READOUT_MS` in `src/dev/ui.js`. `?dev`, `?dev=loop`, `?dev=circles`: buttons work, readouts change 4 times a second, no console errors. Build: no `__pastelPopDev` in `dist/`, one JS chunk, preview `?dev` opens the game. `npm test` 49 pass, lint and format:check clean |
+| 2026-11-08 | R-01 to R-05 review follow-ups | `810ea44`, `17f9a67` | PASS | 0 | qa-tester | 50 tests pass; lint, format:check, build clean, no `__pastelPopDev` in `dist/`. Mutations fail as intended: no `circleRadius` guard (test 50), `playAreaHeight` always `lastHeight` (44, 45), plain `DRAWERS[id]` lookup (26). Browser at 1200x688 and 375x812: collapse and restore, 12 pops across a level change, no NaN, no console warnings |
 
 ## Not yet tested on anything
 - A real phone: touch feel, performance, the device font, colours at night and in daylight.
