@@ -312,4 +312,11 @@ describe('effect state', () => {
       assert.equal(fx.active.length, 1, 'the dim runs to its end');
     });
   });
+
+  test('flashTotal counts every flash the layer pays for, however old', () => {
+    const fx = createEffects();
+    ask(fx, 'pop', 'story', 0);
+    ask(fx, 'pop', 'story', 5);
+    assert.equal(fx.flashTotal(), 2);
+  });
 });

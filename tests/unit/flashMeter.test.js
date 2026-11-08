@@ -194,3 +194,21 @@ test('the area is only taken while a shake is running', () => {
   m.addFrame(1 / FPS, frame(grey(255)), 0, false);
   assert.equal(m.shakeArea.highest, 0);
 });
+
+test('a shake whose offset holds steady at a non-zero value reads 0', () => {
+  const m = createFlashMeter(16, 4);
+  const pic = (left) => {
+    const px = new Uint8ClampedArray(16 * 4 * 4);
+    for (let y = 0; y < 4; y++) for (let x = 0; x < 16; x++) px.set([...bar(left)(x), 255], (y * 16 + x) * 4);
+    return px;
+  };
+  m.addFrame(0, pic(4), 0, false);
+  let i = 1;
+  for (let swing = 0; swing < 4; swing++) {
+    m.addFrame(i++ / FPS, pic(8), 4, true); // moves right by 4
+    for (let hold = 0; hold < 3; hold++) m.addFrame(i++ / FPS, pic(8), 0, true); // holds, offset stays at 4
+    m.addFrame(i++ / FPS, pic(4), -4, true); // moves back
+    m.addFrame(i++ / FPS, pic(4), 0, true);
+  }
+  assert.equal(m.flashes.total, 0);
+});

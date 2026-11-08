@@ -107,6 +107,7 @@ export default function mountEffectsScene(root) {
   let meter = null;
   let lastShake = 0;
   let meterAbove = 0;
+  let lastMeterHighest = 0;
   let meterMs = 0;
 
   const request = (kind, circle, extra = {}) =>
@@ -135,7 +136,9 @@ export default function mountEffectsScene(root) {
 
   function respawn(circle) {
     circle.id = `c${nextId++}`;
-    circle.color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    // At least one target-coloured circle stays on screen, so taps keep popping.
+    const targetShown = circles.some((c) => c !== circle && !c.gone && c.color.id === TARGET.id);
+    circle.color = targetShown ? PALETTE[Math.floor(Math.random() * PALETTE.length)] : TARGET;
     circle.waiting = request('arrival', circle).form === 'waitUntil';
     circle.gone = circle.waiting;
   }
@@ -210,7 +213,9 @@ export default function mountEffectsScene(root) {
     lastShake = shake;
     meterMs = performance.now() - started;
     // The calibration block is a known flash the layer does not know about, so the check is off while it shows.
-    if (!calibrationOn && meter.flashes.highest > effects.peaks.flashes) meterAbove++;
+    const highest = meter.flashes.highest;
+    if (!calibrationOn && highest > effects.peaks.flashes && highest > lastMeterHighest) meterAbove++;
+    lastMeterHighest = highest;
   }
 
   function layout() {
@@ -308,6 +313,7 @@ export default function mountEffectsScene(root) {
       meter.rawFlashes.resetHighest(performance.now() / MS_PER_SECOND);
       meter.shakeArea.highest = 0;
       meterAbove = 0;
+      lastMeterHighest = 0;
     }),
   );
 

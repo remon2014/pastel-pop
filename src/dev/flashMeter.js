@@ -159,7 +159,7 @@ export function createFlashMeter(width, height) {
     for (let c = 0; c < cellCount; c++) {
       const now = sumNow[c] / counts[c];
       rawLevel[c] = now;
-      level[c] = started && dx !== 0 ? level[c] + now - sumPred[c] / counts[c] : now;
+      level[c] = started && (shaking || dx !== 0) ? level[c] + now - sumPred[c] / counts[c] : now;
       const total = sumR[c] + sumG[c] + sumB[c];
       redLevel[c] = total > 0 && sumR[c] / total >= RED_SHARE ? 1 : 0;
     }
