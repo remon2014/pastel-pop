@@ -17,11 +17,23 @@ export function discRows(size) {
   return rows;
 }
 
+const rowCache = new Map();
+
+// discRows by size, so drawing does not rebuild the rows every frame.
+function cachedRows(size) {
+  let rows = rowCache.get(size);
+  if (!rows) {
+    rows = discRows(size);
+    rowCache.set(size, rows);
+  }
+  return rows;
+}
+
 // Draws a world circle (positions and radius in play-area widths) onto the internal-resolution canvas.
 export function drawCircle(ctx, circle, view) {
   const { size, left, top } = circlePixels(view, circle);
   ctx.fillStyle = circle.color.hex;
-  const rows = discRows(size);
+  const rows = cachedRows(size);
   for (let row = 0; row < rows.length; row++) {
     ctx.fillRect(left + rows[row].offset, top + row, rows[row].width, 1);
   }
