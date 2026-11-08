@@ -2,7 +2,7 @@
 // arrivals waiting, forget. State only: no canvas, no look.
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { PULSE_BEAT_SECONDS, SHAKE_MAX_PIXELS, SHAKE_SECONDS, SHAKE_SWINGS, WOBBLE_SECONDS } from '../../src/config.js';
+import { MAX_BEAT_LATENESS, SHAKE_MAX_PIXELS, SHAKE_SECONDS, SHAKE_SWINGS, WOBBLE_SECONDS } from '../../src/config.js';
 import { createEffects } from '../../src/effects/effects.js';
 
 const circle = { x: 0.5, y: 0.5, radius: 0.09, color: '#EDD894' };
@@ -102,7 +102,7 @@ describe('effect state', () => {
     fx.update(0.5);
     assert.equal(fx.active.filter((e) => e.kind === 'pulse').length, 1);
     fx.update(5.3);
-    assert.equal(fx.active.filter((e) => e.kind === 'pulse' && 5.3 - e.start > PULSE_BEAT_SECONDS).length, 0);
+    assert.equal(fx.active.filter((e) => e.kind === 'pulse' && 5.3 - e.start > MAX_BEAT_LATENESS).length, 0);
     assert.equal(fx.flashCount(), 0, 'nothing old was drawn');
     assert.equal(fx.beatCount(), 0);
     fx.update(5.5);
@@ -143,5 +143,45 @@ describe('effect state', () => {
     ask(fx, 'wobble', 'calm', 0.1);
     ask(fx, 'shake', 'calm', 0.1);
     assert.equal(fx.active.length, before);
+  });
+
+  test('late beats: with long frames, drawn flashes stay at 3 a second and no two beats share a frame', () => {
+    const gaps = [0.083, 0.1, 0.05, 0.1, 0.07, 0.1];
+    for (const rate of [2, 1]) {
+      const fx = createEffects();
+      ask(fx, 'pulse', 'story', 0, { rate });
+      const seen = new Set();
+      const drawn = [];
+      let now = 0;
+      for (let i = 0; i < 400; i++) {
+        now += gaps[i % gaps.length];
+        fx.update(now);
+        let beatsThisFrame = 0;
+        for (const e of fx.active) {
+          if (e.kind !== 'pulse' || seen.has(e)) continue;
+          seen.add(e);
+          beatsThisFrame++;
+          drawn.push(now);
+        }
+        assert.ok(beatsThisFrame <= 1, 'two beats drawn in one frame');
+        if (i % 3 === 0 && ask(fx, 'pop', 'story', now).form === 'full') drawn.push(now);
+      }
+      for (const t of drawn) {
+        const n = drawn.filter((x) => x <= t + 1e-9 && x > t - 1 + 1e-9).length;
+        assert.ok(n <= 3, `${n} drawn in one second ending at ${t}`);
+      }
+      assert.ok(seen.size > 0, 'some beats are still drawn');
+    }
+  });
+
+  test('a beat taken late but older than a logged tap keeps the layer count at 3 or below', () => {
+    const fx = createEffects();
+    ask(fx, 'pulse', 'story', 0, { rate: 2 });
+    fx.update(0.5);
+    assert.equal(ask(fx, 'pop', 'story', 1.03).form, 'full');
+    fx.update(1.03);
+    fx.update(1.5);
+    assert.equal(fx.peaks.flashes, 3);
+    assert.equal(fx.flashCount(), 3);
   });
 });

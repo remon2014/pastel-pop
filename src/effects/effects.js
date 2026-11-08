@@ -4,6 +4,7 @@ import {
   ARRIVAL_SECONDS,
   DIM_SECONDS,
   FLASH_WINDOW_SECONDS,
+  MAX_BEAT_LATENESS,
   PLAIN_FADE_SECONDS,
   POP_SECONDS,
   PULSE_BEAT_SECONDS,
@@ -133,7 +134,7 @@ export function createEffects() {
     }
     for (const t of limiter.takeBeats(now)) {
       // A beat seen late (after a gap) is dropped unseen. The limiter still counted it, which errs safe.
-      if (now - t > PULSE_BEAT_SECONDS) continue;
+      if (now - t > MAX_BEAT_LATENESS) continue;
       countFlash(t);
       beats.push(t);
       begin(

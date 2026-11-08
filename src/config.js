@@ -102,6 +102,10 @@ export const EFFECT_COLORS = Object.freeze({ lowTimePulse: '#E6C070', targetGlow
 // Effects layer (F-15). All PLACEHOLDER looks until the art phase (D-010); timings stay inside the WB bounds above.
 // A pulse beat is drawn for this long (under the tick length); a beat older than this when seen is dropped unseen.
 export const PULSE_BEAT_SECONDS = 0.25;
+// A pulse beat seen later than this after its tick is dropped unseen (the limiter still counted it).
+// Drawn late, a beat could sit closer to other flashes than the limiter's tick-time count allows.
+// 0.04 s is one 30 Hz step (0.033 s, the dev slow loop) plus a margin, so 60 Hz frames (0.017 s) never drop a beat.
+export const MAX_BEAT_LATENESS = 0.04;
 export const ARRIVAL_SECONDS = 0.3;
 export const POP_SECONDS = 0.3;
 export const WOBBLE_PIXELS = 2;
