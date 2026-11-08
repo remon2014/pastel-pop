@@ -46,8 +46,18 @@ export function createLimiter() {
   // When enough old flashes have left the window for `needed` more to fit.
   const freeAt = (needed) => flashes[flashes.length + reservedBeats() + needed - FLASH_LIMIT - 1] + 1;
 
-  function updateClock() {
-    clock.setRate(Math.max(0, ...pulses.values()));
+  // Past beats were reserved, not logged. Before the rate drops, log those still in the window.
+  function logPastBeats(now) {
+    const rate = clock.rate;
+    const first = Math.floor((now - FLASH_WINDOW_SECONDS) * rate + EPS) + 1;
+    for (let k = first; k <= Math.floor(now * rate + EPS); k++) flashes.push(k / rate);
+    flashes.sort((a, b) => a - b);
+  }
+
+  function updateClock(now) {
+    const next = Math.max(0, ...pulses.values());
+    if (next < clock.rate) logPastBeats(now);
+    clock.setRate(next);
   }
 
   function pulse({ mode, now, circleId, rate }) {
@@ -56,7 +66,7 @@ export function createLimiter() {
     const was = pulses.get(circleId);
     pulses.set(circleId, rate);
     const before = clock.rate;
-    updateClock();
+    updateClock(now);
     if (room(now) < 0) {
       // Taps already use the room this pulse needs: start once enough have left the window.
       const at = freeAt(0);
@@ -92,12 +102,11 @@ export function createLimiter() {
 
   function shake({ mode, now }) {
     if (mode === 'calm') return { form: 'refused' };
-    if (reduceMotion) return { form: 'dim', amount: dim };
     prune(shakes, now);
     if (now < shakeUntil - EPS || shakes.length >= SHAKE_STARTS_PER_SECOND) return { form: 'quiet' };
     shakes.push(now);
-    shakeUntil = now + SHAKE_SECONDS;
-    return { form: 'full' };
+    shakeUntil = now + (reduceMotion ? DIM_SECONDS : SHAKE_SECONDS);
+    return reduceMotion ? { form: 'dim', amount: dim } : { form: 'full' };
   }
 
   function wobble({ mode, now, circleId }) {
@@ -132,9 +141,9 @@ export function createLimiter() {
       const handle = handlers[req.kind];
       return handle ? handle(req) : { form: 'refused' };
     },
-    stopPulse(id) {
+    stopPulse(id, now) {
       pulses.delete(id);
-      updateClock();
+      updateClock(now);
     },
   };
 }

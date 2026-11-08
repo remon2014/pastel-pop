@@ -75,7 +75,27 @@ describe('effects rules', () => {
     const pops = tapStorm(req);
     assert.ok(pops.length >= 8, 'bursts still get what the pulse leaves');
     assert.ok(maxInOneSecond([...events, ...pops]) <= 3);
-    l.stopPulse('bar');
+    l.stopPulse('bar', 10);
+  });
+
+  test('2b stopping a pulse keeps its recent beats in the budget: no second holds more than 3', () => {
+    const { l, req } = story();
+    req('pulse', 0, { circleId: 'bar', rate: 2 });
+    assert.equal(req('pop', 0.9, { circleId: 1 }).form, 'full');
+    l.stopPulse('bar', 1.0);
+    const granted = [0.9];
+    for (const t of [1.02, 1.02, 1.02]) if (req('pop', t, { circleId: 2 }).form === 'full') granted.push(t);
+    assert.ok(maxInOneSecond([0.5, 1.0, ...granted]) <= 3);
+  });
+
+  test('2c lowering a pulse rate keeps the beats already played in the budget', () => {
+    const { req } = story();
+    req('pulse', 0, { circleId: 'bar', rate: 2 });
+    assert.equal(req('pop', 0.9, { circleId: 1 }).form, 'full');
+    req('pulse', 1.0, { circleId: 'bar', rate: 0.5 });
+    const granted = [0.9];
+    for (const t of [1.02, 1.02, 1.02]) if (req('pop', t, { circleId: 2 }).form === 'full') granted.push(t);
+    assert.ok(maxInOneSecond([0.5, 1.0, ...granted]) <= 3);
   });
 
   test('3 pulse rate: Story allows 2 a second, Calm one every 2 s; faster is refused', () => {
@@ -122,6 +142,17 @@ describe('effects rules', () => {
     assert.ok(config.SHAKE_MAX_PIXELS <= 2);
     assert.ok(config.SHAKE_SECONDS <= 0.2);
     assert.ok(config.SHAKE_SWINGS <= 2);
+  });
+
+  test('6b Story Reduce motion dim: one at a time, never extended, at most 2 starting in a second', () => {
+    const { l, req } = story();
+    l.setReduceMotion(true);
+    assert.equal(req('shake', 0).form, 'dim');
+    assert.notEqual(req('shake', 0.1).form, 'dim');
+    const starts = [];
+    for (let i = 0; i < 200; i++) if (req('shake', 1 + i * 0.05).form === 'dim') starts.push(1 + i * 0.05);
+    assert.ok(maxInOneSecond(starts) <= 2);
+    for (let i = 1; i < starts.length; i++) assert.ok(starts[i] - starts[i - 1] >= 0.2 - EPS);
   });
 
   test('12b a shake does not count as a flash', () => {
@@ -202,7 +233,7 @@ describe('effects rules', () => {
         log.push(`${tick}:shake:${req('shake', now).form}`);
         log.push(`${tick}:arrival:${JSON.stringify(req('arrival', now))}`);
       }
-      l.stopPulse('bar');
+      l.stopPulse('bar', 10);
       return { log, taps };
     }
     const aligned = [60, 90, 120].map((r) => run(r, 0));
