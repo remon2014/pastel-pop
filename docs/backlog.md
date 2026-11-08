@@ -9,10 +9,11 @@ Static files are in `public/`, the service worker and the fake 1.1 MB favicon ar
 
 - `public/icon-512.png` is still 233 kB; it could not be shrunk with the tools on the machine and no new tool was installed.
 - The build uses root-absolute paths (`/favicon.png`, `/manifest.json`, `/assets/...`). Fine from a site root; a sub-folder or `file://` origin would break them. Settle Vite's `base` setting when Capacitor is wired up.
+- Settings use `localStorage`, which works in Capacitor's WebView, but iOS may not always keep it; decide when Capacitor is wired up whether to move to native Preferences (a new plugin, owner decision). Only `src/storage.js` would change (F-13).
 - The favicon and icons still show the old "POP" on mint green and do not match the Dusk look; replace with the final art.
 
 ## Next: engineering foundations
-Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F-01 to F-09 (2026-10-11), F-10 to F-12 (2026-11-08)** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), circle logic in screen widths per second, sharp rendering, the portrait layout with safe areas, and pointer input with a pure hit test. **Left: F-13 to F-19** — settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
+Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F-01 to F-09 (2026-10-11), F-10 to F-13 (2026-11-08)** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), circle logic in screen widths per second, sharp rendering, the portrait layout with safe areas, pointer input with a pure hit test, and settings with safe storage. **Left: F-14 to F-19** — settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
 **Before F-10:** R-01 to R-05, five fixes from the F-01 to F-09 retrospective review; deferred review items (S5, N1, N3 to N9, three real-phone questions) are listed in `docs/foundations-plan.md` section 3b.
 
 - No pixel-art rendering path: draw at a low internal resolution and scale up with smoothing off (GD Look). The exact internal resolution waits on the art reference (see Blocked). (F-10)
@@ -26,12 +27,17 @@ Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F
 - Game circles can pass under the HUD (target swatch and Pause button); ask the game designer whether they should (F-11).
 - In landscape the Pause button overlaps the target swatch: at 800x360 the column is 202 px wide, too narrow for both side by side. Deferred by the owner 2026-11-08; likely solved by a portrait lock in the Capacitor build, otherwise a game-designer choice (Pause on its own row, or a smaller Pause and swatch) (F-11).
 - Real-phone checks for F-11: a real notch and gesture bar, rotating a device, swatch sharpness at dpr 3, and how the swatch and Pause feel on a small screen (F-11; with F-19).
-- Dev layout scene (`/?dev=layout`): the readout panel covers part of the play area, and the "Pretend notch" button is 44 px tall, under the 48 px minimum. Dev only (F-11).
+- Dev layout scene (`/?dev=layout`): the readout panel covers part of the play area. Dev only (F-11). (Its 44 px button was fixed in F-13, which raised all dev buttons to 48 px.)
 - Minimum tap size: the hit floor is a 48 dp diameter (`MIN_TOUCH_DP`), but CLAUDE.md asks about 64 CSS px for moving circles and Calm circles drift; ask the game designer which applies. `TAP_REACH` (1.1) is also provisional (F-12).
 - Dev input scene (`/?dev=input`) sizes a full-width canvas instead of the F-11 column, so it cannot show taps mapping in the centred column; lay it out with the real column (review should-fix, F-12).
 - `tests/unit/hit.test.js` "nearest" case tests only one circle order; add the reversed order so a topmost-wins rule would fail (review should-fix, F-12).
 - Nits: the detach returned by `attachPointer` is never used and dev scenes never clean up listeners; `src/game.js` hit check reads more clearly as `if (!hit || …)` (F-12).
 - Real-phone checks for F-12: feel of multi-finger taps, pinch and double-tap zoom blocked on the canvas, the 1.1 tap reach, tapping the swatch while circles pass under it (F-12; with F-19).
+- Settings: a subscriber that throws stops later subscribers and makes `set()` throw (`src/settings.js:41`); wrap each call in try/catch (review should-fix, F-13).
+- Settings: `name in DEFAULT_SETTINGS` accepts inherited names, so `set('toString', …)` is stored; use `Object.hasOwn` (`src/settings.js:45`) (review should-fix, F-13).
+- Settings tests: add Infinity (`1e999`), a `null` field, extra stored fields dropped, a throwing `storage.set` keeping the value in memory, and unsubscribe during notification (review should-fix, F-13).
+- Nits: settings save and notify even when a value is unchanged (say so in the `subscribe` comment); the system-setting subscription and the dev scene's subscription are never removed (F-13).
+- Vibration is one setting for both modes, default off; the design only settles off for Calm. Ask the game designer about Story. Volume defaults (music 0.5, effects 0.7) are placeholders (F-13).
 - Placeholder UI: button shapes are only 1.26:1 against Dusk (labels are fine), and there is no pressed style, so the hover colour sticks briefly after a touch (found by QA on the palette task).
 - Placeholder symbols are small (8% to 16% of circle area; the leaf is smallest). Judge on a real phone; final symbols come with the pixel art.
 - A first-time player may not realise the swatch is the thing to match: there are no words and the swatch glow is not built (QA note for playtests; GD Open questions 12).
