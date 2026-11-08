@@ -1,6 +1,6 @@
 # Wellbeing and sensory safety: Pastel Pop
 
-**Status:** v0.8, 2026-11-08. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
+**Status:** v0.9, 2026-11-08. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
 
 **Changed in v0.2:** the sensory rules are split into two tiers by owner decision. Tier 1 (safety) covers the whole game. Tier 2 (comfort) covers Calm mode only. Story mode gains bounded allowances (section 6).
 
@@ -15,6 +15,8 @@
 **Changed in v0.7:** the open question on Shao et al. is closed, from facts supplied by the owner on 2026-11-08: the study supports a pace of about 6 breaths a minute (included studies used 10 a minute or fewer); the inhale-to-exhale ratio was extracted but not analysed, so it supports no specific ratio such as 4 s / 6 s. A longer out-breath is supported by Rethink's guidance only. No rule or value changed; the 4/6 split is recorded as design judgement.
 
 **Changed in v0.8 (2026-11-08):** section 6 gains effects-layer rules for F-14: the over-budget Story burst, the Story Reduce motion dim and screen shake against the flash budget. They are reasoned, not measured.
+
+**Changed in v0.9 (2026-11-08):** section 6 gains effects-layer rules 4 to 6 from F-15: which clock the flash limit counts on, the shape of the one-second window, and Reduce motion turning on mid-effect. Reasoned, not measured.
 
 **Who wrote this:** an AI advisor agent (`wellbeing-advisor`). Its review is not a clinical endorsement and must never be presented as one, in the game, the store listing or anywhere else.
 
@@ -263,6 +265,9 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 1. **Over-budget Story burst (`quiet`).** The circle goes away in its own colour only: it fades (and may shrink) and never gets brighter than its fill. Nothing is added: no ring, no particles, no glow, no white. Any extra mark must change relative luminance by 0.07 or less. Sound carries most of the feedback. It does not count as a new flash, because the circle disappearing is the second half of its arrival flash, and Story arrivals pay one flash each. A `full` burst is different. It brightens and then fades within a fraction of a second, which is a complete flash in its own right, so it always pays its own flash, however soon it comes after the arrival. There is no grace window. Under Reduce motion: opacity fade only, no shrink. Duration: designer's choice, 450 ms or less.
 2. **Story Reduce motion dim.** Same cap as Calm: a relative luminance change of 0.07 or less on the lightest colour drawn in the dimmed area, recomputed when a hex value changes. One at a time, never stacked or extended. Prefer a dim on the tapped circle only. A full-screen dim is allowed only within the same cap.
 3. **Screen shake and the flash budget.** It does not count, as long as it changes position only and never brightness or colour, and it stays within: 2 internal px or less, 200 ms or less, decaying, no more than 2 swings, one at a time, and no more than 2 shakes beginning in any one second. Reason: a quick back-and-forth makes the high-contrast edges flicker, so the bound keeps that flicker at 2 a second or less. The amplitude and number of swings are design judgement; the game designer should confirm they still feel like a shake.
+4. **Which clock (F-15).** The player sees drawn frames, so drawn time is what passes or fails: F-16's drawn-pixel measurement is the authority, and if it disagrees with the limiter, the drawn result wins. The limiter may schedule on logic time, provided that (a) any beat or flash more than one frame late is dropped, not drawn late, and (b) the window below has a margin that covers that lateness.
+5. **Window shape (F-15).** Count on a closed window with a margin: a new flash may begin at time t only if fewer than 3 flashes began in [t − W, t], where W = 1 s + the late-drop threshold (use W = 1.05 s). Reason: WCAG says "any one-second period", so the closed reading is the safe one, and up to one frame of draw jitter can squeeze 1.000 s of logic time into less than 1 s on screen. The cost is negligible (a 2-a-second pulse is unaffected).
+6. **Reduce motion turning on mid-effect (F-15).** From the next drawn frame, every running motion effect stops: shake offset goes to 0, expanding rings, shrink and travelling lights are removed. No substitute dim is started for a cut effect, so the switch never adds a brightness change. Non-motion effects (fades, dims, the bar pulse) run to their end. New effects use their Reduce motion form. Turning Reduce motion off never changes a running effect. Reason: a player who switches it on may already feel dizzy, and WCAG 2.3.3 asks for the motion to be stoppable; removing a ring only ends a flash already counted, so it adds none.
 
 ## 7. Story content ("The Lantern Mural")
 
