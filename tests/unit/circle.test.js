@@ -16,3 +16,16 @@ for (const size of [1, 2, 7, 16, 32]) {
     });
   });
 }
+
+test('discRows(7) matches the hand-worked disc', () => {
+  const widths = [3, 5, 7, 7, 7, 5, 3];
+  const expected = widths.map((width) => ({ offset: (7 - width) / 2, width }));
+  assert.deepEqual(discRows(7), expected);
+});
+
+test('the top row is narrower than the middle row from size 7 up', () => {
+  for (const size of [7, 8, 16, 32]) {
+    const rows = discRows(size);
+    assert.ok(rows[0].width < rows[Math.floor(size / 2)].width, `size ${size}`);
+  }
+});
