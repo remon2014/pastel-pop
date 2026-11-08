@@ -28,3 +28,5 @@ One line per verification, newest last. Verdicts come from the qa-tester agent p
 - A real 90 or 120 Hz screen (frame rates were simulated).
 - Real app-switching or tab-hiding (page visibility was simulated).
 - Rotation on a device, "Add to Home Screen", and offline use.
+2026-11-08 | F-11 layout | FAIL | 2 bugs (swatch half device pixel at some widths/dpr; Pause overlaps swatch in landscape)
+2026-11-08 | F-11 layout (rechecked at 963d5c7) | PASS | 0 open bugs; round 1 swatch half-pixel bug fixed; landscape Pause/swatch overlap deferred to backlog by owner
