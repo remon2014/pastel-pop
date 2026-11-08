@@ -317,3 +317,16 @@ test('a 5-a-second block over 10% of the area reads 5', () => {
   assert.equal(m.flashes.total, 5);
   assert.equal(m.flashes.highest, 5);
 });
+
+test('a pair uses up both its changes, so no bridging pair joins two small events', () => {
+  const m = createFlashMeter(N, N);
+  const boxA = [0, 0, 12, 4]; // 3 cells
+  const boxB = [0, 20, 36, 4]; // 9 cells
+  for (let i = 0; i < 60; i++) {
+    const lit = [];
+    if ((i >= 2 && i < 4) || (i >= 40 && i < 42)) lit.push(boxA);
+    if (i >= 20 && i < 22) lit.push(boxB);
+    m.addFrame(i / FPS, picture(lit, true));
+  }
+  assert.equal(m.flashes.total, 0);
+});
