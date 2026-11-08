@@ -13,7 +13,7 @@ Static files are in `public/`, the service worker and the fake 1.1 MB favicon ar
 - The favicon and icons still show the old "POP" on mint green and do not match the Dusk look; replace with the final art.
 
 ## Next: engineering foundations
-Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F-01 to F-09 (2026-10-11), F-10 to F-13 (2026-11-08)** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), circle logic in screen widths per second, sharp rendering, the portrait layout with safe areas, pointer input with a pure hit test, and settings with safe storage. **Left: F-14 to F-19** — settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
+Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F-01 to F-09 (2026-10-11), F-10 to F-14 (2026-11-08)** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), circle logic in screen widths per second, sharp rendering, the portrait layout with safe areas, pointer input with a pure hit test, settings with safe storage, and the effects safety rules as tested logic. **Left: F-15 to F-19** — settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
 **Before F-10:** R-01 to R-05, five fixes from the F-01 to F-09 retrospective review; deferred review items (S5, N1, N3 to N9, three real-phone questions) are listed in `docs/foundations-plan.md` section 3b.
 
 - No pixel-art rendering path: draw at a low internal resolution and scale up with smoothing off (GD Look). The exact internal resolution waits on the art reference (see Blocked). (F-10)
@@ -38,6 +38,16 @@ Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F
 - Settings tests: add Infinity (`1e999`), a `null` field, extra stored fields dropped, a throwing `storage.set` keeping the value in memory, and unsubscribe during notification (review should-fix, F-13).
 - Nits: settings save and notify even when a value is unchanged (say so in the `subscribe` comment); the system-setting subscription and the dev scene's subscription are never removed (F-13).
 - Vibration is one setting for both modes, default off; the design only settles off for Calm. Ask the game designer about Story. Volume defaults (music 0.5, effects 0.7) are placeholders (F-13).
+- Effects: `clock` and `src/effects/pulseClock.js` are mostly dead after the pulse grid (they repeat `tickOf` and ignore periods); rewrite test 4 on `takeBeats` and drop the clock (review should-fix, F-14).
+- Effects: the `reacting` Map in `src/effects/limiter.js` keeps one entry per wobbled circle for the whole session; delete expired entries or add `forget(circleId)` (review should-fix, F-14).
+- Effects: `isSaturatedRed` in `src/effects/colors.js` is unused and `relativeLuminance` is only used inside the file; remove or stop exporting (review should-fix, F-14).
+- Effects: `prune` in the limiter assumes time only moves forward; clamp or document it and add a test (it errs safe by over-counting) (review should-fix, F-14).
+- Effects: `fired` grows until `takeBeats` is called and returns stale beats in a burst after a long gap; F-15 must drop beats older than `now` (review nit, F-14).
+- Effects nits: the `waitUntil` time can be later than needed; tests copy the Dusk hex instead of importing it; `PLAIN_FADE_SECONDS` lacks a PLACEHOLDER flag; a missing `mode` is silently treated as Story (F-14).
+- Effects test gap: shortening the Reduce motion dim's tracked duration fails no test; test the 0.6 s duration (QA, F-14).
+- Game designer questions from F-14: the real Story arrival limit (`STORY_ARRIVALS_PER_SECOND` is a PLACEHOLDER 3); whether a 2 internal px, 2-swing shake still feels like a shake; more full Story bursts would need a burst whose brightness change is 0.07 or less, not looser counting (WB section 6) (F-14).
+- PLACEHOLDER effect values: `QUIET_FADE_SECONDS` 0.45 and the low-time pulse colour `#E6C070` (F-14).
+- Commit hook gap: `.claude/hooks/check-commit.mjs` runs tests and lint on the working tree, not the staged snapshot, so a commit with failing tests can pass while a fix sits unstaged (happened once in F-14, eff7a81). Consider testing the staged tree (for example via `git stash --keep-index`) (F-14; tech lead).
 - Placeholder UI: button shapes are only 1.26:1 against Dusk (labels are fine), and there is no pressed style, so the hover colour sticks briefly after a touch (found by QA on the palette task).
 - Placeholder symbols are small (8% to 16% of circle area; the leaf is smallest). Judge on a real phone; final symbols come with the pixel art.
 - A first-time player may not realise the swatch is the thing to match: there are no words and the swatch glow is not built (QA note for playtests; GD Open questions 12).

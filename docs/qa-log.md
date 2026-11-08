@@ -33,3 +33,5 @@ One line per verification, newest last. Verdicts come from the qa-tester agent p
 2026-11-08 | F-12 input (b171b33) | FAIL | 1 bug (tap on target swatch reaches play input: swatch has pointer-events none)
 2026-11-08 | F-12 input (recheck vs revised swatch criterion, 072aaf7) | PASS | 0 open bugs; swatch tap hits circle beneath, does nothing when empty, Pause blocks (0 canvas events)
 2026-11-08 | F-13 settings and safe storage (f89c375) | PASS | 0 bugs; all criteria observed at 360x800 and 1280x800, dev and preview; real-device checks none required
+2026-11-08 | F-14 effects safety rules (8b9200e) | PASS with 1 minor gap | 0 bugs; npm test 125 pass; mutation check killed on tests 1, 2, 4, 5, 6, 9, 10, 11, 12, 13; gap: Story Reduce-motion dim has no one-at-a-time guard or test (WB 6 item 2); real-device checks none (pure logic)
+2026-11-08 | F-14 recheck after fix rounds (ba90ee1) | PASS | 0 bugs; npm test 135 pass; mutations on tests 1, 5, 6b, 9, 12, 13, 14 all caught; earlier Story Reduce motion dim gap closed (6b, 6c)

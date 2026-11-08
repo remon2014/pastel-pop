@@ -1,6 +1,6 @@
 # Wellbeing and sensory safety: Pastel Pop
 
-**Status:** v0.7, 2026-11-08. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
+**Status:** v0.8, 2026-11-08. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
 
 **Changed in v0.2:** the sensory rules are split into two tiers by owner decision. Tier 1 (safety) covers the whole game. Tier 2 (comfort) covers Calm mode only. Story mode gains bounded allowances (section 6).
 
@@ -13,6 +13,8 @@
 **Changed in v0.6:** the four sources this repo's fetch tool could not reach (Shao, Fish, NICE, Mind) are marked verified on 2026-10-11, on the owner's instruction, with facts read live in the owner's Claude chat session. No rule or value changed. One question stays open: whether the Shao study covered a 4 s in / 6 s out ratio.
 
 **Changed in v0.7:** the open question on Shao et al. is closed, from facts supplied by the owner on 2026-11-08: the study supports a pace of about 6 breaths a minute (included studies used 10 a minute or fewer); the inhale-to-exhale ratio was extracted but not analysed, so it supports no specific ratio such as 4 s / 6 s. A longer out-breath is supported by Rethink's guidance only. No rule or value changed; the 4/6 split is recorded as design judgement.
+
+**Changed in v0.8 (2026-11-08):** section 6 gains effects-layer rules for F-14: the over-budget Story burst, the Story Reduce motion dim and screen shake against the flash budget. They are reasoned, not measured.
 
 **Who wrote this:** an AI advisor agent (`wellbeing-advisor`). Its review is not a clinical endorsement and must never be presented as one, in the game, the store listing or anywhere else.
 
@@ -255,6 +257,12 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 | Reveal | Unchanged | One gradual colour fade of 1 s or more, no bright bloom at the end, text stays until tapped, tap to skip with no loss of progress |
 | Travelling lights | Allowed | Removed under Reduce motion |
 | Music | May build in tempo and energy | No sudden loud sounds |
+
+**Effects-layer rules for F-14 (advisor, 2026-11-08).** These are reasoned from WCAG 2.3.1, not measured; F-16 and the device checks in section 10 must prove them. Where marked, the game designer sets the feel inside the bound.
+
+1. **Over-budget Story burst (`quiet`).** The circle goes away in its own colour only: it fades (and may shrink) and never gets brighter than its fill. Nothing is added: no ring, no particles, no glow, no white. Any extra mark must change relative luminance by 0.07 or less. Sound carries most of the feedback. It does not count as a new flash, because the circle disappearing is the second half of its arrival flash, and Story arrivals pay one flash each. A `full` burst is different. It brightens and then fades within a fraction of a second, which is a complete flash in its own right, so it always pays its own flash, however soon it comes after the arrival. There is no grace window. Under Reduce motion: opacity fade only, no shrink. Duration: designer's choice, 450 ms or less.
+2. **Story Reduce motion dim.** Same cap as Calm: a relative luminance change of 0.07 or less on the lightest colour drawn in the dimmed area, recomputed when a hex value changes. One at a time, never stacked or extended. Prefer a dim on the tapped circle only. A full-screen dim is allowed only within the same cap.
+3. **Screen shake and the flash budget.** It does not count, as long as it changes position only and never brightness or colour, and it stays within: 2 internal px or less, 200 ms or less, decaying, no more than 2 swings, one at a time, and no more than 2 shakes beginning in any one second. Reason: a quick back-and-forth makes the high-contrast edges flicker, so the bound keeps that flicker at 2 a second or less. The amplitude and number of swings are design judgement; the game designer should confirm they still feel like a shake.
 
 ## 7. Story content ("The Lantern Mural")
 
