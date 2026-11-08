@@ -1,0 +1,31 @@
+# Runs the same checks as the local commit hook, plus the production build.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run build
+      - name: Dev code is absent from the production build
+        run: |
+          if grep -rl __pastelPopDev dist/; then
+            echo "Dev-only code found in dist/"
+            exit 1
+          fi
