@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { circleRadius } from '../../src/logic/world.js';
-import { circlePixels, computeView, cssToWorld } from '../../src/render/view.js';
+import { MAX_COLUMN_ASPECT } from '../../src/config.js';
+import { circlePixels, columnRect, computeView, cssToWorld, swatchPixels } from '../../src/render/view.js';
 
 const near = (a, b, tol = 1e-9) => assert.ok(Math.abs(a - b) <= tol, `${a} is not near ${b}`);
 
@@ -123,4 +124,55 @@ test('V15 cssToWorld', () => {
   const bc = cssToWorld(b, b.playCssWidth, b.playCssHeight);
   near(bc.x, 1);
   near(bc.y, b.internalHeight / b.internalWidth);
+});
+
+const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
+const ASPECT = 9 / 16;
+
+test('C1 phones keep full width (360x800, 412x915)', () => {
+  assert.deepEqual(columnRect(360, 800, NO_INSETS, ASPECT), { left: 0, top: 0, width: 360, height: 800 });
+  assert.deepEqual(columnRect(412, 915, NO_INSETS, ASPECT), { left: 0, top: 0, width: 412, height: 915 });
+});
+
+test('C2 1280x800 gets a centred 450x800 column', () => {
+  assert.deepEqual(columnRect(1280, 800, NO_INSETS, ASPECT), { left: 415, top: 0, width: 450, height: 800 });
+});
+
+test('C3 landscape phone 800x360 gets a narrow centred column', () => {
+  const c = columnRect(800, 360, NO_INSETS, ASPECT);
+  near(c.width, 202.5);
+  near(c.left, (800 - 202.5) / 2);
+  assert.equal(c.height, 360);
+});
+
+test('C4 insets trim the screen first, and the column never passes them', () => {
+  const c = columnRect(360, 800, { top: 47, right: 10, bottom: 34, left: 20 }, ASPECT);
+  assert.equal(c.top, 47);
+  assert.equal(c.height, 800 - 47 - 34);
+  assert.equal(c.left, 20);
+  assert.equal(c.width, 330);
+  const wide = columnRect(1280, 800, { top: 0, right: 0, bottom: 0, left: 100 }, ASPECT);
+  near(wide.left + wide.width / 2, 100 + (1280 - 100) / 2);
+});
+
+test('C5 bad sizes and bad insets', () => {
+  assert.equal(columnRect(0, 800, NO_INSETS, ASPECT), null);
+  assert.equal(columnRect(360, NaN, NO_INSETS, ASPECT), null);
+  assert.equal(columnRect(360, 800, { top: 400, bottom: 400, left: 0, right: 0 }, ASPECT), null);
+  assert.deepEqual(columnRect(360, 800, { top: -5, right: NaN }, ASPECT), { left: 0, top: 0, width: 360, height: 800 });
+  assert.deepEqual(columnRect(360, 800, undefined, ASPECT), { left: 0, top: 0, width: 360, height: 800 });
+});
+
+test('C6 default aspect is the config constant', () => {
+  assert.equal(columnRect(1280, 800, NO_INSETS).width, 800 * MAX_COLUMN_ASPECT);
+});
+
+test('S1 swatch is about 1.5 times a play circle (360x800, dpr 1, 2, 3)', () => {
+  for (const dpr of [1, 2, 3]) {
+    const view = computeView(360, 800, dpr, 180);
+    const radius = circleRadius(view.playCssWidth);
+    const circle = circlePixels(view, { x: 0, y: 0, radius }).size;
+    assert.equal(circle, 32);
+    assert.equal(swatchPixels(view, radius), 48);
+  }
 });

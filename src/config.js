@@ -10,7 +10,7 @@ export const LEVEL_SPEED_STEP = 0.2;
 export const CIRCLE_DIAMETER_DP = 64;
 export const CIRCLE_REFERENCE_WIDTH_DP = 360;
 export const CIRCLE_MIN_DIAMETER_DP = 48;
-// PROVISIONAL cap so circles do not fill a wide window; revisit when F-11 makes the play area a portrait column.
+// PROVISIONAL cap so circles do not fill a wide window; with the portrait column (F-11) it rarely binds (see ?dev=layout).
 export const CIRCLE_MAX_DIAMETER_DP = 112;
 
 // Calm supporting shades (docs/game-design.md, "Supporting shades").
@@ -26,9 +26,13 @@ export const BACKGROUND_COLOR = DUSK;
 // Symbol size as a fraction of the circle radius (symbol fills about half the circle).
 export const SYMBOL_SIZE = 0.55;
 
-// Target swatch is about 1.5 times a play circle (design); shrunk to fit beside the Pause button.
-export const SWATCH_SIZE = 96;
-export const SWATCH_FRAME_WIDTH = 3;
+// Target swatch is about 1.5 times a play circle (design), with a 1-pixel Cream frame and a 1-pixel Dusk gap.
+export const SWATCH_SCALE = 1.5;
+export const SWATCH_FRAME_PX = 1;
+export const SWATCH_GAP_PX = 1;
+
+// Play column is at most this wide for its height (width / height). PROVISIONAL: 9:16, waits on the designer.
+export const MAX_COLUMN_ASPECT = 9 / 16;
 
 // Longest single frame the loop will deliver, in seconds. Longer gaps are dropped (D-003). Placeholder.
 export const MAX_FRAME_SECONDS = 0.1;
