@@ -46,7 +46,7 @@ export function createLimiter() {
   // When enough old flashes have left the window for `needed` more to fit.
   const freeAt = (needed) => flashes[flashes.length + reservedBeats() + needed - FLASH_LIMIT - 1] + 1;
 
-  // Past beats were reserved, not logged. Before the rate drops, log those still in the window.
+  // Past beats were reserved, not logged. Before the rate changes, log those still in the window.
   function logPastBeats(now) {
     const rate = clock.rate;
     const first = Math.floor((now - FLASH_WINDOW_SECONDS) * rate + EPS) + 1;
@@ -56,7 +56,7 @@ export function createLimiter() {
 
   function updateClock(now) {
     const next = Math.max(0, ...pulses.values());
-    if (next < clock.rate) logPastBeats(now);
+    if (next !== clock.rate) logPastBeats(now);
     clock.setRate(next);
   }
 

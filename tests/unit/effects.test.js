@@ -98,6 +98,33 @@ describe('effects rules', () => {
     assert.ok(maxInOneSecond([0.5, 1.0, ...granted]) <= 3);
   });
 
+  // Pulse at 1.5 a second from 0, a pop at 1.35, then a faster pulse (raised or a second id) from 1.4.
+  function fasterPulseKeepsBudget(secondId) {
+    const { req } = story();
+    req('pulse', 0, { circleId: 'a', rate: 1.5 });
+    const pops = [];
+    if (req('pop', 1.35, { circleId: 1 }).form === 'full') pops.push(1.35);
+    let switchAt = 1.4;
+    const res = req('pulse', 1.4, { circleId: secondId, rate: 2 });
+    if (res.form === 'waitUntil') {
+      switchAt = res.at;
+      assert.equal(req('pulse', switchAt, { circleId: secondId, rate: 2 }).form, 'full');
+    }
+    for (let t = switchAt; t < 4; t += 0.05) if (req('pop', t, { circleId: 2 }).form === 'full') pops.push(t);
+    const beats = [];
+    for (let k = 0; k / 1.5 <= switchAt; k++) beats.push(k / 1.5);
+    for (let k = 0; k / 2 < 4; k++) if (k / 2 > switchAt) beats.push(k / 2);
+    assert.ok(maxInOneSecond([...beats, ...pops]) <= 3);
+  }
+
+  test('2d raising a pulse rate keeps the beats already played in the budget', () => {
+    fasterPulseKeepsBudget('a');
+  });
+
+  test('2e a second pulse id at a faster rate keeps the beats already played in the budget', () => {
+    fasterPulseKeepsBudget('b');
+  });
+
   test('3 pulse rate: Story allows 2 a second, Calm one every 2 s; faster is refused', () => {
     assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 2 }).form, 'full');
     assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 2.5 }).form, 'refused');
@@ -153,6 +180,14 @@ describe('effects rules', () => {
     for (let i = 0; i < 200; i++) if (req('shake', 1 + i * 0.05).form === 'dim') starts.push(1 + i * 0.05);
     assert.ok(maxInOneSecond(starts) <= 2);
     for (let i = 1; i < starts.length; i++) assert.ok(starts[i] - starts[i - 1] >= 0.2 - EPS);
+  });
+
+  test('6c turning Reduce motion on mid-shake: a dim cannot start inside the 2-a-second shake limit', () => {
+    const { l, req } = story();
+    assert.equal(req('shake', 0).form, 'full');
+    l.setReduceMotion(true);
+    assert.equal(req('shake', 0.2).form, 'dim');
+    assert.equal(req('shake', 0.8).form, 'quiet');
   });
 
   test('12b a shake does not count as a flash', () => {
