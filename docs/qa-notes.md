@@ -9,6 +9,9 @@ Short, lasting knowledge for future test sessions. Remove a note when it goes ou
 - The main game exposes nothing on `window`. To read circle positions, hook canvas `arc` and `fillRect` from an init script.
 
 ## Known quirks
+- Device pixel ratio: in Playwright `browser_run_code_unsafe`, `page.context().newCDPSession(page)` then `Emulation.setDeviceMetricsOverride` ({width, height, deviceScaleFactor, mobile:false}) works, then `page.goto`. Height or width 0 in the override does nothing; for R-02 define `window.innerWidth/innerHeight` as 0 and dispatch `resize`. `page.screenshot` ignores the emulated dpr (always 2x), so sample canvas pixels with `getImageData` for hard-edge checks. `filename` for run_code must be inside the repo (`.playwright-mcp/`).
+- Playing the game headlessly: read the target word from `#targetLabel`, find that colour's hex pixels on `#gameCanvas` (flood fill), click the bbox centre. Prefer the largest blob (overlapped circles hide each other, so about 10% of taps are no-ops even when correct).
+- Dev circle size follows width (64/360 of it): 33 internal px at 375 CSS wide is correct, not a bug.
 - Use a fresh browser context with the cache disabled. A persistent profile once served a stale `game.js` and produced a false failure.
 - Stop any server you start. A dev server left running on port 5174 serves whatever branch is checked out.
 - The browser tool writes logs to `.playwright-mcp/` in the project folder. It is in `.gitignore`; do not commit it.

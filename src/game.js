@@ -3,6 +3,7 @@ import { UIManager } from './uiManager.js';
 import { PALETTE } from './colorManager.js';
 import { browserHost, createLoop } from './core/loop.js';
 import { BACKGROUND_COLOR, CIRCLE_REFERENCE_WIDTH_DP } from './config.js';
+import { cssToWorld } from './render/view.js';
 import { getDistance } from './utils.js';
 import {
   circleRadius,
@@ -26,6 +27,7 @@ export class Game {
     this.loop = createLoop(this.update.bind(this), browserHost());
     this.circles = [];
     this.bounds = { width: 1, height: 1 };
+    this.view = null;
     this.widthPixels = 0;
 
     this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
@@ -67,14 +69,20 @@ export class Game {
     this.selectNewTargetColor();
   }
 
-  // The play area is 1 wide and as tall as the canvas aspect. Resizing pulls circles back inside.
+  setView(view) {
+    this.view = view;
+    this.syncBounds();
+  }
+
+  // The play area is 1 wide and as tall as the view. Resizing pulls circles back inside.
   syncBounds() {
-    if (!(this.canvas.width > 0)) return;
-    const height = playAreaHeight(this.canvas.width, this.canvas.height, this.bounds.height);
-    if (height === this.bounds.height && this.canvas.width === this.widthPixels) return;
-    this.widthPixels = this.canvas.width;
+    if (!this.view) return;
+    const { playCssWidth, playCssHeight } = this.view;
+    const height = playAreaHeight(playCssWidth, playCssHeight, this.bounds.height);
+    if (height === this.bounds.height && playCssWidth === this.widthPixels) return;
+    this.widthPixels = playCssWidth;
     this.bounds.height = height;
-    const radius = circleRadius(this.canvas.width);
+    const radius = circleRadius(playCssWidth);
     for (const circle of this.circles) circle.radius = radius;
     fitCircles(this.circles, this.bounds);
   }
@@ -104,10 +112,10 @@ export class Game {
     this.handleInput(touch.clientX - rect.left, touch.clientY - rect.top);
   }
 
-  handleInput(pixelX, pixelY) {
+  handleInput(cssX, cssY) {
     if (this.isPaused) return;
-    const x = pixelX / this.canvas.width;
-    const y = pixelY / this.canvas.width;
+    if (!this.view) return;
+    const { x, y } = cssToWorld(this.view, cssX, cssY);
 
     for (let i = this.circles.length - 1; i >= 0; i--) {
       const circle = this.circles[i];
@@ -140,12 +148,12 @@ export class Game {
   }
 
   update(elapsedSeconds) {
-    this.syncBounds();
+    if (!this.view) return;
     stepCircles(this.circles, this.bounds, elapsedSeconds);
 
     this.ctx.fillStyle = BACKGROUND_COLOR;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0, 0, this.view.internalWidth, this.view.internalHeight);
 
-    for (const circle of this.circles) drawCircle(this.ctx, circle, this.canvas.width);
+    for (const circle of this.circles) drawCircle(this.ctx, circle, this.view);
   }
 }

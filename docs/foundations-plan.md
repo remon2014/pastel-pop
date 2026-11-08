@@ -80,8 +80,8 @@ The QA tester verifies each task with the existing Playwright browser tool. Dev 
 | F-07 | **One game loop on elapsed time.** Replace the self-calling `update()` (`src/game.js:231-271`) | New `src/core/loop.js`, `tests/unit/loop.test.js`, `src/game.js`, `src/config.js` | Starting twice still gives one update per frame. Elapsed time is in seconds and never above the maximum. A 5 s gap advances the game by no more than the maximum. Loop stops when the page is hidden and resumes without a jump. Pause and resume pressed quickly 20 times does not change speed. Tests cover each of these with a fake clock passed in | `npm test` shows the loop tests passing. By eye: Start, press Pause and Resume as fast as possible 20 times, then switch tab for 10 s and return: circles do not speed up or jump. The measured proof (loops running = 1, clamped frames counted) is F-08's check; F-07 is not signed off until that passes | F-06 | gameplay-engineer |
 | F-08 | **Dev level shell.** `?dev=` opens a scene; `?dev` alone lists them. First scene: `loop` | New `src/dev/index.js`, `src/dev/readout.js`, `src/dev/scenes/loop.js`, `src/main.js` | `?dev` lists every scene as a link. `?dev=loop` shows a readout: frames per second, last elapsed time, number of clamped frames, number of running loops (always 1). A read-only `window.__pastelPopDev` exposes the same numbers. In a production build none of it exists | Dev: open `/?dev=loop`, press Start, read the numbers; hide the tab 5 s, return: loops still 1, clamped-frame count unchanged and no jump (the loop halts while hidden, as built in F-07); press Stall: clamped-frame count goes up by 1. Production: build, then `grep -r "__pastelPopDev" dist` finds nothing, and `http://localhost:4173/?dev=loop` shows the normal start screen | F-07 | gameplay-engineer |
 | F-09 | **Game logic without a canvas, in screen-relative units.** Circle movement, bounce, and bounds as plain functions | New `src/logic/world.js`, `tests/unit/world.test.js`, `src/dev/scenes/circles.js`; retire the movement in `src/circle.js:55-70` | No `document`, `window` or canvas in `src/logic/`. Speeds in widths per second; 1.0x is 0.25. Tests: distance covered in 1 s is the same (within 0.1%) when stepped at 60, 90 and 120 steps a second; circles never leave the bounds; changing the bounds pulls every circle back inside; circle size never under the 48 dp floor | Open `/?dev=circles`: one circle at 1.0x with a stopwatch readout crosses the play area in 4.0 s (plus or minus 0.2 s). A "slow frames" toggle that runs the loop at 30 a second gives the same crossing time. `npm test` passes | F-08 | gameplay-engineer |
-| F-10 | **Sharp rendering.** Low internal resolution, whole-number scale, `devicePixelRatio`, smoothing off | New `src/render/view.js`, `src/render/draw.js`, `tests/unit/view.test.js`, `src/dev/scenes/render.js`, `src/config.js`, `index.html`, `src/main.js:21-26` | One constant sets the internal width. Each internal pixel covers a whole number of device pixels. Sizing maths is a pure function with tests for device pixel ratios 1, 2, 2.625 and 3. Changing the constant from 180 to 240 changes chunkiness only: the crossing time and the on-screen circle size in `?dev=circles` stay the same **Units fix (review S1):** `circleRadius(widthDp)` is meant to get the play-area width in CSS px, but `initLevel` and `syncBounds` in `src/game.js` pass `canvas.width` (canvas pixels), and `handleInput` divides CSS-px tap positions by `canvas.width`. They agree today only because `src/main.js:20` sets the canvas to `innerWidth`; `widthPixels` and the `CIRCLE_REFERENCE_WIDTH_DP` fallback compared against it in `initLevel` are also canvas px and must become CSS px too. Once the canvas is at internal or device resolution the 48 dp floor, 112 dp cap and hit-testing would be in the wrong unit. F-10 passes the CSS-px width to sizing and maps taps through the view, not the canvas size. `?dev=circles` gains a real game-sized circle (same sizing call as the game) and a "diameter in CSS px" readout: 64 at 360 CSS px wide at device scale 1, 2 and 3 | Open `/?dev=render` at device scale 1, 2 and 3: a test card of one-pixel checks and lines. Take a screenshot and zoom in: edges are hard, with no in-between colours. Readout shows internal size, scale and device pixel ratio. Engineer's report includes the 180 against 240 comparison. In `?dev=circles` at 360x800 and device scale 1, 2 and 3, the readout says 64 CSS px and a measured screenshot agrees within 1 px; taps on the circle's edge register at each scale | F-09, R-01 to R-05 | gameplay-engineer |
-| F-11 | **Layout: screen-relative play area, resize, rotation, safe areas.** | `index.html:9`, `:12-29`, `:273`, `src/render/view.js`, `src/main.js`, new `src/dev/scenes/layout.js` | Viewport uses `viewport-fit=cover`. HUD and buttons sit inside `env(safe-area-inset-*)`. No fixed-pixel positions for gameplay. The play area is portrait; on a wide window it is a centred portrait column. On resize or rotation the canvas is re-sized, stays sharp, and every circle is back inside within one frame. No scrollbars; height follows the visible screen, not `100vh` | Open `/?dev=layout` at 360x800, 412x915 and 1280x800. Resize mid-play between them and to landscape: readout "circles outside play area" stays 0; screenshot is sharp. Use the scene's "pretend notch" control (it overrides the inset values): HUD moves inside the outline | F-10 | gameplay-engineer |
+| F-10 | **Sharp rendering, and play-area sizes and taps in CSS px (review S1).** Low internal resolution, whole-number scale, `devicePixelRatio`, smoothing off. Refined 2026-11-08: see "F-10 refined" under section 3a, which replaces this row's detail | New `src/render/view.js`, `tests/unit/view.test.js`, `tests/unit/circle.test.js`, `src/dev/scenes/render.js`; `src/circle.js`, `src/game.js`, `src/main.js`, `src/config.js`, `src/dev/scenes/circles.js`, `src/dev/index.js`, `index.html` (canvas CSS) | See "F-10 refined" | See "F-10 refined" | F-09, R-01 to R-05 | gameplay-engineer |
+| F-11 | **Layout: screen-relative play area, resize, rotation, safe areas.** | `index.html:9`, `:12-29`, `:273`, `src/render/view.js`, `src/main.js`, new `src/dev/scenes/layout.js` | Viewport uses `viewport-fit=cover`. HUD and buttons sit inside `env(safe-area-inset-*)`. No fixed-pixel positions for gameplay. The play area is portrait; on a wide window it is a centred portrait column. On resize or rotation the canvas is re-sized, stays sharp, and every circle is back inside within one frame. No scrollbars; height follows the visible screen, not `100vh`. The target swatch canvas (`src/uiManager.js`) is sharp and uses the same pixel size as the play area (moved here from F-10, because its size follows the circle size and HUD layout) | Open `/?dev=layout` at 360x800, 412x915 and 1280x800. Resize mid-play between them and to landscape: readout "circles outside play area" stays 0; screenshot is sharp. Use the scene's "pretend notch" control (it overrides the inset values): HUD moves inside the outline | F-10 | gameplay-engineer |
 | F-12 | **Input: pointer events, one tap per finger.** Replaces `click` and `touchstart` (`src/game.js:43-44`, `:149-154`) | New `src/input/pointer.js`, `tests/unit/hit.test.js`, `src/dev/scenes/input.js`, `index.html` | Every finger going down is its own tap at its own position (today a second finger lands on the first: `src/game.js:152`). Taps are converted to logic units correctly at every scale and in the centred column. `touch-action: none` on the play area: no scroll, zoom or text selection. Mouse and touch both work. Hit test is a pure function with tests. The scene has an auto-tapper (taps per second, number of fingers) that feeds the real input path | Open `/?dev=input`. Click circles with the mouse, then with touch emulation: the readout names the circle hit and the tap position. Run the auto-tapper at 10 a second with 3 fingers: the tap log shows 30 taps a second, each at its own position, none dropped | F-11 | gameplay-engineer |
 | F-13 | **Settings and safe storage.** Reduce motion (in-game switch plus the system setting), music volume, effects volume, vibration, mute | New `src/storage.js`, `src/settings.js`, `tests/unit/settings.test.js`, `src/dev/scenes/settings.js` | All storage access survives blocked storage without an error. Values persist across a reload. Reduce motion is on when the in-game switch is on or when `prefers-reduced-motion: reduce` is set, and updates live when the system setting changes. Tests use a fake storage and a fake system setting. This is plumbing with plain test controls; the real settings screen is a later feature | Open `/?dev=settings`: change each control, reload, values kept. Emulate reduced motion in the browser: the "effective Reduce motion" readout turns on without a reload. Block storage and reload: no console error, defaults shown | F-08 | gameplay-engineer |
 | F-14 | **Effects safety rules as tested logic.** Flash budget, shared pulse clock, one shake at a time, Reduce motion swaps | New `src/effects/limiter.js`, `src/effects/pulseClock.js`, `tests/unit/effects.test.js` | Tests, written from WB 4 and WB 6, not from the code: (1) 10 taps a second with 3 fingers for 10 s: no one-second window grants more than 3 flashes; (2) with a 2-a-second pulse running, pulse plus bursts together stay at 3 or under; (3) a pulse faster than 2 a second in Story, or faster than one every 2 s in Calm, is refused; (4) all pulses share one clock; (5) a second shake during a shake neither restarts nor extends it, and Calm never shakes; (6) under Reduce motion: shake becomes dim, wobble becomes dim, burst becomes small fade; (7) no effect colour is saturated red (R/(R+G+B) of 0.8 or more); (8) same results at 60, 90 and 120 steps a second | `npm test` shows the eight named tests passing. QA reads the test names against WB 4 and WB 6 and reports any rule with no test. Visible proof comes in F-15 | F-13 | gameplay-engineer |
@@ -104,6 +104,106 @@ From the retrospective code review of F-01 to F-09. All five come before F-10; t
 | R-05 | Small | N2 | One shared `button()` and `READOUT_MS` for dev scenes | `src/dev/scenes/loop.js:9-12`, `src/dev/scenes/circles.js:17-30`, new shared module in `src/dev/` (e.g. `src/dev/ui.js`) | One definition of each, imported by both scenes; no copies left (a search of `src/dev/` finds one `function button` and one `READOUT_MS =`). Scenes look and behave as before | Browser: `?dev`, `?dev=loop`, `?dev=circles` open, buttons work, readouts update about 4 times a second. `npm run build`, then `grep -rl __pastelPopDev dist/` finds nothing and `dist/assets/` has no dev-scene chunk, and `?dev` in `npm run preview` opens the normal game | gameplay-engineer |
 
 **R-04 fallback decision:** no fallback drawer. Symbol ids come only from the static `PALETTE`, so the unit test makes a missing drawer impossible to commit (the pre-commit hook runs `npm test`). A silent fallback would hide exactly the bug the test catches, and a circle without its symbol breaks the "never colour alone" rule. The wider point, that any exception inside the loop stops it for good, is noted under deferred items rather than patched here.
+
+### F-10 refined (2026-11-08)
+
+Replaces the detail of the F-10 row. Standing criteria and the "mutation check" meaning from section 3a apply. Size: medium, one branch (`feat/f10-sharp-rendering`), six commits.
+
+**Scope trimmed.** No `src/render/draw.js`: drawing stays in `src/circle.js` until F-18 tidies files. The target swatch moves to F-11. Symbols stay as path-drawn placeholders: at internal resolution their edges are soft. That is accepted until the artist's art arrives; the hard-edge check applies to the `?dev=render` test card and to circle discs only. The tap area 10% wider than the circle (GD Calm mode) is not part of F-10.
+
+**1. The view: one pure function in `src/render/view.js`**
+
+`computeView(cssWidth, cssHeight, dpr, target)` returns a frozen plain object, or `null` when no usable view exists. `target` is `INTERNAL_WIDTH_TARGET` (new in `src/config.js`, 180, marked provisional).
+
+| Step | Rule |
+|---|---|
+| Bad pixel ratio | `dpr` that is not a finite number above 0 counts as 1 |
+| Bad size | `cssWidth` or `cssHeight` that is not a finite number above 0: return `null` |
+| `scale` | Device pixels per internal pixel: `max(1, round(cssWidth × dpr / target))` (D-004: nearest whole number) |
+| `internalWidth`, `internalHeight` | `floor(cssWidth × dpr / scale + 1e-6)`, same for height. The tiny allowance stops float error losing a pixel (360 CSS at 1.15 gives 413.99999… device px; the answer must be 207, not 206). If either comes out under 1, return `null` |
+| `cssPerInternal` | `scale / dpr` |
+| `playCssWidth`, `playCssHeight` | `internalWidth × cssPerInternal`, same for height: the canvas's CSS size, and the play area's size in CSS px |
+| Also returned | `dpr` (after the fix-up) and `target`, for readouts |
+
+**Leftover strip.** Because the grid is rounded down, the canvas can be a little smaller than the window: under one internal pixel on the right and bottom. The canvas sits at the top left; the strip shows the page background, which is the same Dusk as the play area, so nothing is visible. No centring and no letterbox in F-10. Example: 412x915 at 2.625 gives scale 6, 180x400 internal, canvas 411.43x914.29 CSS px.
+
+**Using it.** `src/main.js` calls it on start and on every resize with `innerWidth`, `innerHeight`, `devicePixelRatio`. It sets `canvas.width/height` to the internal size and `canvas.style.width/height` to the play CSS size in px. When it returns `null`, keep the last view (as R-02 keeps the last bounds). `index.html` canvas CSS: drop `width: 100vw; height: 100vh`, add `image-rendering: pixelated`. The game reads the view, never `canvas.width` or `canvas.height`.
+
+**How F-11 extends it.** No new parameters needed: F-11 passes the safe-area-trimmed portrait column size instead of the window size, and positions the canvas element. Taps are measured from the canvas's own `getBoundingClientRect()`, so moving the canvas needs no change to the mapping.
+
+**2. Units: logic, internal pixels, CSS px**
+
+- The play area is 1.0 wide and `internalHeight / internalWidth` tall, so the world maps exactly onto the drawn canvas.
+- **Sizing (S1 fix):** `circleRadius(view.playCssWidth)`. `widthPixels` becomes the play CSS width; the `CIRCLE_REFERENCE_WIDTH_DP` fallback is only used before the first view exists.
+- **Drawing:** world to internal pixels is "multiply by `internalWidth`". New `circlePixels(view, circle)` in `view.js` returns whole internal pixels: `size = max(1, round(2 × radius × internalWidth))`, `left = round(x × internalWidth − size / 2)`, same for `top`. `drawCircle` draws that disc as whole-pixel rows (new `discRows(size)` in `src/circle.js`, a list of row offset and width), not with `arc()`, because `arc()` blends edge pixels even with smoothing off. Symbol drawn on top, centred on the disc.
+- **Taps:** `cssToWorld(view, cssX, cssY)` returns `{ x: cssX / playCssWidth, y: cssY / playCssWidth }`, with `cssX, cssY` measured from the canvas's top left. `handleInput` uses it; hit testing stays in widths against the logic radius.
+- **Same size when the target changes from 180 to 240:** only approximately, because both the scale and the disc snap to whole pixels. Tolerance: the drawn diameter in CSS px is within one internal pixel (`cssPerInternal`) of the ideal, `2 × radius × cssWidth`, at both settings. At 360 CSS wide with 180, it is exactly 64 at device scale 1, 2 and 3. With 240 at device scale 3 it is 63.33 (38 internal px at 5/3 CSS px each), which passes. Crossing time does not depend on the target at all (logic is in widths).
+
+**3. Tests**
+
+`tests/unit/view.test.js`, values written from the rules above, not copied from the code's output:
+
+| # | Case | Expect |
+|---|---|---|
+| V1 | 360x800, dpr 1, target 180 | scale 2, 180x400, cssPerInternal 2, play 360x800 |
+| V2 | 360x800, dpr 2 | scale 4, 180x400, cssPerInternal 2, play 360x800 |
+| V3 | 360x800, dpr 3 | scale 6, 180x400, cssPerInternal 2, play 360x800 |
+| V4 | 412x915, dpr 2.625 | scale 6, 180x400, cssPerInternal 6/2.625, play about 411.43x914.29 |
+| V5 | Grid: widths 320, 360, 412, 768, 1280; heights 640, 800, 915; dpr 1, 1.5, 2, 2.625, 3 | scale is a whole number of at least 1; `internal × scale` is at most the device size and adding one more internal pixel would pass it, for both axes; play size is at most the window |
+| V6 | 306x600, dpr 1 (306/180 = 1.7) | scale 2, internal width 153 (rounding, not rounding down) |
+| V7 | 80x100, dpr 1 | scale 1, 80x100 (scale never 0) |
+| V8 | 360x800, dpr 1.15 | internal width 207 (float allowance) |
+| V9 | Width or height 0, negative, `NaN`, `Infinity` | `null` |
+| V10 | dpr 0, `NaN`, `undefined` | same result as dpr 1 |
+| V11 | 360x1, dpr 1 | `null` (height under one internal pixel) |
+| V12 | Target 240 at 360x800, dpr 2 and dpr 3 | dpr 2: scale 3, 240 wide; dpr 3: scale 5, 216 wide; play width 360 in both |
+| V13 | `circlePixels` with `circleRadius(view.playCssWidth)`, 360x800, dpr 1, 2, 3, target 180 | size 32, whole-number left and top, `size × cssPerInternal` is 64 |
+| V14 | Same at 412x915 and 1280x800, dpr 1, 2, 2.625, 3, targets 180 and 240 | `size × cssPerInternal` within `cssPerInternal` of `2 × radius × cssWidth` |
+| V15 | `cssToWorld` at 360x800 dpr 1, and 412x915 dpr 2.625 | (0, 0) gives (0, 0); (playCssWidth, playCssHeight) gives (1, height in widths); (180, 400) at 360 gives (0.5, 400/360) |
+
+`tests/unit/circle.test.js`: for sizes 1, 2, 7, 16 and 32, `discRows(size)` has `size` rows, the widest row is `size` wide, rows are symmetric top to bottom and left to right, and every row is inside the square.
+
+**Mutation checks** (each must break at least one test; restore after):
+
+| Break | Caught by |
+|---|---|
+| `round` to `floor` in `scale` | V6 |
+| `round` to `ceil` in `scale` | V4 |
+| Remove `max(1, …)` | V7 |
+| `floor` to `round` or `ceil` for the internal size | V5 |
+| Remove the `1e-6` allowance | V8 |
+| `cssPerInternal = scale` (forget `/ dpr`) | V2, V3 |
+| Remove the bad-size guard | V9, V11 |
+| `cssToWorld` divides by `internalWidth` | V15 |
+| `circlePixels` multiplies by `playCssWidth` | V13 |
+| `discRows` row width off by one | circle test |
+
+Browser mutation (not a unit test, because `src/game.js` needs the DOM): put `canvas.width` back into `handleInput`; edge taps in the game now miss. Static check: `git grep -n "canvas\.width\|canvas\.height" src/game.js` finds nothing.
+
+**4. Dev scenes and how QA measures**
+
+- **`?dev=render` (new):** a test card at internal resolution, drawn with `fillRect` at whole coordinates: a one-pixel checkerboard patch, one-pixel lines across and down, a 2x2 block grid, and a frame on the canvas edge. Readout: target, internal size, scale, dpr, CSS per internal pixel, play CSS size, leftover strip in device px. Button "Internal width 180 / 240" re-runs `computeView` with the other target, so QA can compare without editing code.
+- **`?dev=circles` (extended):** its canvas becomes full window width (outside the page padding), sized through `computeView` like the game, `bounds.height` from the view. It adds a still, game-sized circle (`circleRadius(view.playCssWidth)` and `drawCircle`, the game's own calls) centred on a whole internal pixel, away from the moving dot's path. The existing dot and crossing readouts stay as they are. New readouts: view numbers as above, "Circle diameter (internal px)", "Circle diameter (CSS px)", circle centre in CSS px, last tap (CSS x, y; world x, y; hit or miss). Taps use `pointerdown` and `cssToWorld`. Buttons: "Internal width 180 / 240" and "Calm speed" (dot at 0.05 widths a second, Risks 1). `window.__pastelPopDev.circles` adds `diameterCss`, `diameterInternal`, `centreCss`, `radiusCss`, `lastTap`, and the view numbers.
+
+**QA method.** Viewport 360x800 at device scale 1, 2 and 3 (and 412x915 at 2.625 for the leftover strip). Use a fresh Playwright browser context with `deviceScaleFactor` set, if the Playwright tool offers a way to run Playwright code; otherwise use the Chrome DevTools Protocol command `Emulation.setDeviceMetricsOverride` with `deviceScaleFactor`, then reload. If neither is possible with `@playwright/mcp@0.0.83`, say so in the QA log and ask the owner to run the three scales in Chrome DevTools' device toolbar. Do not change `.mcp.json`. At each scale, check:
+
+1. `devicePixelRatio` in the readout matches the emulated scale.
+2. Measured diameter, independent of the readout: in the page, read one row of the canvas through the circle's centre (`getImageData`) and count the pixels in the circle's colour, then multiply by `canvas.getBoundingClientRect().width / canvas.width`. It must be 64 CSS px within 1 px and match the readout. Also take a screenshot and zoom in on one edge: steps are whole blocks, 2 CSS px each.
+3. Taps: at the circle's centre plus and minus 30 CSS px on each axis (2 CSS px inside the 32 px radius): 4 hits. At plus and minus 34 CSS px: 4 misses.
+4. `?dev=render`: zoomed screenshot of the checkerboard and lines shows hard edges and only the card's own colours. Canvas CSS width times dpr is a whole number equal to `internalWidth × scale`.
+5. Press "Internal width 180 / 240" in both scenes: chunkiness changes, the diameter readout stays within one internal pixel of 64 (63.33 at scale 3 is a pass), and the crossing time is unchanged.
+6. Game at `/`: circles are blocky and sharp, and tapping the right ones still clears them at each scale. In preview, `?dev=render` opens the normal game.
+
+**5. Commit steps**
+
+| # | Commit | Proved by |
+|---|---|---|
+| 1 | `INTERNAL_WIDTH_TARGET` and `computeView`, `cssToWorld`, `circlePixels` in `src/render/view.js`, with `tests/unit/view.test.js` | `npm test` |
+| 2 | `discRows` and the whole-pixel disc in `drawCircle`, with `tests/unit/circle.test.js` | `npm test` |
+| 3 | Game on the view: `src/main.js` resize, canvas CSS in `index.html`, `src/game.js` bounds, radius, taps and drawing in view units (S1) | Grep check above; game plays at scale 1, 2, 3 |
+| 4 | `?dev=render` scene and its entry in `src/dev/index.js` | QA steps 1 and 4 |
+| 5 | `?dev=circles`: full-width view canvas, game-sized circle, readouts, taps, two buttons | QA steps 2, 3, 5 |
+| 6 | `CLAUDE.md` structure table (`src/render/`, new tests, new scene) | Read-through |
 
 ### 3b. Deferred from the F-01 to F-09 retrospective review
 

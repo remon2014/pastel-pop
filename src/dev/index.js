@@ -2,11 +2,13 @@ import { CREAM, DUSK, GLOW_1, GLOW_2 } from '../config.js';
 import { parseDevQuery } from './sceneName.js';
 import mountCirclesScene from './scenes/circles.js';
 import mountLoopScene from './scenes/loop.js';
+import mountRenderScene from './scenes/render.js';
 
 // One line per scene: name, what it shows, and its mount function.
 const SCENES = [
   { name: 'loop', title: 'Game loop: fps, elapsed, clamped frames, running loops', mount: mountLoopScene },
   { name: 'circles', title: 'Circles: crossing time, slow frames, bounds pull-back', mount: mountCirclesScene },
+  { name: 'render', title: 'Render: test card, internal size, scale, pixel ratio', mount: mountRenderScene },
 ];
 
 const STYLE = `
@@ -18,7 +20,7 @@ body{display:block;overflow:auto;height:auto;min-height:100vh;background:${DUSK}
 .dev-readout dt,.dev-readout dd{margin:0}
 .dev-readout dd{font-variant-numeric:tabular-nums}
 .dev-canvas{display:block;width:100%;height:120px;border:1px solid ${GLOW_2};border-radius:8px;margin-bottom:12px}
-.dev-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.dev-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .dev-buttons button{min-width:44px;min-height:44px;padding:8px 16px;font:inherit;color:${CREAM};background:${GLOW_2};border:1px solid ${CREAM};border-radius:8px}
 `;
 

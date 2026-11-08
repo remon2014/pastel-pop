@@ -15,7 +15,7 @@ Static files are in `public/`, the service worker and the fake 1.1 MB favicon ar
 Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged (2026-10-11): F-01 to F-09** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), and circle logic in screen widths per second. **Left: F-10 to F-19** — rendering (F-10), layout (F-11), input (F-12), settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
 **Before F-10:** R-01 to R-05, five fixes from the F-01 to F-09 retrospective review; deferred review items (S5, N1, N3 to N9, three real-phone questions) are listed in `docs/foundations-plan.md` section 3b.
 
-- Canvas ignores `devicePixelRatio`, so it is blurry on phone screens; the target swatch canvas has the same problem (F-10).
+- Canvas ignores `devicePixelRatio`, so it is blurry on phone screens (F-10); the target swatch canvas has the same problem (F-11).
 - No pixel-art rendering path: draw at a low internal resolution and scale up with smoothing off (GD Look). The exact internal resolution waits on the art reference (see Blocked). (F-10)
 - Circle size is now screen-relative (64 dp at 360 wide, 48 dp floor) with a PROVISIONAL 112 dp maximum for wide windows (`CIRCLE_MAX_DIAMETER_DP`); revisit the maximum when F-11 makes the play area a portrait column, and ask the game designer how size should scale on tablets.
 - No safe-area handling for notches: no `viewport-fit=cover` and no `env(safe-area-inset-*)` in `index.html` (F-11).

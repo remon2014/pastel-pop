@@ -54,6 +54,7 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 - **Reason:** The canvas ignores `devicePixelRatio` today (`src/main.js:22-23`). A small canvas scaled by the browser is the cheapest path on low-end phones, and whole-number scaling keeps every pixel the same size (GD Look).
 - **Alternatives rejected:** A full device-resolution canvas with a low-resolution buffer copied onto it each frame. It allows sprites to be placed more finely than the pixel grid, but costs a full-screen copy every frame. Kept as the fallback if `pixelated` scaling misbehaves on a target phone, or if the owner chooses smooth slow movement (plan Decision 7).
 - **Unverified:** behaviour on a low-end Android WebView. Checked in F-10 and F-19.
+- **Refined 2026-11-08 (F-10):** the internal size is rounded down, so the canvas may fall short of the window by under one internal pixel; it sits at the top left and the strip shows the same Dusk page background (no centring or letterbox). Play-area sizes and taps are in CSS px through the view, never `canvas.width`. Circles are drawn as whole-pixel discs, not `arc()`, because `arc()` blends edge pixels even with smoothing off. Detail in `docs/foundations-plan.md`, "F-10 refined".
 
 ## D-005: Central effects-safety layer
 
