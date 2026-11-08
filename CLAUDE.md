@@ -53,7 +53,7 @@ Current layout; update this table when files are added, moved or removed.
 | `src/storage.js` | The only file that touches `localStorage` (guarded, survives blocked storage) and `matchMedia` for the system Reduce motion setting |
 | `src/settings.js` | Settings (Reduce motion, music and effects volume, vibration, mute): versioned JSON, in memory, `subscribe`. Takes storage and the system setting as arguments; no `window` |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
-| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`, `world.test.js` covers `src/logic/world.js`, `view.test.js` covers `src/render/view.js` (including `columnRect` and `swatchPixels`), `circle.test.js` covers `discRows`, `symbols.test.js` checks every palette id has a symbol) |
+| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`, `world.test.js` covers `src/logic/world.js`, `view.test.js` covers `src/render/view.js` (including `columnRect` and `swatchPixels`), `circle.test.js` covers `discRows`, `symbols.test.js` checks every palette id has a symbol, `settings.test.js` covers `src/settings.js`, `storage.test.js` covers the `src/storage.js` matchMedia fallbacks) |
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
