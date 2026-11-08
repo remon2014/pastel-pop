@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   fitCircles,
   isInside,
+  playAreaHeight,
   levelMultiplier,
   circleRadius,
   spawnCircle,
@@ -127,4 +128,41 @@ test('spawning places every circle fully inside the bounds', () => {
 test('spawned circles move at the requested speed', () => {
   const c = spawnCircle(BOUNDS, 0.09, speedFor(1.4), seeded(5));
   assert.ok(Math.abs(Math.hypot(c.vx, c.vy) - 0.35) < 1e-12);
+});
+
+test('a canvas with no usable size keeps the last good play-area height', () => {
+  assert.equal(playAreaHeight(400, 720, 1.8), 1.8);
+  assert.equal(playAreaHeight(400, 800, 1.8), 2);
+  for (const [w, h] of [
+    [0, 800],
+    [400, 0],
+    [0, 0],
+    [Number.NaN, 800],
+    [400, Number.POSITIVE_INFINITY],
+  ]) {
+    assert.equal(playAreaHeight(w, h, 1.8), 1.8);
+  }
+});
+
+test('circles stay finite and inside when a collapsed canvas returns to a real size', () => {
+  const circles = [];
+  const random = seeded(7);
+  for (let i = 0; i < 10; i++) circles.push(spawnCircle(BOUNDS, 0.07, 0.25, random));
+  const bounds = { ...BOUNDS };
+  for (const [w, h] of [
+    [400, 720],
+    [400, 0],
+    [0, 0],
+    [400, 0],
+    [400, 500],
+  ]) {
+    bounds.height = playAreaHeight(w, h, bounds.height);
+    fitCircles(circles, bounds);
+    stepCircles(circles, bounds, 1 / 60);
+    for (const c of circles) {
+      assert.ok([c.x, c.y, c.vx, c.vy, c.radius].every(Number.isFinite));
+      assert.ok(isInside(c, bounds));
+    }
+  }
+  assert.equal(bounds.height, 1.25);
 });

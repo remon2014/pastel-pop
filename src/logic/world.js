@@ -21,6 +21,14 @@ export function circleRadius(widthDp) {
   return Math.max(Math.min(fraction, cap), floor);
 }
 
+// Play-area height in widths for a canvas of the given pixel size, or `lastHeight` when the canvas
+// has no usable size (0 or not finite, for example while a window is collapsed). This keeps the
+// last good bounds so circles never get NaN or infinite positions.
+export function playAreaHeight(widthPx, heightPx, lastHeight) {
+  const usable = Number.isFinite(widthPx) && Number.isFinite(heightPx) && widthPx > 0 && heightPx > 0;
+  return usable ? heightPx / widthPx : lastHeight;
+}
+
 // Speed multiplier for a level (1.0 at level 1).
 export function levelMultiplier(level) {
   return 1 + (level - 1) * LEVEL_SPEED_STEP;
