@@ -1,3 +1,4 @@
+import { drawCircle } from '../../circle.js';
 import { PALETTE } from '../../colorManager.js';
 import { DUSK, INTERNAL_WIDTH_TARGET } from '../../config.js';
 import { browserHost, createLoop } from '../../core/loop.js';
@@ -10,6 +11,7 @@ import { computeView, cssToWorld } from '../../render/view.js';
 import { createSettings } from '../../settings.js';
 import { createStorage, createSystemReducedMotion } from '../../storage.js';
 import { createFpsCounter } from '../fpsCounter.js';
+import { createFlashMeter } from '../flashMeter.js';
 import { createReadout } from '../readout.js';
 import { button, createViewCanvas, READOUT_MS, sizeCanvas } from '../ui.js';
 
@@ -46,7 +48,21 @@ const ROWS = [
   'Pulse beats in the last second',
   'Steps per second',
   'Looks on screen',
+  'Meter: flashes in the last second',
+  'Meter: highest in a second (layer)',
+  'Meter: total (layer)',
+  'Meter: red flashes (highest / total)',
+  'Meter: raw count, no area test, for information (highest / total)',
+  'Highest shake change area (must be 10% or less)',
+  'Meter above layer (must stay 0)',
+  'Meter ms per frame',
 ];
+// Calibration block: switches twice a second, dark state well under 0.80, bright 0.10 or more above it.
+const CALIBRATION_RATE = 2;
+const CALIBRATION_DARK = '#404040';
+const CALIBRATION_BRIGHT = '#ffffff';
+const CALIBRATION_SIZE = 0.4; // fraction of the internal width: over 10% of the play area (WB 6 rule 7c)
+const MS_PER_SECOND = 1000;
 const onOff = (b) => (b ? 'on' : 'off');
 
 // Mounts the scene and returns its read-only numbers for window.__pastelPopDev.
@@ -87,9 +103,17 @@ export default function mountEffectsScene(root) {
   let pulseOn = false;
   const rate = START_RATE;
   let timer = null;
+  let meterOn = true;
+  let calibrationOn = false;
+  let meter = null;
+  let lastShake = 0;
+  let meterAbove = 0;
+  let lastMeterHighest = 0;
+  let meterMs = 0;
 
-  const request = (kind, circle, extra = {}) =>
-    effects.request({
+  const tally = {};
+  const request = (kind, circle, extra = {}) => {
+    const granted = effects.request({
       kind,
       mode,
       now,
@@ -100,9 +124,14 @@ export default function mountEffectsScene(root) {
       color: circle.color.hex,
       ...extra,
     });
+    const key = `${kind}.${granted.form}`;
+    tally[key] = (tally[key] ?? 0) + 1;
+    return granted;
+  };
 
   function pop(circle) {
-    request('pop', circle);
+    const granted = request('pop', circle);
+    circle.ghostId = granted.form === 'full' ? circle.id : null;
     effects.forget(circle.id);
     circle.gone = true;
     circle.respawnAt = now + RESPAWN_SECONDS;
@@ -114,7 +143,9 @@ export default function mountEffectsScene(root) {
 
   function respawn(circle) {
     circle.id = `c${nextId++}`;
-    circle.color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    // At least one target-coloured circle stays on screen, so taps keep popping.
+    const targetShown = circles.some((c) => c !== circle && !c.gone && c.color.id === TARGET.id);
+    circle.color = targetShown ? PALETTE[Math.floor(Math.random() * PALETTE.length)] : TARGET;
     circle.waiting = request('arrival', circle).form === 'waitUntil';
     circle.gone = circle.waiting;
   }
@@ -161,13 +192,54 @@ export default function mountEffectsScene(root) {
     }
   }
 
+  const effectOf = (kind, id) => effects.active.find((e) => e.kind === kind && e.circleId === id);
+
+  // A circle fades in with its arrival and, when its pop has no fade of its own, fades out with its pop.
+  function drawCircleFading(circle) {
+    if (!circle.gone) {
+      const arrival = effectOf('arrival', circle.id);
+      ctx.globalAlpha = arrival ? arrival.progress : 1;
+      drawCircleWithEffects(ctx, effects, circle, view);
+    } else {
+      const pop = circle.ghostId && effectOf('pop', circle.ghostId);
+      if (!pop) return;
+      ctx.globalAlpha = 1 - pop.progress;
+      drawCircle(ctx, circle, view);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function draw() {
     if (!view) return;
     ctx.fillStyle = DUSK;
     ctx.fillRect(0, 0, view.internalWidth, view.internalHeight);
     drawFrame(ctx, effects, view, () => {
-      for (const circle of circles) if (!circle.gone) drawCircleWithEffects(ctx, effects, circle, view);
+      for (const circle of circles) drawCircleFading(circle);
     });
+    const drawnAt = performance.now() / MS_PER_SECOND;
+    if (calibrationOn) drawCalibration(drawnAt);
+    if (meterOn) measure(drawnAt);
+  }
+
+  function drawCalibration(drawnAt) {
+    const size = Math.round(view.internalWidth * CALIBRATION_SIZE);
+    const bright = Math.floor(drawnAt * CALIBRATION_RATE * 2) % 2 === 1;
+    ctx.fillStyle = bright ? CALIBRATION_BRIGHT : CALIBRATION_DARK;
+    ctx.fillRect(view.internalWidth - size - 4, view.internalHeight - size - 4, size, size);
+  }
+
+  // Reads the picture just drawn (one getImageData) and gives it to the meter with the shake offset change.
+  function measure(drawnAt) {
+    const started = performance.now();
+    const shake = effects.shakeOffset();
+    const pixels = ctx.getImageData(0, 0, view.internalWidth, view.internalHeight).data;
+    meter.addFrame(drawnAt, pixels, shake - lastShake, shake !== 0 || lastShake !== 0);
+    lastShake = shake;
+    meterMs = performance.now() - started;
+    // The calibration block is a known flash the layer does not know about, so the check is off while it shows.
+    const highest = meter.flashes.highest;
+    if (!calibrationOn && highest > effects.peaks.flashes && highest > lastMeterHighest) meterAbove++;
+    lastMeterHighest = highest;
   }
 
   function layout() {
@@ -180,6 +252,8 @@ export default function mountEffectsScene(root) {
     if (!next) return;
     view = next;
     sizeCanvas(canvas, view);
+    meter = createFlashMeter(view.internalWidth, view.internalHeight);
+    lastShake = 0;
     ctx.imageSmoothingEnabled = false;
     for (const circle of circles) circle.radius = circleRadius(view.playCssWidth);
   }
@@ -238,6 +312,15 @@ export default function mountEffectsScene(root) {
     pendingSeconds = 0;
     refresh();
   });
+  const meterButton = button('', () => {
+    meterOn = !meterOn;
+    if (meterOn) meter = createFlashMeter(view.internalWidth, view.internalHeight);
+    refresh();
+  });
+  const calibrationButton = button('', () => {
+    calibrationOn = !calibrationOn;
+    refresh();
+  });
   const reduceButton = button('', () => settings.set('reduceMotion', !settings.get('reduceMotion')));
   buttons.append(
     tapButton,
@@ -245,7 +328,17 @@ export default function mountEffectsScene(root) {
     reduceButton,
     pulseButton,
     slowButton,
-    button('Reset highest', () => effects.resetPeaks()),
+    meterButton,
+    calibrationButton,
+    button('Reset highest', () => {
+      effects.resetPeaks();
+      meter.flashes.resetHighest(performance.now() / MS_PER_SECOND);
+      meter.redFlashes.resetHighest(performance.now() / MS_PER_SECOND);
+      meter.rawFlashes.resetHighest(performance.now() / MS_PER_SECOND);
+      meter.shakeArea.highest = 0;
+      meterAbove = 0;
+      lastMeterHighest = 0;
+    }),
   );
 
   const looks = () => effects.active.map((e) => `${e.kind}.${e.form}`).join(' ') || 'none';
@@ -255,6 +348,8 @@ export default function mountEffectsScene(root) {
     pulseButton.textContent = `Low-time pulse: ${onOff(pulseOn)}`;
     tapButton.textContent = `Auto-tapper (${rate}/s x ${FINGERS}): ${onOff(timer !== null)}`;
     slowButton.textContent = `Slow loop (30 steps/s): ${onOff(slowLoop)}`;
+    meterButton.textContent = `Flash meter: ${onOff(meterOn)}`;
+    calibrationButton.textContent = `Calibration block (${CALIBRATION_RATE}/s): ${onOff(calibrationOn)}`;
     reduceButton.textContent = `Reduce motion switch: ${onOff(settings.get('reduceMotion'))}`;
     readout.set(ROWS[0], mode);
     readout.set(
@@ -272,6 +367,16 @@ export default function mountEffectsScene(root) {
     readout.set(ROWS[10], String(effects.beatCount()));
     readout.set(ROWS[11], stepCounter.fps(performance.now()).toFixed(1));
     readout.set(ROWS[12], looks());
+    const f = meter.flashes;
+    const nowSeconds = performance.now() / MS_PER_SECOND;
+    readout.set(ROWS[13], meterOn ? String(f.inWindow(nowSeconds)) : 'off');
+    readout.set(ROWS[14], `${f.highest} (${effects.peaks.flashes})`);
+    readout.set(ROWS[15], `${f.total} (${effects.flashTotal()})`);
+    readout.set(ROWS[16], `${meter.redFlashes.highest} / ${meter.redFlashes.total}`);
+    readout.set(ROWS[17], `${meter.rawFlashes.highest} / ${meter.rawFlashes.total}`);
+    readout.set(ROWS[18], `${(meter.shakeArea.highest * 100).toFixed(1)}%`);
+    readout.set(ROWS[19], calibrationOn ? `${meterAbove} (exempt: calibration on)` : String(meterAbove));
+    readout.set(ROWS[20], meterOn ? meterMs.toFixed(2) : 'off');
   }
   settings.subscribe(refresh);
   setInterval(refresh, READOUT_MS);
@@ -316,6 +421,24 @@ export default function mountEffectsScene(root) {
     },
     get stepsPerSecond() {
       return stepCounter.fps(performance.now());
+    },
+    get tally() {
+      return { ...tally };
+    },
+    get meter() {
+      return {
+        on: meterOn,
+        highest: meter.flashes.highest,
+        total: meter.flashes.total,
+        redHighest: meter.redFlashes.highest,
+        redTotal: meter.redFlashes.total,
+        shakeAreaHighest: meter.shakeArea.highest,
+        rawHighest: meter.rawFlashes.highest,
+        rawTotal: meter.rawFlashes.total,
+        above: meterAbove,
+        ms: meterMs,
+        layerHighest: effects.peaks.flashes,
+      };
     },
     get slowLoop() {
       return slowLoop;

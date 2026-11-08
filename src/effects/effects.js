@@ -65,6 +65,7 @@ export function createEffects() {
   const beats = [];
   const shakeStarts = [];
   let clock = 0;
+  let flashTotal = 0;
   const peaks = { flashes: 0, shakesRunning: 0, shakesBegun: 0 };
 
   const runningShakes = () => active.filter((e) => e.kind === 'shake' && e.form === 'full').length;
@@ -82,6 +83,7 @@ export function createEffects() {
   // Flash start times, kept in time order (a beat seen late is older than a tap already logged).
   // The peak is the most flashes in any window (t - 1 s, t] ending at a flash.
   function countFlash(at) {
+    flashTotal++;
     let i = flashes.length;
     while (i > 0 && flashes[i - 1] > at) i--;
     flashes.splice(i, 0, at);
@@ -194,6 +196,7 @@ export function createEffects() {
       active.reduce((sum, e) => (e.kind === 'wobble' && e.circleId === circleId ? sum + e.offsetX : sum), 0),
     // The layer's own numbers, for F-16's comparison with the pixels.
     flashCount: () => flashesIn(clock),
+    flashTotal: () => flashTotal,
     beatCount: () => beats.length,
     shakesBegunCount: () => shakeStarts.length,
     shakesRunning: runningShakes,
