@@ -106,10 +106,13 @@ describe('effects rules', () => {
     if (req('pop', 1.35, { circleId: 1 }).form === 'full') pops.push(1.35);
     let switchAt = 1.4;
     const res = req('pulse', 1.4, { circleId: secondId, rate: 2 });
-    if (res.form === 'waitUntil') {
-      switchAt = res.at;
-      assert.equal(req('pulse', switchAt, { circleId: secondId, rate: 2 }).form, 'full');
+    let answer = res;
+    while (answer.form === 'waitUntil') {
+      assert.ok(answer.at > switchAt);
+      switchAt = answer.at;
+      answer = req('pulse', switchAt, { circleId: secondId, rate: 2 });
     }
+    assert.equal(answer.form, 'full');
     for (let t = switchAt; t < 4; t += 0.05) if (req('pop', t, { circleId: 2 }).form === 'full') pops.push(t);
     const beats = [];
     for (let k = 0; k / 1.5 <= switchAt; k++) beats.push(k / 1.5);

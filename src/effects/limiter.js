@@ -63,6 +63,7 @@ export function createLimiter() {
   function pulse({ mode, now, circleId, rate }) {
     const max = mode === 'calm' ? CALM_PULSE_MAX_RATE : STORY_PULSE_MAX_RATE;
     if (!(rate > 0) || rate > max + EPS) return { form: 'refused' };
+    const savedFlashes = flashes.slice();
     const was = pulses.get(circleId);
     pulses.set(circleId, rate);
     const before = clock.rate;
@@ -73,6 +74,8 @@ export function createLimiter() {
       if (was === undefined) pulses.delete(circleId);
       else pulses.set(circleId, was);
       clock.setRate(before);
+      flashes.length = 0;
+      flashes.push(...savedFlashes);
       return { form: 'waitUntil', at };
     }
     return { form: 'full' };
