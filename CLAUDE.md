@@ -58,6 +58,7 @@ Current layout; update this table when files are added, moved or removed.
 | `docs/qa-log.md`, `docs/qa-notes.md` | QA verdict per task, and lasting notes for future test sessions |
 | `.claude/hooks/` | Claude Code hooks, wired up in `.claude/settings.json`: `format-file.mjs` formats and lints each edited file, `check-commit.mjs` runs tests and lint before any `git commit`, `protect-files.mjs` blocks edits to secrets and asks before edits to settings, MCP and hook files |
 | `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor`, `tech-lead`, `gameplay-engineer`, `qa-tester`, `code-reviewer` |
+| `.claude/skills/` | Skills the owner runs by typing them: `ship-task/SKILL.md` (`/ship-task F-11`) runs one planned task through tech lead, engineer, QA and review, and stops for approval before merging |
 
 ## Rules
 - **Static assets go in `public/`.** Vite only copies files from `public/` into the build. Anything in the repo root (icons, `sw.js`, CSS loaded at runtime) is missing from production builds.
