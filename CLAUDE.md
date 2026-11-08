@@ -50,6 +50,8 @@ Current layout; update this table when files are added, moved or removed.
 | `src/input/pointer.js` | `attachPointer(canvas, onTap)`: one tap per `pointerdown`, each finger at its own canvas-relative position. Taps on HUD controls never reach it |
 | `src/logic/hit.js` | Canvas-free hit test `findHit`: tap area = radius x `TAP_REACH`, floor half `MIN_TOUCH_DP`; matching circle wins, else nearest, else null |
 | `src/dev/` | Dev-only test sandbox, absent from `npm run build`. Open `http://localhost:5174/?dev` for the scene list, `?dev=loop`, `?dev=circles`, `?dev=render`, `?dev=layout` or `?dev=input` for a scene. `index.js` scene registry, `readout.js` on-screen panel, `ui.js` shared `button()` and `READOUT_MS`, `scenes/` one file per scene; `window.__pastelPopDev` holds the read-only numbers |
+| `src/storage.js` | The only file that touches `localStorage` (guarded, survives blocked storage) and `matchMedia` for the system Reduce motion setting |
+| `src/settings.js` | Settings (Reduce motion, music and effects volume, vibration, mute): versioned JSON, in memory, `subscribe`. Takes storage and the system setting as arguments; no `window` |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
 | `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`, `world.test.js` covers `src/logic/world.js`, `view.test.js` covers `src/render/view.js` (including `columnRect` and `swatchPixels`), `circle.test.js` covers `discRows`, `symbols.test.js` checks every palette id has a symbol) |
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |

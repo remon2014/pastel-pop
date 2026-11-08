@@ -5,6 +5,7 @@ import mountInputScene from './scenes/input.js';
 import mountLayoutScene from './scenes/layout.js';
 import mountLoopScene from './scenes/loop.js';
 import mountRenderScene from './scenes/render.js';
+import mountSettingsScene from './scenes/settings.js';
 
 // One line per scene: name, what it shows, and its mount function.
 const SCENES = [
@@ -13,6 +14,7 @@ const SCENES = [
   { name: 'render', title: 'Render: test card, internal size, scale, pixel ratio', mount: mountRenderScene },
   { name: 'layout', title: 'Layout: play column, safe areas, HUD, resize', mount: mountLayoutScene },
   { name: 'input', title: 'Input: pointer taps, hit test, auto-tapper', mount: mountInputScene },
+  { name: 'settings', title: 'Settings: Reduce motion, volumes, vibration, mute, storage', mount: mountSettingsScene },
 ];
 
 const STYLE = `
