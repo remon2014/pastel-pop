@@ -4,7 +4,8 @@ import { PALETTE } from './colorManager.js';
 import { browserHost, createLoop } from './core/loop.js';
 import { BACKGROUND_COLOR, CIRCLE_REFERENCE_WIDTH_DP } from './config.js';
 import { cssToWorld } from './render/view.js';
-import { getDistance } from './utils.js';
+import { attachPointer } from './input/pointer.js';
+import { findHit, minTapRadius } from './logic/hit.js';
 import {
   circleRadius,
   fitCircles,
@@ -33,8 +34,7 @@ export class Game {
     this.ui.pauseBtn.addEventListener('click', () => this.togglePause());
     this.ui.continueBtn.addEventListener('click', () => this.resumeGame());
 
-    this.canvas.addEventListener('click', this.handleClick.bind(this));
-    this.canvas.addEventListener('touchstart', this.handleTouch.bind(this));
+    attachPointer(this.canvas, this.handleInput.bind(this));
   }
 
   start() {
@@ -102,33 +102,16 @@ export class Game {
     this.ui.setTargetSwatch(selected);
   }
 
-  handleClick(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    this.handleInput(e.clientX - rect.left, e.clientY - rect.top);
-  }
-
-  handleTouch(e) {
-    e.preventDefault();
-    const rect = this.canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    this.handleInput(touch.clientX - rect.left, touch.clientY - rect.top);
-  }
-
   handleInput(cssX, cssY) {
     if (this.isPaused) return;
     if (!this.view) return;
     const { x, y } = cssToWorld(this.view, cssX, cssY);
-
-    for (let i = this.circles.length - 1; i >= 0; i--) {
-      const circle = this.circles[i];
-      if (getDistance(x, y, circle.x, circle.y) <= circle.radius) {
-        if (circle.color.id === this.currentTargetColor) {
-          this.circles.splice(i, 1);
-          this.selectNewTargetColor();
-        }
-        return;
-      }
-    }
+    const hit = findHit(this.circles, x, y, this.currentTargetColor, {
+      minRadius: minTapRadius(this.view.playCssWidth),
+    });
+    if (hit?.color.id !== this.currentTargetColor) return;
+    this.circles.splice(this.circles.indexOf(hit), 1);
+    this.selectNewTargetColor();
   }
 
   togglePause() {

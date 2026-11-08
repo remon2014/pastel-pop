@@ -44,3 +44,8 @@ export const DEV_FPS_WINDOW_MS = 1000;
 export const INTERNAL_WIDTH_TARGET = 180;
 // Dev level only: the other target the 180 / 240 comparison buttons switch to.
 export const ALTERNATE_INTERNAL_WIDTH = 240;
+
+// A circle's tap area is its radius times this (PROVISIONAL, docs/game-design.md "Missed tap": about 10% wider).
+export const TAP_REACH = 1.1;
+// Minimum touch size in dp. The tap area is never under half of it across the radius.
+export const MIN_TOUCH_DP = 48;
