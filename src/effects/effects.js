@@ -59,6 +59,7 @@ export function createEffects() {
   const flashes = [];
   const beats = [];
   const shakeStarts = [];
+  let clock = 0;
   const peaks = { flashes: 0, shakesRunning: 0, shakesBegun: 0 };
 
   const runningShakes = () => active.filter((e) => e.kind === 'shake' && e.form === 'full').length;
@@ -73,11 +74,17 @@ export function createEffects() {
     }
   }
 
-  function countFlash(now) {
-    flashes.push(now);
-    prune(flashes, now);
-    peaks.flashes = Math.max(peaks.flashes, flashes.length);
+  // Flash start times, kept in time order (a beat seen late is older than a tap already logged).
+  // The peak is the most flashes in any window (t - 1 s, t] ending at a flash.
+  function countFlash(at) {
+    let i = flashes.length;
+    while (i > 0 && flashes[i - 1] > at) i--;
+    flashes.splice(i, 0, at);
+    while (flashes[0] <= flashes[flashes.length - 1] - 2 * FLASH_WINDOW_SECONDS) flashes.shift();
+    for (const end of flashes) peaks.flashes = Math.max(peaks.flashes, flashesIn(end));
   }
+
+  const flashesIn = (end) => flashes.filter((t) => t <= end + EPS && t > end - FLASH_WINDOW_SECONDS + EPS).length;
 
   // A flash is a brightening that pays the budget: a Story arrival, a full pop or burst, a pulse beat.
   // A Calm arrival and its pop are one flash, paid by the pop (the limiter's rule).
@@ -110,6 +117,7 @@ export function createEffects() {
 
   // req: { kind, mode, now, circleId, rate?, x, y, radius (widths), color (hex) }. Returns the limiter's { form }.
   function request(req) {
+    clock = Math.max(clock, req.now);
     const answer = limiter.request(req);
     if (answer.form === 'waitUntil') held.set(req.circleId, { req, at: answer.at });
     else show(req, answer.form, answer.amount, req.now);
@@ -117,6 +125,7 @@ export function createEffects() {
   }
 
   function update(now) {
+    clock = Math.max(clock, now);
     for (const [id, wait] of [...held]) {
       if (wait.at > now + EPS) continue;
       held.delete(id);
@@ -141,7 +150,6 @@ export function createEffects() {
       }
       effect.offsetX = offsetFor(effect);
     }
-    prune(flashes, now);
     prune(beats, now);
     prune(shakeStarts, now);
   }
@@ -166,13 +174,13 @@ export function createEffects() {
     wobbleOffset: (circleId) =>
       active.reduce((sum, e) => (e.kind === 'wobble' && e.circleId === circleId ? sum + e.offsetX : sum), 0),
     // The layer's own numbers, for F-16's comparison with the pixels.
-    flashCount: () => flashes.length,
+    flashCount: () => flashesIn(clock),
     beatCount: () => beats.length,
     shakesBegunCount: () => shakeStarts.length,
     shakesRunning: runningShakes,
     peaks,
     resetPeaks() {
-      peaks.flashes = flashes.length;
+      peaks.flashes = flashesIn(clock);
       peaks.shakesRunning = runningShakes();
       peaks.shakesBegun = shakeStarts.length;
     },
