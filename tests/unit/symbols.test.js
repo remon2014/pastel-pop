@@ -8,5 +8,5 @@ test('every palette entry has a symbol drawer', () => {
 });
 
 test('an unknown id has no symbol drawer', () => {
-  assert.equal(hasSymbol('nope'), false);
+  for (const id of ['nope', 'toString', 'constructor']) assert.equal(hasSymbol(id), false, id);
 });

@@ -131,7 +131,7 @@ test('spawned circles move at the requested speed', () => {
 });
 
 test('a canvas with no usable size keeps the last good play-area height', () => {
-  assert.equal(playAreaHeight(400, 720, 1.8), 1.8);
+  assert.equal(playAreaHeight(400, 720, 1.0), 1.8);
   assert.equal(playAreaHeight(400, 800, 1.8), 2);
   for (const [w, h] of [
     [0, 800],
@@ -207,4 +207,11 @@ test('a zero-second step moves nothing', () => {
   const circle = { x: 0.4, y: 0.7, vx: 0.25, vy: -0.1, radius: 0.1 };
   stepCircle(circle, BOUNDS, 0);
   assert.deepEqual(circle, { x: 0.4, y: 0.7, vx: 0.25, vy: -0.1, radius: 0.1 });
+});
+
+test('circle size is finite and the reference size when the width is 0 or not a number', () => {
+  const reference = circleRadius(360);
+  for (const width of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.equal(circleRadius(width), reference, String(width));
+  }
 });

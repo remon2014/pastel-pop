@@ -14,7 +14,9 @@ import {
 
 // Radius in widths for a play area `widthDp` CSS pixels wide: a fixed fraction of the width,
 // but never smaller than the floor diameter in dp.
+// A width that is 0, negative or not finite is treated as the reference width.
 export function circleRadius(widthDp) {
+  if (!(widthDp > 0) || !Number.isFinite(widthDp)) return circleRadius(CIRCLE_REFERENCE_WIDTH_DP);
   const fraction = CIRCLE_DIAMETER_DP / 2 / CIRCLE_REFERENCE_WIDTH_DP;
   const floor = CIRCLE_MIN_DIAMETER_DP / 2 / widthDp;
   const cap = CIRCLE_MAX_DIAMETER_DP / 2 / widthDp;
