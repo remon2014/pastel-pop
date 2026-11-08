@@ -49,3 +49,17 @@ export const ALTERNATE_INTERNAL_WIDTH = 240;
 export const TAP_REACH = 1.1;
 // Minimum touch size in dp. The tap area is never under half of it across the radius.
 export const MIN_TOUCH_DP = 48;
+
+// Settings (F-13). All defaults are PLACEHOLDERS awaiting the game designer.
+// Reduce motion switch, vibration (one setting for both modes) and mute start off.
+export const SETTINGS_KEY = 'pastelPop.settings';
+export const SETTINGS_VERSION = 1;
+export const DEFAULT_SETTINGS = Object.freeze({
+  reduceMotion: false,
+  vibration: false,
+  muted: false,
+  musicVolume: 0.5,
+  effectsVolume: 0.7,
+});
+// Step the dev scene's volume buttons move by.
+export const DEV_VOLUME_STEP = 0.1;
