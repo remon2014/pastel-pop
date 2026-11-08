@@ -30,3 +30,5 @@ One line per verification, newest last. Verdicts come from the qa-tester agent p
 - Rotation on a device, "Add to Home Screen", and offline use.
 2026-11-08 | F-11 layout | FAIL | 2 bugs (swatch half device pixel at some widths/dpr; Pause overlaps swatch in landscape)
 2026-11-08 | F-11 layout (rechecked at 963d5c7) | PASS | 0 open bugs; round 1 swatch half-pixel bug fixed; landscape Pause/swatch overlap deferred to backlog by owner
+2026-11-08 | F-12 input (b171b33) | FAIL | 1 bug (tap on target swatch reaches play input: swatch has pointer-events none)
+2026-11-08 | F-12 input (recheck vs revised swatch criterion, 072aaf7) | PASS | 0 open bugs; swatch tap hits circle beneath, does nothing when empty, Pause blocks (0 canvas events)
