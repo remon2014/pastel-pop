@@ -110,6 +110,15 @@ describe('effect state', () => {
     assert.equal(fx.flashCount(), 1);
   });
 
+  test('a quiet arrival during the pulse draws nothing and counts no flash', () => {
+    const fx = createEffects();
+    ask(fx, 'pulse', 'story', 0, { rate: 2 });
+    assert.equal(ask(fx, 'arrival', 'story', 0.1, { circleId: 'n' }).form, 'quiet');
+    fx.update(0.1);
+    assert.equal(fx.active.length, 0, 'no halo, nothing added');
+    assert.equal(fx.flashCount(), 0);
+  });
+
   test('arrivals wait for waitUntil and start no earlier', () => {
     const fx = createEffects();
     const arrivals = () => fx.active.filter((e) => e.kind === 'arrival');
@@ -193,15 +202,13 @@ describe('effect state', () => {
     assert.equal(fx.flashCount(), 0);
   });
 
-  test('a beat taken late but older than a logged tap keeps the layer count at 3 or below', () => {
+  test('the layer count uses closed windows: a tap, then pulse beats, peaks at exactly 3', () => {
     const fx = createEffects();
-    ask(fx, 'pulse', 'story', 0, { rate: 2 });
-    fx.update(0.5);
-    assert.equal(ask(fx, 'pop', 'story', 1.03).form, 'full');
-    fx.update(1.03);
-    fx.update(1.5);
-    assert.equal(fx.peaks.flashes, 3);
-    assert.equal(fx.flashCount(), 3);
+    assert.equal(ask(fx, 'pop', 'story', 0).form, 'full');
+    assert.equal(ask(fx, 'pulse', 'story', 0.2, { rate: 2 }).form, 'full');
+    for (let t = 0.25; t <= 1.5; t += 0.25) fx.update(t);
+    assert.equal(fx.peaks.flashes, 3, 'tap at 0 plus beats at 0.5 and 1.0');
+    assert.equal(fx.flashCount(), 3, 'beats at 0.5, 1.0 and 1.5 are inside [0.45, 1.5]');
   });
 
   describe('Reduce motion turned on mid-effect', () => {

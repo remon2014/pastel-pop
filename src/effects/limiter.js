@@ -88,9 +88,6 @@ export function createLimiter() {
     // The window is closed, so a flash may start only just after the oldest one has left it.
     const free = (t) => t + FLASH_BUDGET_WINDOW_SECONDS + 2 * EPS;
     if (logged.length >= FLASH_LIMIT) at = free(logged[logged.length - FLASH_LIMIT]);
-    if (pulseRecent(now) && taps.length >= TAP_FLASHES_WITH_PULSE) {
-      at = Math.max(at, free(taps[taps.length - TAP_FLASHES_WITH_PULSE]));
-    }
     if (pulses.size === 0) at = Math.max(at, free(pulseStoppedAt));
     return at;
   }
@@ -112,9 +109,12 @@ export function createLimiter() {
     let at = now;
     if (arrivals.length >= perSecond) at = arrivals[arrivals.length - perSecond] + FLASH_WINDOW_SECONDS;
     // Story arrivals pay a flash; in Calm the pop pays for the arrival and itself.
-    if (!calm && !canFlash(now)) at = Math.max(at, flashFreeAt(now));
+    // While a pulse runs it owns the budget: the circle arrives quietly (no brightness) and pays nothing.
+    const quiet = !calm && pulseRecent(now);
+    if (!calm && !quiet && !canFlash(now)) at = Math.max(at, flashFreeAt(now));
     if (at > now + EPS) return { form: 'waitUntil', at };
     arrivals.push(now);
+    if (quiet) return { form: 'quiet' };
     if (!calm) taps.push(now);
     return { form: 'full' };
   }

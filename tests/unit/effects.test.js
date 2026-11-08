@@ -76,36 +76,51 @@ describe('effects rules', () => {
     assert.ok(forms.includes('plainFade'));
   });
 
-  test('2 pulse plus bursts: a 2-a-second pulse and tap bursts together stay at 3 or under', () => {
+  test('2 pulse plus taps and arrivals: the pulse keeps every beat and nothing else flashes', () => {
     const { l, req } = story();
     assert.equal(req('pulse', 0, { circleId: 'bar', rate: 2 }).form, 'full');
-    const pops = tapStorm(req);
-    // Beats that did not fit beside a tap are skipped, so the granted beats are what the limiter reports.
-    const events = l.takeBeats(10);
-    assert.ok(events.length >= 10, 'the pulse keeps beating');
-    assert.ok(pops.length >= 8, 'bursts still get what the pulse leaves');
-    assert.ok(maxFlashes([...events, ...pops]) <= 3);
+    const forms = [];
+    for (let i = 0; i < 100; i++) {
+      for (let finger = 0; finger < 3; finger++) forms.push(req('pop', i / 10, { circleId: finger }).form);
+      forms.push(req('arrival', i / 10, { circleId: `a${i}` }).form);
+    }
+    assert.ok(
+      forms.every((f) => f === 'quiet' || f === 'waitUntil'),
+      'during the pulse no tap or arrival flashes',
+    );
+    assert.ok(forms.includes('quiet'));
+    const expected = Array.from({ length: 20 }, (_, k) => (k + 1) / 2);
+    assert.deepEqual(l.takeBeats(10), expected, 'exactly 20 beats in 10 s, none skipped');
     l.stopPulse('bar', 10);
   });
 
-  test('2b stopping a pulse keeps its recent beats in the budget: no second holds more than 3', () => {
+  test('2a during the pulse a Story arrival is quiet, never waits for the pulse and pays no budget', () => {
     const { l, req } = story();
     req('pulse', 0, { circleId: 'bar', rate: 2 });
-    assert.equal(req('pop', 0.9, { circleId: 1 }).form, 'full');
-    l.stopPulse('bar', 1.0);
-    const granted = [0.9];
-    for (const t of [1.02, 1.02, 1.02]) if (req('pop', t, { circleId: 2 }).form === 'full') granted.push(t);
-    assert.ok(maxFlashes([0.5, 1.0, ...granted]) <= 3);
+    assert.deepEqual(req('arrival', 0.1, { circleId: 1 }), { form: 'quiet' });
+    assert.deepEqual(req('arrival', 0.2, { circleId: 2 }), { form: 'quiet' });
+    assert.deepEqual(req('arrival', 0.3, { circleId: 3 }), { form: 'quiet' });
+    assert.equal(req('arrival', 0.35, { circleId: 4 }).form, 'waitUntil', 'the arrival rate limit still holds');
+    assert.deepEqual(l.takeBeats(2.0), [0.5, 1, 1.5, 2], 'quiet arrivals took nothing from the pulse');
   });
 
-  test('2c lowering a pulse rate keeps the beats already played in the budget', () => {
-    const { req } = story();
+  test('2b taps stay quiet for 1.05 s after the pulse stops, then the full budget returns', () => {
+    const { l, req } = story();
     req('pulse', 0, { circleId: 'bar', rate: 2 });
-    assert.equal(req('pop', 0.9, { circleId: 1 }).form, 'full');
+    assert.equal(req('pop', 0.9, { circleId: 1 }).form, 'quiet');
+    l.stopPulse('bar', 1.0);
+    for (const t of [1.02, 1.5, 2.0]) assert.equal(req('pop', t, { circleId: 2 }).form, 'quiet', `at ${t}`);
+    assert.equal(req('pop', 2.06, { circleId: 2 }).form, 'full', 'the last beat (1.0) is out of the window');
+    assert.equal(req('arrival', 2.06, { circleId: 5 }).form, 'full', 'no pulse: Story arrivals flash again');
+  });
+
+  test('2c lowering a pulse rate: the pulse still runs, so taps stay quiet and its beats are kept', () => {
+    const { l, req } = story();
+    req('pulse', 0, { circleId: 'bar', rate: 2 });
+    assert.equal(req('pop', 0.9, { circleId: 1 }).form, 'quiet');
     req('pulse', 1.0, { circleId: 'bar', rate: 0.5 });
-    const granted = [0.9];
-    for (const t of [1.02, 1.02, 1.02]) if (req('pop', t, { circleId: 2 }).form === 'full') granted.push(t);
-    assert.ok(maxFlashes([0.5, 1.0, ...granted]) <= 3);
+    for (const t of [1.02, 1.02, 1.02]) assert.equal(req('pop', t, { circleId: 2 }).form, 'quiet');
+    assert.deepEqual(l.takeBeats(1.5), [0.5, 1]);
   });
 
   // Pulse at 1 a second from 0, a pop at 1.35, then a faster pulse (raised or a second id) from 1.4.
@@ -160,16 +175,13 @@ describe('effects rules', () => {
     assert.equal(calm().req('pulse', 0, { circleId: 'a', rate: 0.5 }).form, 'full');
   });
 
-  test('3d while a pulse runs or ran in the last second, taps get at most 1 flash per second', () => {
+  test('3d while a pulse runs or ran within the last 1.05 s, taps get no flash', () => {
     const { l, req } = story();
     req('pulse', 0, { circleId: 'a', rate: 1 });
-    assert.equal(req('pop', 0.1, { circleId: 1 }).form, 'full');
-    assert.equal(req('pop', 0.2, { circleId: 2 }).form, 'quiet');
+    assert.equal(req('pop', 0.1, { circleId: 1 }).form, 'quiet');
     l.stopPulse('a', 0.3);
     assert.equal(req('pop', 0.5, { circleId: 3 }).form, 'quiet');
-    assert.equal(req('pop', 1.2, { circleId: 3 }).form, 'full', 'first tap flash in its window');
-    assert.equal(req('pop', 1.25, { circleId: 4 }).form, 'quiet', 'pulse ran within the last window');
-    // The pulse stopped at 0.3, so it ran within the last closed window of 1.05 s until 1.35 (was 1.3).
+    assert.equal(req('pop', 1.2, { circleId: 3 }).form, 'quiet', 'pulse ran within the last window');
     assert.equal(req('pop', 1.31, { circleId: 5 }).form, 'quiet', 'still within 1.05 s of the pulse');
     assert.equal(req('pop', 1.36, { circleId: 5 }).form, 'full', 'no pulse any more: the full budget again');
     assert.equal(req('pop', 1.37, { circleId: 6 }).form, 'full');
@@ -444,24 +456,57 @@ describe('effects rules', () => {
       const fingers = pick([1, 2, 3]);
       const running = new Set();
       const grants = [];
+      // Every pulse's intervals as { from, to, period } in ticks, to know which beats were due.
+      const open = new Map();
+      const spans = [];
+      const closeSpan = (id, at) => {
+        const span = open.get(id);
+        if (span) spans.push({ ...span, to: at });
+        open.delete(id);
+      };
+      const beatGrants = [];
       for (let step = 0; step <= 6 * steps; step++) {
         const now = step / steps;
         if (random() < 0.02) {
           const id = pick(['a', 'b', 'c']);
           if (random() < 0.4) {
             l.stopPulse(id, now);
+            closeSpan(id, now);
             running.delete(id);
-          } else if (req('pulse', now, { circleId: id, rate: pick(RATES) }).form === 'full') {
-            running.add(id);
+          } else {
+            const rate = pick(RATES);
+            if (req('pulse', now, { circleId: id, rate }).form === 'full') {
+              closeSpan(id, now);
+              open.set(id, { from: now, period: Math.round(1 / rate / config.PULSE_TICK_SECONDS) });
+              running.add(id);
+            }
           }
         }
-        grants.push(...l.takeBeats(now));
+        const beats = l.takeBeats(now);
+        grants.push(...beats);
+        beatGrants.push(...beats);
         if (random() < tapRate / steps) {
           for (let f = 0; f < fingers; f++) {
             if (req('pop', now, { circleId: f }).form === 'full') grants.push(now);
             if (!isCalm && random() < 0.2 && req('arrival', now).form === 'full') grants.push(now);
           }
         }
+      }
+      // Taps and arrivals take no flash while a pulse runs, so once a pulse has run for a full window
+      // (earlier taps have left it) no due beat may ever be skipped.
+      const endAt = 6;
+      const lastBeats = l.takeBeats(endAt);
+      grants.push(...lastBeats);
+      beatGrants.push(...lastBeats);
+      for (const id of [...open.keys()]) closeSpan(id, Infinity);
+      for (let k = 1; k <= endAt / config.PULSE_TICK_SECONDS; k++) {
+        const t = k * config.PULSE_TICK_SECONDS;
+        const due = spans.some((sp) => sp.from <= t - 1.05 - EPS && t <= sp.to + EPS && k % sp.period === 0);
+        if (due)
+          assert.ok(
+            beatGrants.some((b) => Math.abs(b - t) < EPS),
+            `run ${run}: beat at ${t} was skipped`,
+          );
       }
       grants.sort((x, y) => x - y);
       for (const g of grants) {
