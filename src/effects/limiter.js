@@ -9,10 +9,12 @@ import {
   DUSK,
   FLASH_LIMIT,
   FLASH_WINDOW_SECONDS,
+  PULSE_TICK_SECONDS,
   SHAKE_SECONDS,
   SHAKE_STARTS_PER_SECOND,
   STORY_ARRIVALS_PER_SECOND,
   STORY_PULSE_MAX_RATE,
+  TAP_FLASHES_WITH_PULSE,
   WOBBLE_SECONDS,
 } from '../config.js';
 import { dimFraction } from './colors.js';
@@ -29,7 +31,6 @@ function prune(starts, now) {
 export function createLimiter() {
   const clock = createPulseClock();
   const pulses = new Map();
-  const flashes = [];
   const arrivals = [];
   const shakes = [];
   const reacting = new Map();
@@ -41,43 +42,59 @@ export function createLimiter() {
   let reduceMotion = false;
   let shakeUntil = -Infinity;
 
-  const reservedBeats = () => Math.ceil(clock.rate - EPS);
-  const room = (now) => FLASH_LIMIT - reservedBeats() - prune(flashes, now).length;
-  // When enough old flashes have left the window for `needed` more to fit.
-  const freeAt = (needed) => flashes[flashes.length + reservedBeats() + needed - FLASH_LIMIT - 1] + 1;
+  // Taps and pulse beats are logged separately; together they may never reach FLASH_LIMIT in a window.
+  const beats = [];
+  const taps = [];
+  const fired = [];
+  let lastTick = 0;
+  let pulseStoppedAt = -Infinity;
 
-  // Past beats were reserved, not logged. Before the rate changes, log those still in the window.
-  function logPastBeats(now) {
-    const rate = clock.rate;
-    const first = Math.floor((now - FLASH_WINDOW_SECONDS) * rate + EPS) + 1;
-    for (let k = first; k <= Math.floor(now * rate + EPS); k++) flashes.push(k / rate);
-    flashes.sort((a, b) => a - b);
+  const tickOf = (t) => Math.floor(t / PULSE_TICK_SECONDS + EPS);
+  const used = (now) => prune(beats, now).length + prune(taps, now).length;
+  const pulseRecent = (now) => pulses.size > 0 || now < pulseStoppedAt + FLASH_WINDOW_SECONDS - EPS;
+
+  // Decide every pulse beat up to `now`, in time order. A beat that does not fit is skipped.
+  function advance(now) {
+    const target = tickOf(now);
+    if (pulses.size > 0) {
+      for (let k = lastTick + 1; k <= target; k++) {
+        const t = k * PULSE_TICK_SECONDS;
+        const due = [...pulses.values()].some((period) => k % period === 0);
+        if (due && used(t) < FLASH_LIMIT) {
+          beats.push(t);
+          fired.push(t);
+        }
+      }
+    }
+    lastTick = Math.max(lastTick, target);
   }
 
-  function updateClock(now) {
-    const next = Math.max(0, ...pulses.values());
-    if (next !== clock.rate) logPastBeats(now);
-    clock.setRate(next);
+  // The one test every tap flash passes: fewer than FLASH_LIMIT granted in the last second,
+  // and while a pulse runs (or just ran) at most TAP_FLASHES_WITH_PULSE tap flashes in that second.
+  function canFlash(now) {
+    if (used(now) >= FLASH_LIMIT) return false;
+    return !pulseRecent(now) || taps.length < TAP_FLASHES_WITH_PULSE;
   }
 
-  function pulse({ mode, now, circleId, rate }) {
+  // Earliest time canFlash may be true again (advice for a `waitUntil` answer).
+  function flashFreeAt(now) {
+    const logged = [...beats, ...taps].sort((x, y) => x - y);
+    let at = now;
+    if (logged.length >= FLASH_LIMIT) at = logged[logged.length - FLASH_LIMIT] + FLASH_WINDOW_SECONDS;
+    if (pulseRecent(now) && taps.length >= TAP_FLASHES_WITH_PULSE) {
+      at = Math.max(at, taps[taps.length - TAP_FLASHES_WITH_PULSE] + FLASH_WINDOW_SECONDS);
+    }
+    if (pulses.size === 0) at = Math.max(at, pulseStoppedAt + FLASH_WINDOW_SECONDS);
+    return at;
+  }
+
+  // Beats sit on shared ticks, so a period must be a whole multiple of the tick length.
+  function pulse({ mode, circleId, rate }) {
     const max = mode === 'calm' ? CALM_PULSE_MAX_RATE : STORY_PULSE_MAX_RATE;
     if (!(rate > 0) || rate > max + EPS) return { form: 'refused' };
-    const savedFlashes = flashes.slice();
-    const was = pulses.get(circleId);
-    pulses.set(circleId, rate);
-    const before = clock.rate;
-    updateClock(now);
-    if (room(now) < 0) {
-      // Taps already use the room this pulse needs: start once enough have left the window.
-      const at = freeAt(0);
-      if (was === undefined) pulses.delete(circleId);
-      else pulses.set(circleId, was);
-      clock.setRate(before);
-      flashes.length = 0;
-      flashes.push(...savedFlashes);
-      return { form: 'waitUntil', at };
-    }
+    const period = Math.round(1 / rate / PULSE_TICK_SECONDS);
+    if (period < 1 || Math.abs(period * PULSE_TICK_SECONDS * rate - 1) > EPS) return { form: 'refused' };
+    pulses.set(circleId, period);
     return { form: 'full' };
   }
 
@@ -88,18 +105,18 @@ export function createLimiter() {
     let at = now;
     if (arrivals.length >= perSecond) at = arrivals[arrivals.length - perSecond] + FLASH_WINDOW_SECONDS;
     // Story arrivals pay a flash; in Calm the pop pays for the arrival and itself.
-    if (!calm && room(now) < 1) at = Math.max(at, freeAt(1));
+    if (!calm && !canFlash(now)) at = Math.max(at, flashFreeAt(now));
     if (at > now + EPS) return { form: 'waitUntil', at };
     arrivals.push(now);
-    if (!calm) flashes.push(now);
+    if (!calm) taps.push(now);
     return { form: 'full' };
   }
 
   function pop({ mode, now }) {
     const calm = mode === 'calm';
     if (reduceMotion) return { form: calm ? 'plainFade' : 'fade' };
-    if (room(now) < 1) return { form: calm ? 'plainFade' : 'quiet' };
-    flashes.push(now);
+    if (!canFlash(now)) return { form: calm ? 'plainFade' : 'quiet' };
+    taps.push(now);
     return { form: 'full' };
   }
 
@@ -141,12 +158,19 @@ export function createLimiter() {
       reduceMotion = Boolean(on);
     },
     request(req) {
+      advance(req.now);
       const handle = handlers[req.kind];
       return handle ? handle(req) : { form: 'refused' };
     },
+    // Beats granted since the last call (the drawing side plays these). Skipped beats never appear.
+    takeBeats(now) {
+      advance(now);
+      return fired.splice(0);
+    },
     stopPulse(id, now) {
+      advance(now);
       pulses.delete(id);
-      updateClock(now);
+      if (pulses.size === 0) pulseStoppedAt = now;
     },
   };
 }

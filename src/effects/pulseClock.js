@@ -1,24 +1,18 @@
-// The one clock every pulse beats on. Beats fall at whole multiples of 1/rate from time 0,
-// so pulses started at different moments still beat together. Pure: time comes in as seconds.
+// The one clock every pulse beats on: shared ticks every PULSE_TICK_SECONDS from time 0, so pulses
+// started at different moments still beat together. Pure: time comes in as seconds.
+import { PULSE_TICK_SECONDS } from '../config.js';
+
 const EPS = 1e-9;
 
 export function createPulseClock() {
-  let rate = 0;
+  const tickOf = (t) => Math.floor(t / PULSE_TICK_SECONDS + EPS);
   return {
-    get rate() {
-      return rate;
-    },
-    setRate(next) {
-      rate = next;
-    },
-    // Beats in the half-open span (from, to].
+    // Ticks in the half-open span (from, to].
     beatsIn(from, to) {
-      if (rate <= 0) return 0;
-      return Math.floor(to * rate + EPS) - Math.floor(from * rate + EPS);
+      return tickOf(to) - tickOf(from);
     },
     nextBeatAfter(now) {
-      if (rate <= 0) return Number.POSITIVE_INFINITY;
-      return (Math.floor(now * rate + EPS) + 1) / rate;
+      return (tickOf(now) + 1) * PULSE_TICK_SECONDS;
     },
   };
 }

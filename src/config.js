@@ -70,6 +70,10 @@ export const FLASH_LIMIT = 3;
 export const FLASH_WINDOW_SECONDS = 1;
 // Pulses: Story at most 2 a second, Calm at most one every 2 seconds (WB 4, 6).
 export const STORY_PULSE_MAX_RATE = 2;
+// Pulse beats sit on shared ticks this far apart; a pulse period is a whole number of ticks (owner, F-14).
+export const PULSE_TICK_SECONDS = 0.5;
+// While a pulse runs (or ran in the last second), taps get at most this many flashes per window.
+export const TAP_FLASHES_WITH_PULSE = 1;
 export const CALM_PULSE_MAX_RATE = 0.5;
 // Calm: at most 2 circles begin arriving in any one second (WB 4).
 export const CALM_ARRIVALS_PER_SECOND = 2;

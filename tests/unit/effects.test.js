@@ -98,10 +98,10 @@ describe('effects rules', () => {
     assert.ok(maxInOneSecond([0.5, 1.0, ...granted]) <= 3);
   });
 
-  // Pulse at 1.5 a second from 0, a pop at 1.35, then a faster pulse (raised or a second id) from 1.4.
+  // Pulse at 1 a second from 0, a pop at 1.35, then a faster pulse (raised or a second id) from 1.4.
   function fasterPulseKeepsBudget(secondId) {
     const { req } = story();
-    req('pulse', 0, { circleId: 'a', rate: 1.5 });
+    req('pulse', 0, { circleId: 'a', rate: 1 });
     const pops = [];
     if (req('pop', 1.35, { circleId: 1 }).form === 'full') pops.push(1.35);
     let switchAt = 1.4;
@@ -115,7 +115,7 @@ describe('effects rules', () => {
     assert.equal(answer.form, 'full');
     for (let t = switchAt; t < 4; t += 0.05) if (req('pop', t, { circleId: 2 }).form === 'full') pops.push(t);
     const beats = [];
-    for (let k = 0; k / 1.5 <= switchAt; k++) beats.push(k / 1.5);
+    for (let k = 0; k <= switchAt; k++) beats.push(k);
     for (let k = 0; k / 2 < 4; k++) if (k / 2 > switchAt) beats.push(k / 2);
     assert.ok(maxInOneSecond([...beats, ...pops]) <= 3);
   }
@@ -126,6 +126,42 @@ describe('effects rules', () => {
 
   test('2e a second pulse id at a faster rate keeps the beats already played in the budget', () => {
     fasterPulseKeepsBudget('b');
+  });
+
+  test('2f reviewer trace: p0 at 2 a second, p1 at 1 a second, stop p0 at 2.6457: no second holds more than 3 flashes', () => {
+    const { l, req } = story();
+    req('pulse', 0, { circleId: 'p0', rate: 2 });
+    req('pulse', 0.2, { circleId: 'p1', rate: 1 });
+    const grants = [...l.takeBeats(2.1445)];
+    if (req('pop', 2.1445, { circleId: 1 }).form === 'full') grants.push(2.1445);
+    grants.push(...l.takeBeats(2.6457));
+    l.stopPulse('p0', 2.6457);
+    for (let t = 2.6457; t < 6; t += 0.01) {
+      grants.push(...l.takeBeats(t));
+      if (req('pop', t, { circleId: 2 }).form === 'full') grants.push(t);
+    }
+    assert.ok(maxInOneSecond(grants) <= 3);
+  });
+
+  test('3c a pulse period must be a whole multiple of 0.5 s: 1.5 a second and 0.4 s periods are refused', () => {
+    assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 1.5 }).form, 'refused');
+    assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 2.5 }).form, 'refused');
+    assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 1 }).form, 'full');
+    assert.equal(story().req('pulse', 0, { circleId: 'a', rate: 0.1 }).form, 'full');
+    assert.equal(calm().req('pulse', 0, { circleId: 'a', rate: 0.5 }).form, 'full');
+  });
+
+  test('3d while a pulse runs or ran in the last second, taps get at most 1 flash per second', () => {
+    const { l, req } = story();
+    req('pulse', 0, { circleId: 'a', rate: 1 });
+    assert.equal(req('pop', 0.1, { circleId: 1 }).form, 'full');
+    assert.equal(req('pop', 0.2, { circleId: 2 }).form, 'quiet');
+    l.stopPulse('a', 0.3);
+    assert.equal(req('pop', 0.5, { circleId: 3 }).form, 'quiet');
+    assert.equal(req('pop', 1.2, { circleId: 3 }).form, 'full', 'first tap flash in its window');
+    assert.equal(req('pop', 1.25, { circleId: 4 }).form, 'quiet', 'pulse ran within the last second');
+    assert.equal(req('pop', 1.31, { circleId: 5 }).form, 'full', 'no pulse any more: the full budget again');
+    assert.equal(req('pop', 1.32, { circleId: 6 }).form, 'full');
   });
 
   test('3 pulse rate: Story allows 2 a second, Calm one every 2 s; faster is refused', () => {
@@ -373,5 +409,50 @@ describe('effects rules', () => {
     assert.equal(req('pop', 0.2, { circleId: 2 }).form, 'quiet');
     assert.equal(req('arrival', 1).form, 'full', 'quiet pops took nothing from the budget');
     assert.ok(config.QUIET_FADE_SECONDS <= 0.45);
+  });
+
+  test('14 property: 5,000 mixed runs, no window starting at a grant time holds more than 3 flashes', () => {
+    let seed = 20261108;
+    const random = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const pick = (list) => list[Math.floor(random() * list.length)];
+    const RATES = [2, 1, 0.5, 0.25, 0.1, 1.5, 3];
+    for (let run = 0; run < 5000; run++) {
+      const isCalm = random() < 0.2;
+      const { l, req } = isCalm ? calm() : story();
+      const steps = pick([60, 90, 120]);
+      const tapRate = pick([3, 10, 20]);
+      const fingers = pick([1, 2, 3]);
+      const running = new Set();
+      const grants = [];
+      for (let step = 0; step <= 6 * steps; step++) {
+        const now = step / steps;
+        if (random() < 0.02) {
+          const id = pick(['a', 'b', 'c']);
+          if (random() < 0.4) {
+            l.stopPulse(id, now);
+            running.delete(id);
+          } else if (req('pulse', now, { circleId: id, rate: pick(RATES) }).form === 'full') {
+            running.add(id);
+          }
+        }
+        grants.push(...l.takeBeats(now));
+        if (random() < tapRate / steps) {
+          for (let f = 0; f < fingers; f++) {
+            if (req('pop', now, { circleId: f }).form === 'full') grants.push(now);
+            if (!isCalm && random() < 0.2 && req('arrival', now).form === 'full') grants.push(now);
+          }
+        }
+      }
+      grants.sort((x, y) => x - y);
+      for (const g of grants) {
+        const inWindow = grants.filter((x) => x >= g - EPS && x < g + 1 - EPS).length;
+        assert.ok(inWindow <= 3, `run ${run}: ${inWindow} flashes in the second from ${g}`);
+      }
+    }
   });
 });
