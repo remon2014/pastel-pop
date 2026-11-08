@@ -45,9 +45,9 @@ Current layout; update this table when files are added, moved or removed.
 | `src/uiManager.js` | DOM HUD updates |
 | `src/logic/world.js` | Canvas-free rules in play-area widths: circle size, speed, spawn, movement, bounce, bounds pull-back. No `document`, `window`, canvas, `performance` or `import.meta` |
 | `src/core/loop.js` | The one game loop: the only caller of `requestAnimationFrame`; elapsed seconds, capped, stops when hidden |
-| `src/dev/` | Dev-only test sandbox, absent from `npm run build`. Open `http://localhost:5174/?dev` for the scene list, `?dev=loop` or `?dev=circles` for a scene. `index.js` scene registry, `readout.js` on-screen panel, `scenes/` one file per scene; `window.__pastelPopDev` holds the read-only numbers |
+| `src/dev/` | Dev-only test sandbox, absent from `npm run build`. Open `http://localhost:5174/?dev` for the scene list, `?dev=loop` or `?dev=circles` for a scene. `index.js` scene registry, `readout.js` on-screen panel, `ui.js` shared `button()` and `READOUT_MS`, `scenes/` one file per scene; `window.__pastelPopDev` holds the read-only numbers |
 | `src/config.js`, `src/utils.js` | Constants and helpers |
-| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`, `world.test.js` covers `src/logic/world.js`) |
+| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`, `world.test.js` covers `src/logic/world.js`, `symbols.test.js` checks every palette id has a symbol) |
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |

@@ -3,19 +3,11 @@ import { browserHost, createLoop } from '../../core/loop.js';
 import { createFpsCounter } from '../fpsCounter.js';
 import { countPending } from '../pendingCounter.js';
 import { createReadout } from '../readout.js';
+import { button, READOUT_MS } from '../ui.js';
 
 const MARKER_SPEED = 0.25; // play-area widths per second
 const STALL_MS = 500;
-const READOUT_MS = 250;
 const ROWS = ['Frames per second', 'Last elapsed (s)', 'Clamped frames', 'Running loops', 'Marker (widths)'];
-
-function button(label, onClick) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = label;
-  b.addEventListener('click', onClick);
-  return b;
-}
 
 function stall() {
   const end = performance.now() + STALL_MS;
