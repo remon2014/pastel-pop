@@ -18,7 +18,6 @@ import {
   WOBBLE_SECONDS,
 } from '../config.js';
 import { dimFraction } from './colors.js';
-import { createPulseClock } from './pulseClock.js';
 
 const EPS = 1e-9;
 
@@ -29,7 +28,6 @@ function prune(starts, now) {
 }
 
 export function createLimiter() {
-  const clock = createPulseClock();
   const pulses = new Map();
   const arrivals = [];
   const shakes = [];
@@ -150,7 +148,6 @@ export function createLimiter() {
   };
 
   return {
-    clock,
     get dimFraction() {
       return dim;
     },
@@ -166,6 +163,10 @@ export function createLimiter() {
     takeBeats(now) {
       advance(now);
       return fired.splice(0);
+    },
+    // A circle has left: its reaction entry is no longer needed.
+    forget(circleId) {
+      reacting.delete(circleId);
     },
     stopPulse(id, now) {
       advance(now);

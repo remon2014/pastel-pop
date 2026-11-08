@@ -180,12 +180,15 @@ describe('effects rules', () => {
   test('4 one clock: pulses started at different moments beat at the same instants', () => {
     const { l, req } = story();
     req('pulse', 0.13, { circleId: 'a', rate: 2 });
-    const a = [0.2, 0.7, 1.31].map((t) => l.clock.nextBeatAfter(t));
     req('pulse', 0.41, { circleId: 'b', rate: 2 });
-    const b = [0.2, 0.7, 1.31].map((t) => l.clock.nextBeatAfter(t));
-    assert.deepEqual(a, b);
-    assert.deepEqual(a, [0.5, 1, 1.5]);
-    assert.equal(l.clock.beatsIn(0, 1), 2);
+    assert.deepEqual(l.takeBeats(1.6), [0.5, 1, 1.5], 'two pulses on one tick are one beat');
+    const other = story();
+    other.req('pulse', 0.4, { circleId: 'c', rate: 2 });
+    assert.deepEqual(
+      other.l.takeBeats(1.6),
+      [0.5, 1, 1.5],
+      'a pulse started elsewhere in time beats on the same ticks',
+    );
   });
 
   test('5 shake: a second shake during a shake neither restarts nor extends it; Calm never shakes', () => {

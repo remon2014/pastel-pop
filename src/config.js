@@ -98,3 +98,21 @@ export const PLAIN_FADE_SECONDS = 0.45;
 export const SATURATED_RED_RATIO = 0.8;
 // Colours effects may draw, besides the palette. PLACEHOLDER pulse colour: warm amber, not red.
 export const EFFECT_COLORS = Object.freeze({ lowTimePulse: '#E6C070', targetGlow: '#EDD894' });
+
+// Effects layer (F-15). All PLACEHOLDER looks until the art phase (D-010); timings stay inside the WB bounds above.
+// A pulse beat is drawn for this long (under the tick length); a beat older than this when seen is dropped unseen.
+export const PULSE_BEAT_SECONDS = 0.25;
+export const ARRIVAL_SECONDS = 0.3;
+export const POP_SECONDS = 0.3;
+export const WOBBLE_PIXELS = 2;
+// Calm pop ring: grows 1 internal px, then one thin ring; never more than a quarter radius beyond the circle.
+export const POP_RING_MAX_RADIUS_FRACTION = 0.25;
+export const POP_GROW_PIXELS = 1;
+// Story burst: this many pixel dots travelling out, staying inside the circle's own area.
+export const BURST_DOTS = 8;
+// Quiet fade may shrink the circle down to this fraction of its size.
+export const QUIET_MIN_SCALE = 0.7;
+// Pulse bar (placeholder time bar at the top of the play area), in internal px and as a fraction of the width.
+export const PULSE_BAR_WIDTH_FRACTION = 0.4;
+export const PULSE_BAR_HEIGHT = 3;
+export const PULSE_BAR_TOP = 2;
