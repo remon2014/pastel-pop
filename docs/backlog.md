@@ -1,26 +1,15 @@
 # Backlog
 
-Refreshed 2026-10-11 against `docs/game-design.md` Draft v0.5 and `docs/wellbeing.md` v0.4. Code references were re-checked against the code that day. One line per item; remove items when done.
+Refreshed 2026-10-11 against `docs/game-design.md` Draft v0.5 and `docs/wellbeing.md` v0.4; done and retired items cleared 2026-11-14 (F-18). One line per item; remove items when done.
 
 References: **GD** = `docs/game-design.md` section, **WB** = `docs/wellbeing.md` section. Design values quoted here are starting values; the design doc is the source of truth.
 
-## Done: production build (F-01 to F-04, merged 2026-10-11)
-Static files are in `public/`, the service worker and the fake 1.1 MB favicon are gone, the manual cache-busting query is removed, and Google Fonts is dropped, so the game makes no outside network call. The build is about 308 kB. Left over:
-
-- `public/icon-512.png` is still 233 kB; it could not be shrunk with the tools on the machine and no new tool was installed.
-- The build uses root-absolute paths (`/favicon.png`, `/manifest.json`, `/assets/...`). Fine from a site root; a sub-folder or `file://` origin would break them. Settle Vite's `base` setting when Capacitor is wired up.
-- Settings use `localStorage`, which works in Capacitor's WebView, but iOS may not always keep it; decide when Capacitor is wired up whether to move to native Preferences (a new plugin, owner decision). Only `src/storage.js` would change (F-13).
-- The favicon and icons still show the old "POP" on mint green and do not match the Dusk look; replace with the final art.
-
 ## Next: engineering foundations
-Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F-01 to F-09 (2026-10-11), F-10 to F-16 (2026-11-08), F-16b and F-17 (2026-11-14)** — retired code deleted, production build fixed, lint and format (Biome), unit tests (Node's runner), one elapsed-time loop, the dev level (`/?dev`), circle logic in screen widths per second, sharp rendering, the portrait layout with safe areas, pointer input with a pure hit test, settings with safe storage, the effects safety rules as tested logic, the effects layer on screen, and the dev flash meter. **Left: F-18 and F-19** — settings (F-13), effects-safety layer (F-14 to F-17), clean-up and phone check (F-18, F-19). QA results are in `docs/qa-log.md`. Items below with no task ID are not in that plan.
-**Before F-10:** R-01 to R-05, five fixes from the F-01 to F-09 retrospective review; deferred review items (S5, N1, N3 to N9, three real-phone questions) are listed in `docs/foundations-plan.md` section 3b.
+Build order, task IDs and what is done are in `docs/foundations-plan.md`; QA results are in `docs/qa-log.md`. **Left: F-18 (clean-up and regression, in progress) and F-19 (real phone check).** Open items below are follow-ups from finished tasks, tagged with the task that found them; items with no task ID are not in that plan. Deferred review items from F-01 to F-09 (S5, N1, N3 to N9, three real-phone questions, loop resilience) are in `docs/foundations-plan.md` section 3b.
 
-- No pixel-art rendering path: draw at a low internal resolution and scale up with smoothing off (GD Look). The exact internal resolution waits on the art reference (see Blocked). (F-10)
+- **F-18b, test follow-ups (proposed, not yet in the plan):** one small test-only task gathering the cheap should-fix test items tagged "F-18b" below (from F-14, F-15, F-16, F-16b and F-17). No game code changes; each new test must fail when the rule it guards is broken (mutation check). Owner: gameplay-engineer, then qa-tester.
 - Circle size is now screen-relative (64 dp at 360 wide, 48 dp floor) with a PROVISIONAL 112 dp maximum for wide windows (`CIRCLE_MAX_DIAMETER_DP`); since F-11's 9:16 column the maximum never applies (about 80 dp at 1280x800), so it matters only on portrait tablets; ask the game designer how size should scale there (F-11).
-- No central effects layer. Build one that every visual and sound effect goes through, enforcing: at most 3 flashes a second counted across the whole screen, no saturated red flashing, no full-screen flash or per-tap full-screen colour change, pulses on one shared clock, one shake at a time, Reduce motion substitutions, time-based effects only (GD Sensory safety; WB 4, including the Reduce motion table).
-- Circle movement, bounce and bounds are now in `src/logic/world.js` with tests; hit-testing is in `src/logic/hit.js` (F-12); target selection and level refill are still inside `src/game.js` with drawing and DOM updates. Move them into `src/logic/` as the real modes are built.
-- No CI: run build, lint and tests on pull requests (no `.github/` directory exists). Not in the foundations plan; deferred by the owner 2026-10-11, to be raised as its own proposal.
+- Circle movement, bounce and bounds are in `src/logic/world.js` with tests; hit-testing is in `src/logic/hit.js` (F-12); target selection and refill are not yet pure logic. Move them into `src/logic/` as the real modes are built.
 - Vite is on 6.4.4; latest is 8.3.4, two majors ahead (`package.json` asks for `^6.3.5`).
 - README is minimal and describes the prototype; rewrite once commands and structure settle.
 - The pause overlay covers the Pause button, so only "Continue Playing" resumes (found by QA in F-01 and F-02). Left out of F-11: Calm has no pause overlay by design (GD Calm mode).
@@ -41,30 +30,30 @@ Build order and task IDs are in `docs/foundations-plan.md`. **Done and merged: F
 - Effects: `isSaturatedRed` in `src/effects/colors.js` is unused and `relativeLuminance` is only used inside the file; remove or stop exporting (review should-fix, F-14).
 - Effects: `prune` in the limiter assumes time only moves forward; clamp or document it and add a test (it errs safe by over-counting) (review should-fix, F-14).
 - Effects nits: the `waitUntil` time can be later than needed; tests copy the Dusk hex instead of importing it; `PLAIN_FADE_SECONDS` lacks a PLACEHOLDER flag; a missing `mode` is silently treated as Story (F-14).
-- Effects test gap: shortening the Reduce motion dim's tracked duration fails no test; test the 0.6 s duration (QA, F-14).
+- Effects test gap: shortening the Reduce motion dim's tracked duration fails no test; test the 0.6 s duration (QA, F-14; F-18b).
 - Game designer questions from F-14: the real Story arrival limit (`STORY_ARRIVALS_PER_SECOND` is a PLACEHOLDER 3); whether a 2 internal px, 2-swing shake still feels like a shake; more full Story bursts would need a burst whose brightness change is 0.07 or less, not looser counting (WB section 6) (F-14).
 - PLACEHOLDER effect values: `QUIET_FADE_SECONDS` 0.45 and the low-time pulse colour `#E6C070` (F-14).
 - Commit hook gap: `.claude/hooks/check-commit.mjs` runs tests and lint on the working tree, not the staged snapshot, so a commit with failing tests can pass while a fix sits unstaged (happened once in F-14, eff7a81). Consider testing the staged tree (for example via `git stash --keep-index`) (F-14; tech lead).
-- Effects test: shake bounds in `tests/unit/effectState.test.js` read the limits from config, so a bad config still passes; use 2 px and 0.2 s from WB as literals, assert the decay (second swing no bigger than the first) and offset 0 from 0.2 s (review should-fix, F-15).
+- Effects test: shake bounds in `tests/unit/effectState.test.js` read the limits from config, so a bad config still passes; use 2 px and 0.2 s from WB as literals, assert the decay (second swing no bigger than the first) and offset 0 from 0.2 s (review should-fix, F-15; F-18b).
 - Effects: `forget` does not clear held arrivals, so an arrival held for a circle that has gone is still released later (`src/effects/effects.js:166`) (review should-fix, F-15).
 - Effects nits: wobble swing count `2` inline at `effects.js:46` belongs in config; `[...held]` builds a new array every frame (`effects.js:129`); comment that the sorted insert at `effects.js:85-87` is now only a safeguard (F-15).
 - Dev effects scene (`/?dev=effects`): at 1280x800 the canvas is taller than the viewport; no readout for dim luminance or shake offset (QA, F-15).
 - Game designer questions from F-15: taps get no full bursts while the low-time pulse runs (steady pulse, `TAP_FLASHES_WITH_PULSE` = 0; retired by F-16b, so the slower-pulse question falls away); placeholder looks (arrival halo, burst dots, amber bar); "2 swings" built as one back-and-forth (stricter reading) (F-15).
 - Real-phone checks for F-15: how pop, shake, dim and pulse look on a small screen, whether the dim reads as soft, multi-finger tap feel, smoothness on a mid-range Android (F-15; with F-19).
-- Flash meter: the "more than 10%" boundary (`src/dev/flashMeter.js:117`) is untested; changing `<=` to `<` survives; add a 10-of-100 versus 11-of-100 cells test. The red 0.8 boundary is also untested (review should-fix, F-16).
+- Flash meter: the "more than 10%" boundary (`src/dev/flashMeter.js:117`) is untested; changing `<=` to `<` survives; add a 10-of-100 versus 11-of-100 cells test. The red 0.8 boundary is also untested (review should-fix, F-16; F-18b).
 - Flash meter nits: `pair.counted` set but never read (`flashMeter.js:100`); toggling the meter in `/?dev=effects` does not reset `lastShake` or `lastMeterHighest`; the `- 4` margin in `drawCalibration` is a magic number; raw count can read slightly high (22 vs 20) when a shape's cells join late; meter cost spikes to 18–27 ms on the frame a calibration event completes (meter on only) (F-16).
 - Game designer notes from F-16: the low-time warning should feel urgent but warm (ticking sound carries the urgency, bar soft amber, never red); a bigger-not-brighter pop during the pulse if wellbeing agrees; record when the warning starts (starting value last 5 s or 15% of the bar) (F-16).
 - Wellbeing rules 3, 5 and 7 (shake, pulse, area-based counting) are reasoned from WCAG, not measured; F-19's phone check must confirm them (F-16).
 - Real-phone checks for F-16: frame rate on a mid or low Android with the meter off; how the calibration block and fades look at arm's length (F-16; with F-19).
-- Effects test: the form check at `tests/unit/effects.test.js:95` still allows `quiet` for arrivals, so it cannot catch quiet arrivals coming back; check arrival forms on their own (`full` or `waitUntil` only) (review should-fix, F-16b).
-- Effects test: "pulse bar drawn last" has no test (`src/effects/drawEffects.js:130`); add a fake-ctx test that the bar's `fillRect` is the last call (review should-fix, F-16b).
-- Pulse bar test: `tests/unit/pulseBar.test.js` composites over Dusk and the palette only; also composite over every effect colour that can be drawn under the bar (halos, bursts) (review should-fix, F-16b).
+- Effects test: the form check at `tests/unit/effects.test.js:95` still allows `quiet` for arrivals, so it cannot catch quiet arrivals coming back; check arrival forms on their own (`full` or `waitUntil` only) (review should-fix, F-16b; F-18b).
+- Effects test: "pulse bar drawn last" has no test (`src/effects/drawEffects.js:130`); add a fake-ctx test that the bar's `fillRect` is the last call (review should-fix, F-16b; F-18b).
+- Pulse bar test: `tests/unit/pulseBar.test.js` composites over Dusk and the palette only; also composite over every effect colour that can be drawn under the bar (halos, bursts) (review should-fix, F-16b; F-18b).
 - Nits: stale comments about beats being counted at `src/config.js:107` and above `MAX_BEAT_LATENESS` in the `effects.js` update loop; `taps` in `limiter.js:53` now also holds Story arrivals (rename to `flashes`); a high `calmArrivalsPerSecond` option would weaken the 2-a-second Calm cap, since Calm arrivals pay no budget (tests only); the dev scene's effect look list overcounts onsets by about 10–15% against real grants (QA) (F-16b).
 - Story arrival limit is dead as configured: `STORY_ARRIVALS_PER_SECOND` (3) equals `FLASH_LIMIT`, so the flash budget always limits arrivals first; decide whether the limit should be lower or removed (tech lead, F-16b).
 - Game designer, F-16b: the soft pulse bar is safe but barely visible (a 3 px tan strip on Dusk, about 1.3:1 contrast, measured change 0.013); at the 0.07 cap urgency must come from the F-17 ticking sound or a non-brightness cue; choose the final base and peak amber within 0.07; when Calm's target glow drawer is built it joins the 0.07 bar test and pays no budget (F-16b).
 - Real-phone checks for F-16b: whether the bar is noticeable outdoors and hand-held, whether the beat feels calm, performance during stress (F-16b; with F-19).
 - Audio dev scene: the single-pop baseline (`measureSingle` in `src/dev/scenes/audio.js`) does not turn music off first, so with music on the ratio reads low (review should-fix, F-17).
-- Audio tests: the duck test's `gap` loop (`tests/unit/voices.test.js:101`) never uses `gap`; the "merged level" test is circular (review should-fix, F-17).
+- Audio tests: the duck test's `gap` loop (`tests/unit/voices.test.js:101`) never uses `gap`; the "merged level" test is circular (review should-fix, F-17; F-18b).
 - Audio: "sounds playing" drops a replaced sound at once while its 30 ms fade still sounds, so the readout under-reports (`src/effects/audio.js:119`) (review should-fix, F-17).
 - Audio: `MUSIC_TONE` 196 Hz is below the WB 250 Hz floor and no test checks music tones (`src/config.js`) (review should-fix, F-17).
 - Audio: no teardown; the settings `subscribe` unsubscribe is discarded and the visibility listener never removed; return a `destroy()` (review should-fix, F-17).
@@ -92,9 +81,10 @@ Not a plan and not in build order within a group. Each needs the foundations abo
 - Reduce motion behaviour per effect, in both modes (GD Sensory safety, Reduce motion on; WB 4 table).
 - Portrait orientation only (GD Interruptions and saving).
 - Auto-pause when the app goes to the background or a call arrives; nothing in the code listens for this today (GD Interruptions and saving).
-- Audio, starting from nothing: there is no audio code and no audio file in the repo. Music per mode, effects, separate music and effects volume, fades in and out on entering and leaving a mode, a cap on overlapping sounds, no sudden loud sound (GD Feel; GD Sensory safety Tier 1; WB 4 Sound).
+- Audio in the game: the sound layer exists (F-17: volumes, fades, voice cap, limiter, placeholder tones) but the game is not wired to it and there are no audio files. Still to do: music per mode, real effect sounds, fades on entering and leaving a mode (GD Feel; GD Sensory safety Tier 1; WB 4 Sound).
 - Readable text against every background, with a clean font for story text if the pixel font is hard to read on a small phone (GD Look; GD Accessibility).
 - No accounts, no analytics, no push notifications, no network calls (GD Audience; WB 8).
+- Saved data: the old prototype `pastelPopHighScore` and `pastelPopLeaderboard` localStorage keys are no longer read or written, but a returning prototype player may still have them stored; nothing clears them.
 
 ### Calm mode
 - One endless level with no timer, score, stars, counters, lives or fail state (GD Calm mode, Structure and No pressure).
@@ -128,6 +118,8 @@ Not a plan and not in build order within a group. Each needs the foundations abo
 
 ### Android
 - Capacitor wrapper for the Android build. Capacitor is not installed or configured today, and adding it is a new dependency that needs the owner's approval (CLAUDE.md Stack; GD Version 1.0 scope).
+- The build uses root-absolute paths (`/favicon.png`, `/manifest.json`, `/assets/...`). Fine from a site root; a sub-folder or `file://` origin would break them. Settle Vite's `base` setting when Capacitor is wired up (F-01 to F-04).
+- Settings use `localStorage`, which works in Capacitor's WebView, but iOS may not always keep it; decide when Capacitor is wired up whether to move to native Preferences (a new plugin, owner decision). Only `src/storage.js` would change (F-13).
 
 ## Before release: checks
 - Measure on a real phone at 60 and 120 Hz: the 10-taps-a-second test with several fingers on every tap effect, the bar pulse at 2 a second, and bar pulse, other pulses and pop bursts together (WB 10).
@@ -139,8 +131,9 @@ Not a plan and not in build order within a group. Each needs the foundations abo
 
 ## Blocked: waiting on others
 - **All final art** (circles, symbols, murals, launch screen, UI): waits on the owner's art references, then on a game-artist agent that does not exist yet (GD Dependencies; GD Look, Art reference pending).
-- **Internal resolution and glow treatment:** wait on the art reference (GD Open questions 3). The rendering path itself can be built first with a placeholder resolution.
-- **Music and sounds:** wait on the owner's uploads, each with a commercial-use licence; Calm and Story need different music (GD Dependencies). The audio system can be built first with placeholder sounds.
+- **App icons and favicon:** still the old "POP" on mint green, not the Dusk look; replace with the final art. `public/icon-512.png` is also 233 kB and could not be shrunk with the tools on the machine (F-01 to F-04).
+- **Internal resolution and glow treatment:** wait on the art reference (GD Open questions 3). The rendering path is built with a placeholder resolution (F-10).
+- **Music and sounds:** wait on the owner's uploads, each with a commercial-use licence; Calm and Story need different music (GD Dependencies). The sound layer is built with placeholder tones (F-17).
 - **Stage 2 and Stage 3 story lines and pictures:** wait on the game designer to write them, then on a wellbeing-advisor review (GD The legend; WB 7, WB 10).
 - **Star thresholds:** still a proposal; waits on the owner's agreement (GD Open questions 4).
 - **Store rating, target audience and Families policy:** deferred by the owner; must be settled before release and may constrain the Android build and listing (GD Open questions 1; WB 9 decision 8).
@@ -150,8 +143,3 @@ Not a plan and not in build order within a group. Each needs the foundations abo
 - **Tech-lead check, not yet done:** vibration behaviour on Android, and the cost of the pixel-art glow on low-end phones (GD Dependencies).
 - **Calm tuning values:** wait on playtests, then on the wellbeing advisor (GD Calm mode, closing note).
 - **Evidence questions:** none open. The Shao ratio question was closed on 2026-11-08: the study supports about 6 breaths a minute but no specific inhale-to-exhale ratio, so the 4/6 split is design judgement. The four sources themselves (Shao, Fish, NICE, Mind) were verified by the owner on 2026-10-11; owned by the wellbeing advisor; does not block building (WB 10).
-
-## Retired with the prototype
-**Done (F-01 and F-02, merged 2026-10-11).** The 10 experimental modes, Rain, both mode dropdowns, the named leaderboard and its `prompt()`, the score, high score and time bonus, game over, the per-tap tint, the shake, the swoop-in, the ripple and glitch effects, and the colour names and "psychology" strings are deleted (GD Core loop; GD Sensory safety Tier 1; WB 4 retired effects table). What remains in `src/game.js` is plain scaffolding, to be replaced as Calm and Story are built (F-18 removes whatever is left).
-
-- **Saved data:** the old `pastelPopHighScore` and `pastelPopLeaderboard` localStorage keys are no longer read or written. A returning prototype player may still have them stored; nothing clears them.
