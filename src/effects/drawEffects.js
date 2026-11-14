@@ -14,6 +14,7 @@ import {
   QUIET_MIN_SCALE,
 } from '../config.js';
 import { circlePixels } from '../render/view.js';
+import { pulseBarAlpha } from './colors.js';
 
 const GROW_PHASE = 0.3;
 
@@ -91,15 +92,21 @@ function dim(ctx, e, pixels) {
   discAround(ctx, pixels, 0, DUSK);
 }
 
-// Placeholder time bar at the top of the play area; the screen itself never changes.
-function pulseBar(ctx, e, _pixels, view) {
+// Placeholder time bar at the top of the play area; the screen itself never changes. It stands at its base
+// while a pulse runs and a beat lifts it to the peak and back (soft: pulseBar.test.js). Drawn last, so no
+// other effect is over it.
+function drawPulseBar(ctx, effects, view) {
+  if (!effects.pulseOn()) return;
+  let progress = 1;
+  for (const e of effects.active) if (e.kind === 'pulse') progress = e.progress;
   const width = Math.round(view.internalWidth * PULSE_BAR_WIDTH_FRACTION);
-  ctx.globalAlpha = 1 - e.progress;
+  ctx.globalAlpha = pulseBarAlpha(progress);
   ctx.fillStyle = EFFECT_COLORS.lowTimePulse;
   ctx.fillRect(Math.round((view.internalWidth - width) / 2), PULSE_BAR_TOP, width, PULSE_BAR_HEIGHT);
 }
 
 // Shake and wobble are offsets (see drawWithShake and drawCircleWithEffects), so they have no drawer here.
+// Pulse beats have none either: drawPulseBar reads them.
 const DRAWERS = {
   'arrival.full': arrivalHalo,
   'pop.full.calm': calmPop,
@@ -109,7 +116,6 @@ const DRAWERS = {
   'pop.plainFade': (ctx, e, pixels) => fade(ctx, e, pixels, false),
   'shake.dim': dim,
   'wobble.dim': dim,
-  'pulse.beat': pulseBar,
 };
 
 function drawerFor(e) {
@@ -122,6 +128,7 @@ export function drawEffects(ctx, effects, view) {
     if (!drawer) continue;
     drawer(ctx, e, e.radius ? circlePixels(view, e) : null, view);
   }
+  drawPulseBar(ctx, effects, view);
   ctx.globalAlpha = 1;
 }
 

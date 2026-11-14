@@ -1,4 +1,5 @@
 // Colour maths for the effects rules. Canvas-free.
+import { PULSE_BAR_BASE_ALPHA, PULSE_BAR_PEAK_ALPHA } from '../config.js';
 
 function channels(hex) {
   const n = Number.parseInt(hex.slice(1), 16);
@@ -41,4 +42,10 @@ export function dimFraction(hexes, backgroundHex, cap) {
     else hi = mid;
   }
   return lo;
+}
+
+// Opacity of the pulse bar at beat progress 0 to 1: the peak as a beat begins, easing to the base as it ends.
+// The one place the bar's brightness is decided; pulseBar.test.js sweeps it to prove the pulse is soft.
+export function pulseBarAlpha(progress) {
+  return PULSE_BAR_PEAK_ALPHA + (PULSE_BAR_BASE_ALPHA - PULSE_BAR_PEAK_ALPHA) * progress;
 }
