@@ -33,7 +33,11 @@ function pruneBudget(starts, now) {
   return starts;
 }
 
-export function createLimiter() {
+// Options let a test set the arrival rates; the defaults are the config values.
+export function createLimiter({
+  storyArrivalsPerSecond = STORY_ARRIVALS_PER_SECOND,
+  calmArrivalsPerSecond = CALM_ARRIVALS_PER_SECOND,
+} = {}) {
   const pulses = new Map();
   const arrivals = [];
   const shakes = [];
@@ -88,7 +92,7 @@ export function createLimiter() {
 
   function arrival({ mode, now }) {
     const calm = mode === 'calm';
-    const perSecond = calm ? CALM_ARRIVALS_PER_SECOND : STORY_ARRIVALS_PER_SECOND;
+    const perSecond = calm ? calmArrivalsPerSecond : storyArrivalsPerSecond;
     prune(arrivals, now);
     let at = now;
     if (arrivals.length >= perSecond) at = arrivals[arrivals.length - perSecond] + FLASH_WINDOW_SECONDS;

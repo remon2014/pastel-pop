@@ -103,16 +103,25 @@ describe('effects rules', () => {
     l.stopPulse('bar', 10);
   });
 
-  test('2a during the pulse Story arrivals are full; the one past the arrival rate limit waits; arrivals take no beats', () => {
-    const { l, req } = story();
+  test('2a during the pulse Story arrivals are full; the arrival rate limit (not the budget) holds the next one; arrivals take no beats', () => {
+    const l = createLimiter({ storyArrivalsPerSecond: 2 });
+    const req = (kind, now, extra = {}) => l.request({ kind, mode: 'story', now, ...extra });
     req('pulse', 0, { circleId: 'bar', rate: 2 });
     assert.deepEqual(req('arrival', 0.1, { circleId: 1 }), { form: 'full' });
     assert.deepEqual(req('arrival', 0.2, { circleId: 2 }), { form: 'full' });
-    assert.deepEqual(req('arrival', 0.3, { circleId: 3 }), { form: 'full' });
-    const wait = req('arrival', 0.35, { circleId: 4 });
-    assert.equal(wait.form, 'waitUntil', 'the arrival rate limit still holds');
-    assert.ok(wait.at >= 1.1 - EPS, 'it waits at least 1 s after the first arrival (the arrival rate limit)');
+    const wait = req('arrival', 0.35, { circleId: 3 });
+    assert.equal(wait.form, 'waitUntil');
+    assert.ok(Math.abs(wait.at - 1.1) < 1e-6, `rate limit time 1.1 (budget would be 1.15), got ${wait.at}`);
     assert.deepEqual(l.takeBeats(2.0), [0.5, 1, 1.5, 2], 'arrivals took nothing from the pulse');
+  });
+
+  test("2g with today's config the flash budget limits Story arrivals before the arrival rate does", () => {
+    assert.ok(config.STORY_ARRIVALS_PER_SECOND >= config.FLASH_LIMIT);
+    const { req } = story();
+    for (const t of [0.1, 0.2, 0.3]) assert.equal(req('arrival', t, { circleId: t }).form, 'full');
+    const wait = req('arrival', 0.35, { circleId: 4 });
+    assert.equal(wait.form, 'waitUntil');
+    assert.ok(Math.abs(wait.at - 1.15) < 1e-6, `budget time 1.15, got ${wait.at}`);
   });
 
   test('2c lowering a pulse rate keeps one clock and every beat', () => {
