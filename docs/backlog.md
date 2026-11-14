@@ -11,7 +11,7 @@ Build order, task IDs and what is done are in `docs/foundations-plan.md`; QA res
 - F-18b: `tests/unit/scene.test.js:107-122` allows one 0.05 s step of slack between refill arrivals; make it exact with an integer frame counter (gap at least `Math.round(REFILL_STAGGER_S / dt)` frames) (review nit, F-18; F-18b).
 - Interim start scene (F-18): no levels, progression or score, and effects and sound are not wired; it stands in until Calm mode replaces it. Values from the game designer: 6 circles, 3 colours, 2 each, refill one per 0.4 s (F-18).
 - F-10 was not checked by eye in the F-18 regression pass; cover it in F-19 (QA, F-18).
-- Real-phone checks for F-18 (with F-19): touch feel and smoothness on a mid-range Android, audio, the 3.83 s crossing at 120 Hz, a real notch, landscape (F-18).
+- Real-phone checks for F-18 (with F-19): touch feel and smoothness on a mid-range Android, audio, the 3.84 s crossing at 120 Hz, a real notch, landscape (F-18).
 - Circle size is now screen-relative (64 dp at 360 wide, 48 dp floor) with a PROVISIONAL 112 dp maximum for wide windows (`CIRCLE_MAX_DIAMETER_DP`); since F-11's 9:16 column the maximum never applies (about 80 dp at 1280x800), so it matters only on portrait tablets; ask the game designer how size should scale there (F-11).
 - Circle movement, bounce and bounds are in `src/logic/world.js`, hit-testing in `src/logic/hit.js` (F-12), and the interim start scene's target pick and staggered refill in `src/logic/scene.js` (F-18), all canvas-free with tests. Calm and Story will need their own rules in `src/logic/` as the real modes are built.
 - Vite is on 6.4.4; latest is 8.3.4, two majors ahead (`package.json` asks for `^6.3.5`).

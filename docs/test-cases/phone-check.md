@@ -78,7 +78,7 @@ Readout names are exact. Press buttons by their label.
 **7a. Loop speed (meter off): `?dev=effects`**
 | ID | What to do | Look at | Pass | Yes / No | Note |
 |---|---|---|---|---|---|
-| P-16 | Make sure "Flash meter: off" and "Slow loop (30 steps/s): off". Press "Auto-tapper" and "Low-time pulse" on, in "Mode: Story", and let the stress run for 30 seconds | "Steps per second" (one step per drawn frame when the slow loop is off) | About 60 (55 to 65), which is about 16.7 ms a frame. On a 90/120 Hz phone, about 60 is still the target. Motion should also look smooth | | Value seen: |
+| P-16 | Make sure "Flash meter: off" and "Slow loop (30 steps/s): off". Press "Auto-tapper" and "Low-time pulse" on, in "Mode: Story", and let the stress run for 30 seconds | "Steps per second" (one step per drawn frame, so it follows the screen's refresh rate) | About your refresh rate, give or take 10%: 55 to 65 at 60 Hz, 108 to 132 at 120 Hz. Motion should also look smooth. Write down the value you saw and the refresh rate during the run (phones with "up to" rates may switch) | | Value seen: / Hz: |
 
 **7b. Looks, by eye: `?dev=effects`** (Flash meter off)
 | ID | What to do | Look at | Pass | Yes / No | Note |
