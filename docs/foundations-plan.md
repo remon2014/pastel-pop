@@ -1,7 +1,7 @@
 # Engineering foundations plan
 
 **Status:** approved by the owner 2026-10-11. The owner accepted the tech lead's recommendation on decisions 1 to 7 in section 6; decision 8 (automatic checks on GitHub) is deferred. Approval authorises local work and local commits only.
-**Progress (2026-11-14):** F-01 to F-16 and F-16b are built, verified and merged into `main`. A retrospective review of F-01 to F-09 added R-01 to R-05 (section 3a), which came before F-10. Next: F-17. Results are in `docs/qa-log.md`.
+**Progress (2026-11-14):** F-01 to F-17 (with F-16b) are built, verified and merged into `main`. A retrospective review of F-01 to F-09 added R-01 to R-05 (section 3a), which came before F-10. Next: F-18. Results are in `docs/qa-log.md`.
 **Grounded in:** the code on branch `docs/foundations-plan` (commit `1aecd4d`), `docs/game-design.md` Draft v0.5 (GD), `docs/wellbeing.md` v0.4 (WB), `docs/backlog.md`.
 **Decisions referenced:** `docs/decisions.md` D-001 to D-009.
 
