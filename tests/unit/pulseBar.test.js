@@ -2,7 +2,7 @@
 // src/config.js, so a hex or opacity change re-runs it. A new pulse drawer must be added here.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { PALETTE } from '../../src/colorManager.js';
+import { PALETTE } from '../../src/palette.js';
 import { DUSK, EFFECT_COLORS, SATURATED_RED_RATIO } from '../../src/config.js';
 import { pulseBarAlpha } from '../../src/effects/colors.js';
 

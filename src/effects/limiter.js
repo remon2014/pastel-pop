@@ -1,6 +1,6 @@
 // The effects safety rules as plain logic (D-005, WB 4 to 6). No DOM, window or settings import.
 // request() always answers with a form; it never returns null and never queues anything.
-import { PALETTE } from '../colorManager.js';
+import { PALETTE } from '../palette.js';
 import {
   CALM_ARRIVALS_PER_SECOND,
   CALM_PULSE_MAX_RATE,

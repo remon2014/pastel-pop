@@ -169,3 +169,12 @@ export const SOUND_BY_KIND = Object.freeze({ pop: 'pop', wobble: 'wrong', shake:
 export const SOUND_FORMS = Object.freeze(['full', 'quiet', 'fade', 'plainFade', 'dim']);
 // Placeholder music: a soft two-note drone on its own bus.
 export const MUSIC_TONE = Object.freeze({ wave: 'sine', notes: [196, 293.66], level: 0.25 });
+
+// Interim start scene (F-18), until Calm and Story modes exist. No levels: 3 random colours, 2 circles of each.
+export const INTERIM_COLOURS = 3;
+export const INTERIM_PER_COLOUR = 2;
+export const INTERIM_CIRCLE_COUNT = INTERIM_COLOURS * INTERIM_PER_COLOUR;
+// Once the target colour is gone, empty slots refill one circle at a time, this far apart (seconds).
+export const REFILL_STAGGER_S = 0.4;
+// The scene's speed multiplier (1 is BASE_SPEED_WIDTHS).
+export const INTERIM_SPEED_MULTIPLIER = 1;

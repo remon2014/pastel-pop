@@ -1,10 +1,10 @@
-// src/uiManager.js
-import { fillDisc } from './circle.js';
+// The DOM HUD: target swatch, Pause button and Pause menu.
+import { fillDisc } from './render/circle.js';
 import { CREAM, DUSK, SWATCH_FRAME_PX, SWATCH_GAP_PX } from './config.js';
 import { swatchPixels } from './render/view.js';
-import { drawSymbol } from './symbols.js';
+import { drawSymbol } from './render/symbols.js';
 
-export class UIManager {
+export class Hud {
   constructor() {
     this.targetCanvas = document.getElementById('targetCanvas');
     this.targetLabel = document.getElementById('targetLabel');
@@ -49,7 +49,7 @@ export class UIManager {
   setTargetSwatch(color) {
     this.targetColor = color;
     this.drawSwatch();
-    this.targetLabel.textContent = `Target: ${color.name}, ${color.colorWord}`;
+    this.targetLabel.textContent = color ? `Target: ${color.name}, ${color.colorWord}` : '';
   }
 
   drawSwatch() {

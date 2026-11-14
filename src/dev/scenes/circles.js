@@ -1,10 +1,10 @@
-import { drawCircle } from '../../circle.js';
-import { PALETTE } from '../../colorManager.js';
+import { drawCircle } from '../../render/circle.js';
+import { PALETTE } from '../../palette.js';
 import { CREAM, DUSK, DUST, GLOW_2, INTERNAL_WIDTH_TARGET } from '../../config.js';
 import { browserHost, createLoop } from '../../core/loop.js';
 import { circleRadius, fitCircles, isInside, speedFor, stepCircles } from '../../logic/world.js';
 import { circlePixels, computeView, cssToWorld } from '../../render/view.js';
-import { getDistance } from '../../utils.js';
+import { getDistance } from '../../logic/hit.js';
 import { createFpsCounter } from '../fpsCounter.js';
 import { createReadout } from '../readout.js';
 import { button, createViewCanvas, otherTarget, READOUT_MS, sizeCanvas } from '../ui.js';

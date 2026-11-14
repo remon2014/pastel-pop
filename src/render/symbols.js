@@ -1,6 +1,6 @@
 // Placeholder symbols: solid silhouettes drawn with canvas paths until pixel art exists.
 // Each function fills one shape centred on (cx, cy); s is half the symbol's width.
-import { INK, SYMBOL_SIZE } from './config.js';
+import { INK, SYMBOL_SIZE } from '../config.js';
 
 function polygon(ctx, points) {
   ctx.moveTo(points[0][0], points[0][1]);

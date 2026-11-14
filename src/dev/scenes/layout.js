@@ -1,5 +1,5 @@
 import { CIRCLE_DIAMETER_DP, CIRCLE_MAX_DIAMETER_DP, CIRCLE_REFERENCE_WIDTH_DP } from '../../config.js';
-import { Game } from '../../game.js';
+import { Scene } from '../../scene.js';
 import { createInsetReader, createLayout } from '../../layout.js';
 import { isInside } from '../../logic/world.js';
 import { circlePixels } from '../../render/view.js';
@@ -19,7 +19,7 @@ const ROWS = [
   'Swatch / circle diameter',
   'Swatch box vs Pause box',
 ];
-// The same elements as index.html, because Game and UIManager find them by id.
+// The same elements as index.html, because Scene and Hud find them by id.
 const GAME_MARKUP = `
   <canvas id="gameCanvas"></canvas>
   <div id="gameUI">
@@ -69,7 +69,7 @@ export default function mountLayoutScene(root) {
   document.body.append(outline);
 
   const canvas = document.getElementById('gameCanvas');
-  const game = new Game(canvas, canvas.getContext('2d'));
+  const game = new Scene(canvas, canvas.getContext('2d'));
   const realInsets = createInsetReader();
   let pretend = false;
   const layout = createLayout(canvas, game, { getInsets: () => (pretend ? PRETEND_INSETS : realInsets()) });
@@ -102,8 +102,8 @@ export default function mountLayoutScene(root) {
   }
 
   const outside = () => game.circles.filter((c) => !isInside(c, game.bounds)).length;
-  const swatchBox = () => box(game.ui.targetCanvas);
-  const pauseBox = () => box(game.ui.pauseBtn);
+  const swatchBox = () => box(game.hud.targetCanvas);
+  const pauseBox = () => box(game.hud.pauseBtn);
   const circleCss = () => {
     const view = layout.last?.view;
     if (!view || game.circles.length === 0) return 0;
@@ -143,7 +143,7 @@ export default function mountLayoutScene(root) {
 
   window.addEventListener('resize', relayout);
   setInterval(refresh, READOUT_MS);
-  game.ui.pauseBtn.style.display = 'inline-block';
+  game.hud.pauseBtn.style.display = 'inline-block';
   game.start();
   relayout();
 

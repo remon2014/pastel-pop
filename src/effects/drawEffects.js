@@ -1,7 +1,7 @@
 // Draws the effect state into the internal-resolution canvas (D-005, D-010). One small drawer per look,
 // chosen from one table; a drawer only reads state and decides nothing about timing, budget or motion.
 // Colours: the circle's own palette colour, Dusk and the config placeholders. Shapes are whole-pixel.
-import { discRows, drawCircle, fillDisc } from '../circle.js';
+import { discRows, drawCircle, fillDisc } from '../render/circle.js';
 import {
   BURST_DOTS,
   DUSK,

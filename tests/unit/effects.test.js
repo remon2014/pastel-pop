@@ -2,7 +2,7 @@
 // Reduce motion on), not from the code. Test numbers match the F-14 row in docs/foundations-plan.md.
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { PALETTE } from '../../src/colorManager.js';
+import { PALETTE } from '../../src/palette.js';
 import * as config from '../../src/config.js';
 import { createLimiter } from '../../src/effects/limiter.js';
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { PALETTE } from '../../src/colorManager.js';
+import { PALETTE } from '../../src/palette.js';
 import { DUSK, INK } from '../../src/config.js';
 
 // WCAG 2 relative luminance and contrast ratio, as used in docs/game-design.md.
