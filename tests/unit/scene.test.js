@@ -82,7 +82,8 @@ test('refill adds one circle at a time, REFILL_STAGGER_S apart, up to 2 of each'
   assert.equal(state.refilling, false);
 });
 
-test('a long frame still adds at most one circle per stagger interval', () => {
+// MAX_FRAME_SECONDS (0.1) is below the stagger, so one capped frame can never owe two arrivals.
+test('a capped frame adds at most one circle per stagger interval', () => {
   const state = { refilling: false, wait: 0 };
   startRefill(state);
   const first = stepRefill(state, [], [A, B, C], 0.1);
@@ -94,4 +95,29 @@ test('refill does nothing once every colour is full', () => {
   const state = { refilling: true, wait: 0 };
   assert.deepEqual(stepRefill(state, on(A, A, B, B), [A, B], 1), []);
   assert.equal(state.refilling, false);
+});
+
+test('clearing a second colour mid-refill never brings two arrivals closer than the stagger', () => {
+  const colours = [A, B];
+  const circles = on(A, A, B, B);
+  const state = { refilling: false, wait: 0 };
+  const arrivals = [];
+  const dt = 0.05;
+  let clearedB = false;
+  circles.splice(0, 2);
+  startRefill(state);
+  for (let t = 0; t < 3; t += dt) {
+    if (!clearedB && t >= 0.1 - 1e-9) {
+      clearedB = true;
+      circles.splice(0, circles.length, ...circles.filter((c) => c.color !== B));
+      startRefill(state);
+    }
+    for (const color of stepRefill(state, circles, colours, dt)) {
+      circles.push({ color });
+      arrivals.push(t);
+    }
+  }
+  assert.equal(circles.length, 4);
+  assert.equal(arrivals.length, 4);
+  for (let i = 1; i < arrivals.length; i++) assert.ok(arrivals[i] - arrivals[i - 1] >= REFILL_STAGGER_S - dt);
 });

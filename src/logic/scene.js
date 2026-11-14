@@ -59,7 +59,9 @@ export function stepRefill(state, circles, colours, seconds, stagger = REFILL_ST
   return arrivals;
 }
 
+// A refill already running is left alone, so it keeps its stagger and also tops up any colour cleared since.
 export function startRefill(state) {
+  if (state.refilling) return;
   state.refilling = true;
   state.wait = 0;
 }

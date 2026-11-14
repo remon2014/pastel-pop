@@ -1,9 +1,6 @@
 // src/config.js
 // Speeds are in play-area widths per second (D-003). 1.0x is one width in 4 seconds.
 export const BASE_SPEED_WIDTHS = 0.25;
-// Each level adds this much to the speed multiplier: level 1 is 1.0x, level 2 is 1.2x, and so on.
-// Matches the prototype, whose per-frame speed grew by 0.5 on a base of 2.5 (0.2 of level 1) per level.
-export const LEVEL_SPEED_STEP = 0.2;
 
 // Circle size (PROVISIONAL, waits on the game designer for large screens): 64 dp across on a
 // 360 dp wide phone, and never under 48 dp across (docs/game-design.md, Accessibility).

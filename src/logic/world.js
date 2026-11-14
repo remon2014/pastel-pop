@@ -9,7 +9,6 @@ import {
   CIRCLE_MAX_DIAMETER_DP,
   CIRCLE_MIN_DIAMETER_DP,
   CIRCLE_REFERENCE_WIDTH_DP,
-  LEVEL_SPEED_STEP,
 } from '../config.js';
 
 // Radius in widths for a play area `widthDp` CSS pixels wide: a fixed fraction of the width,
@@ -29,11 +28,6 @@ export function circleRadius(widthDp) {
 export function playAreaHeight(widthPx, heightPx, lastHeight) {
   const usable = Number.isFinite(widthPx) && Number.isFinite(heightPx) && widthPx > 0 && heightPx > 0;
   return usable ? heightPx / widthPx : lastHeight;
-}
-
-// Speed multiplier for a level (1.0 at level 1).
-export function levelMultiplier(level) {
-  return 1 + (level - 1) * LEVEL_SPEED_STEP;
 }
 
 export function speedFor(multiplier) {

@@ -4,7 +4,6 @@ import {
   fitCircles,
   isInside,
   playAreaHeight,
-  levelMultiplier,
   circleRadius,
   spawnCircle,
   speedFor,
@@ -28,13 +27,6 @@ function seeded(seed) {
 
 test('speed is 0.25 widths per second at 1.0x', () => {
   assert.equal(speedFor(1), 0.25);
-  assert.equal(speedFor(levelMultiplier(1)), 0.25);
-});
-
-test('level multiplier is 1.0 at level 1 and grows by 0.2 a level', () => {
-  assert.equal(levelMultiplier(1), 1);
-  assert.ok(Math.abs(levelMultiplier(2) - 1.2) < 1e-12);
-  assert.ok(Math.abs(levelMultiplier(6) - 2) < 1e-12);
 });
 
 test('a circle covers the same distance in 1 s at every step rate', () => {
