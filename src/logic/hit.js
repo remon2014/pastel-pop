@@ -1,5 +1,8 @@
 import { MIN_TOUCH_DP, TAP_REACH } from '../config.js';
-import { getDistance } from '../utils.js';
+
+export function getDistance(x1, y1, x2, y2) {
+  return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+}
 
 // Smallest tap radius in widths for a play area `widthDp` wide: half the minimum touch size.
 export function minTapRadius(widthDp) {

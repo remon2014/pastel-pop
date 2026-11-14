@@ -1,5 +1,5 @@
 // circle.js
-import { circlePixels } from './render/view.js';
+import { circlePixels } from './view.js';
 import { drawSymbol } from './symbols.js';
 
 // Whole-pixel rows of a filled disc in a size x size square: one { offset, width } per row.

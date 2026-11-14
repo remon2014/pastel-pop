@@ -1,5 +1,5 @@
-import { drawCircle } from '../../circle.js';
-import { PALETTE } from '../../colorManager.js';
+import { drawCircle } from '../../render/circle.js';
+import { PALETTE } from '../../palette.js';
 import { DUSK, INTERNAL_WIDTH_TARGET } from '../../config.js';
 import { attachPointer } from '../../input/pointer.js';
 import { findHit, minTapRadius } from '../../logic/hit.js';

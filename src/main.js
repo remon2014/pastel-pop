@@ -1,4 +1,4 @@
-import { Game } from './game.js';
+import { Scene } from './scene.js';
 import { createLayout } from './layout.js';
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -14,8 +14,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const startGameBtn = document.getElementById('startGameBtn');
   const pauseBtn = document.getElementById('pauseBtn');
 
-  const game = new Game(canvas, ctx);
-  const ui = game.ui;
+  const game = new Scene(canvas, ctx);
+  const hud = game.hud;
 
   const layout = createLayout(canvas, game);
   layout.resize();
@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     game.start();
   });
 
-  ui.backToMainBtn.addEventListener('click', () => {
+  hud.backToMainBtn.addEventListener('click', () => {
     game.stop();
     mainMenu.style.display = 'flex';
     pauseBtn.style.display = 'none';

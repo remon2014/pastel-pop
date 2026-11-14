@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { discRows } from '../../src/circle.js';
+import { discRows } from '../../src/render/circle.js';
 
 for (const size of [1, 2, 7, 16, 32]) {
   test(`discRows(${size}) is a symmetric whole-pixel disc inside its square`, () => {

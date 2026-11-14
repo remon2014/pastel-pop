@@ -38,26 +38,28 @@ Current layout; update this table when files are added, moved or removed.
 | `public/` | Static files copied as-is to the site root: `manifest.json`, `icon-192.png`, `icon-512.png`, `favicon.png` |
 | `index.html` | Markup, inline CSS, main menu, pause overlay, HUD |
 | `src/main.js` | Bootstrap, canvas resize, menu wiring |
-| `src/game.js` | Game loop, levels, input, pause, fixed background |
-| `src/circle.js` | Draws one world circle as a whole-pixel disc (`discRows`) at internal resolution |
-| `src/symbols.js` | Placeholder canvas-path symbols (star, cloud, kite, leaf, moon) |
-| `src/colorManager.js` | Colour palette (neutral ids and hex) |
-| `src/uiManager.js` | DOM HUD updates |
+| `src/scene.js` | The interim start scene (`Scene`): Dusk, moving circles from `world.js`, target tap, Pause, staggered refill. No levels, no score, effects and sound unwired |
+| `src/hud.js` | DOM HUD (`Hud`): target swatch, Pause button and label, Pause menu |
+| `src/palette.js` | Colour palette (`PALETTE`: neutral ids and hex) |
+| `src/render/circle.js` | Draws one world circle as a whole-pixel disc (`discRows`, `drawCircle`, `fillDisc`) at internal resolution |
+| `src/render/symbols.js` | Placeholder canvas-path symbols (star, cloud, kite, leaf, moon) |
+| `src/logic/scene.js` | Canvas-free rules of the interim scene: `pickColours`, `pickTarget`, `colourCleared`, `nextRefillColour`, `startRefill`, `stepRefill` (one circle per `REFILL_STAGGER_S`) |
 | `src/logic/world.js` | Canvas-free rules in play-area widths: circle size, speed, spawn, movement, bounce, bounds pull-back. No `document`, `window`, canvas, `performance` or `import.meta` |
 | `src/render/view.js` | Canvas-free view maths: `computeView` (internal size, whole-number scale, CSS size from the column size and `devicePixelRatio`), `columnRect` (safe-area-trimmed portrait column, at most `MAX_COLUMN_ASPECT`, centred), `swatchPixels` (target swatch size), `cssToWorld` (taps), `circlePixels` (circle as whole internal pixels). No `document`, `window` or canvas |
 | `src/layout.js` | Browser side of layout: reads `env(safe-area-inset-*)`, places and sizes the canvas in the column, sets the `--play-*` CSS variables the HUD follows, hands the view to the game. Used by `main.js` and the layout dev scene |
 | `src/core/loop.js` | The one game loop: the only caller of `requestAnimationFrame`; elapsed seconds, capped, stops when hidden |
 | `src/input/pointer.js` | `attachPointer(canvas, onTap)`: one tap per `pointerdown`, each finger at its own canvas-relative position. Taps on HUD controls never reach it |
-| `src/logic/hit.js` | Canvas-free hit test `findHit`: tap area = radius x `TAP_REACH`, floor half `MIN_TOUCH_DP`; matching circle wins, else nearest, else null |
+| `src/logic/hit.js` | Canvas-free `getDistance` and hit test `findHit`: tap area = radius x `TAP_REACH`, floor half `MIN_TOUCH_DP`; matching circle wins, else nearest, else null |
 | `src/dev/` | Dev-only test sandbox, absent from `npm run build`. Open `http://localhost:5174/?dev` for the scene list, `?dev=loop`, `?dev=circles`, `?dev=render`, `?dev=layout`, `?dev=input`, `?dev=effects`, `?dev=settings` or `?dev=audio` for a scene. `index.js` scene registry, `readout.js` on-screen panel, `ui.js` shared `button()` and `READOUT_MS`, `flashMeter.js` pure flash counter on drawn pixels (F-16), `scenes/` one file per scene; `window.__pastelPopDev` holds the read-only numbers |
 | `src/storage.js` | The only file that touches `localStorage` (guarded, survives blocked storage) and `matchMedia` for the system Reduce motion setting |
 | `src/settings.js` | Settings (Reduce motion, music and effects volume, vibration, mute): versioned JSON, in memory, `subscribe`. Takes storage and the system setting as arguments; no `window` |
 | `src/effects/` | Effects safety rules as canvas-free logic: `limiter.js` (`createLimiter().request({kind, mode, now, circleId})` always returns `{form}`: flash budget for pops and arrivals, free soft pulse beats, shake, Reduce motion swaps), `colors.js` (luminance, saturated red, dim amount, `pulseBarAlpha` bar opacity). No DOM, `window`, `performance` or settings import. `effects.js` (`createEffects()`: wraps one limiter, turns each `{form}` into plain effect state, `bindSettings(settings)` applies Reduce motion and returns the unsubscribe, `forget`, `flashCount` and peaks; no canvas or DOM) and `drawEffects.js` (one drawer per look from one table, into the internal-resolution canvas; the only place that draws brightness changes, shake, dim, wobble and pulse), `voices.js` (canvas-free sound rules: which request makes a sound, voice cap, ducking, same-instant merge, fade, gain, note and RMS-window maths) and `audio.js` (the only Web Audio file: `createAudio(settings)`, `unlock()` inside the first `pointerdown`, `playEffect(kind, form)`, music, buses, master limiter and ceiling, hidden-page suspend) |
-| `src/config.js`, `src/utils.js` | Constants and helpers |
-| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`, `world.test.js` covers `src/logic/world.js`, `view.test.js` covers `src/render/view.js` (including `columnRect` and `swatchPixels`), `circle.test.js` covers `discRows`, `flashMeter.test.js` covers `src/dev/flashMeter.js`, `symbols.test.js` checks every palette id has a symbol, `settings.test.js` covers `src/settings.js`, `storage.test.js` covers the `src/storage.js` matchMedia fallbacks, `effects.test.js` covers `src/effects/limiter.js`, `effectState.test.js` covers `src/effects/effects.js`, `voices.test.js` covers `src/effects/voices.js`, `pulseBar.test.js` proves the bar pulse is soft over Dusk and every palette colour) |
+| `src/config.js` | Constants |
+| `tests/unit/` | Unit tests, one `*.test.js` per module, run by `npm test` (`loop.test.js` covers `src/core/loop.js`, `world.test.js` covers `src/logic/world.js`, `view.test.js` covers `src/render/view.js` (including `columnRect` and `swatchPixels`), `circle.test.js` covers `discRows`, `flashMeter.test.js` covers `src/dev/flashMeter.js`, `symbols.test.js` checks every palette id has a symbol, `scene.test.js` covers `src/logic/scene.js`, `settings.test.js` covers `src/settings.js`, `storage.test.js` covers the `src/storage.js` matchMedia fallbacks, `effects.test.js` covers `src/effects/limiter.js`, `effectState.test.js` covers `src/effects/effects.js`, `voices.test.js` covers `src/effects/voices.js`, `pulseBar.test.js` proves the bar pulse is soft over Dusk and every palette colour) |
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
+| `docs/test-cases/` | QA test cases by area (`foundations.md`, written by QA for F-18) |
 | `docs/backlog.md` | Known issues and priorities |
 | `docs/foundations-plan.md` | Engineering foundations plan: tasks F-01 to F-19 and their progress |
 | `docs/decisions.md` | Log of significant technical decisions (D-001 onward) |
