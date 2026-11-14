@@ -23,3 +23,12 @@ Short, lasting knowledge for future test sessions. Remove a note when it goes ou
 ## Recurring bug patterns
 - A call left behind after its import was deleted passes a text search for the file name but throws at run time. After any deletion, search for every removed function and variable name, then exercise every button and both tap outcomes.
 - A test whose input range never reaches the rule it names (the 48 dp floor test did not include widths under 270). Check that each test would fail if the rule were removed.
+
+## F-19 real phone check (2026-11-14)
+- Phone: Pixel 10 Pro XL, Android 17, up to 120 Hz (owner's words: "up to 120Hz"). Owner reported all checks P-01 to P-36 passed, no notes.
+- Limits: self-reported. No per-check readout values (crossing time, steps per second, meter numbers) were recorded, and there were no feel notes. P-34 to P-36 (earbuds, 120 Hz crossing, second phone in the dark) reported passed, method not stated.
+- P-16 (loop speed): passed, value not recorded, refresh rate during the run unknown. "Steps per second" follows the refresh rate (about 60 at 60 Hz, about 120 at 120 Hz), not a fixed 60.
+- Not covered: this phone is a flagship. The plan asks for a mid- or low-range Android phone, so mid- and low-range performance is still untested.
+- Checklist: `docs/test-cases/phone-check.md`. Setup: `npm run dev:phone`, open the `Network:` address on the phone (same trusted home Wi-Fi), Ctrl+C when done.
+- The loop stops while its tab is hidden, so read frame rate on the effects scene ("Steps per second", slow loop off), not on `?dev=loop` in another tab.
+- Android "Remove animations" name and place vary by maker (Pixel: Accessibility > Color and motion). Ask the owner to write the values in the Results block next time.
