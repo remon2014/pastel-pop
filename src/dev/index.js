@@ -1,5 +1,6 @@
 import { CREAM, DUSK, GLOW_1, GLOW_2 } from '../config.js';
 import { parseDevQuery } from './sceneName.js';
+import mountAudioScene from './scenes/audio.js';
 import mountCirclesScene from './scenes/circles.js';
 import mountEffectsScene from './scenes/effects.js';
 import mountInputScene from './scenes/input.js';
@@ -19,6 +20,11 @@ const SCENES = [
     name: 'effects',
     title: 'Effects: flash budget, shake, pulse, Reduce motion, auto-tapper',
     mount: mountEffectsScene,
+  },
+  {
+    name: 'audio',
+    title: 'Audio: first-tap start, music fade, voice cap, peak level, auto-tapper',
+    mount: mountAudioScene,
   },
   { name: 'settings', title: 'Settings: Reduce motion, volumes, vibration, mute, storage', mount: mountSettingsScene },
 ];
