@@ -5,9 +5,11 @@ Refreshed 2026-10-11 against `docs/game-design.md` Draft v0.5 and `docs/wellbein
 References: **GD** = `docs/game-design.md` section, **WB** = `docs/wellbeing.md` section. Design values quoted here are starting values; the design doc is the source of truth.
 
 ## Next: engineering foundations
-Build order, task IDs and what is done are in `docs/foundations-plan.md`; QA results are in `docs/qa-log.md`. **Left: F-19 (real phone check).** Open items below are follow-ups from finished tasks, tagged with the task that found them; items with no task ID are not in that plan. Deferred review items from F-01 to F-09 (S5, N1, N3 to N9, three real-phone questions, loop resilience) are in `docs/foundations-plan.md` section 3b.
+Build order, task IDs and what is done are in `docs/foundations-plan.md`; QA results are in `docs/qa-log.md`. **All foundations tasks F-01 to F-19 are done (2026-11-14).** Open items below are follow-ups from finished tasks, tagged with the task that found them; items with no task ID are not in that plan. Deferred review items from F-01 to F-09 (S5, N1, N3 to N9, three real-phone questions, loop resilience) are in `docs/foundations-plan.md` section 3b.
 
 - **F-18b, test follow-ups (proposed, not yet in the plan):** one small test-only task gathering the cheap should-fix test items tagged "F-18b" below (from F-14, F-15, F-16, F-16b and F-17). No game code changes; each new test must fail when the rule it guards is broken (mutation check). Owner: gameplay-engineer, then qa-tester.
+- Mid- or low-range Android check still open: F-19 ran on a flagship (Pixel 10 Pro XL, up to 120 Hz), so smoothness, frame rate during the effects stress, and audio on a cheaper phone are untested. Rerun `docs/test-cases/phone-check.md` on one before release, recording values (F-19).
+- Phone checklist nits: P-16 gives ranges for 60 and 120 Hz but not 90 Hz (81–99); the Results block asks for P-16's value but not the Hz seen (review nit, F-19).
 - F-18b: `tests/unit/scene.test.js:107-122` allows one 0.05 s step of slack between refill arrivals; make it exact with an integer frame counter (gap at least `Math.round(REFILL_STAGGER_S / dt)` frames) (review nit, F-18; F-18b).
 - Interim start scene (F-18): no levels, progression or score, and effects and sound are not wired; it stands in until Calm mode replaces it. Values from the game designer: 6 circles, 3 colours, 2 each, refill one per 0.4 s (F-18).
 - F-10 was not checked by eye in the F-18 regression pass; cover it in F-19 (QA, F-18).
