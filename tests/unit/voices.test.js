@@ -10,9 +10,18 @@ import {
   MIN_WRONG_TAP_QUIETER_DB,
   SOUND_FORMS,
   TONES,
-  VOICE_FALLOFF,
+  VOICE_FLOOR,
 } from '../../src/config.js';
-import { busGain, createVoices, envelopeGain, pickNote, ramp, soundFor, voiceLevel } from '../../src/effects/voices.js';
+import {
+  busGain,
+  createVoices,
+  envelopeGain,
+  limiterTrim,
+  pickNote,
+  ramp,
+  soundFor,
+  soundLevel,
+} from '../../src/effects/voices.js';
 
 test('voice cap: a 5th sound replaces the oldest and the count never passes the cap', () => {
   const v = createVoices();
@@ -74,13 +83,34 @@ test('bus gain: muted is silent, volume is clamped and monotonic', () => {
   assert.ok(busGain(0.3, false) < busGain(0.6, false));
 });
 
-test('voice level: each sound already playing lowers the next, so the sum stays near 1.5 times one', () => {
-  assert.equal(voiceLevel(0.3, 0), 0.3);
-  assert.ok(voiceLevel(0.3, 2) < voiceLevel(0.3, 1));
-  let sum = 0;
-  for (let i = 0; i < MAX_EFFECT_VOICES; i++) sum += voiceLevel(1, i);
-  assert.ok(sum <= 1.5, `sum ${sum}`);
-  assert.ok(VOICE_FALLOFF < 1);
+test('sound level: a lone sound plays at its own level; others sounding use up the budget', () => {
+  const budget = 1.5;
+  assert.equal(soundLevel({ base: 1, budget, sounding: [] }), 1);
+  assert.equal(soundLevel({ base: 1, budget, sounding: [1] }), 0.5);
+  assert.ok(Math.abs(soundLevel({ base: 1, budget, sounding: [0.9] }) - 0.6) < 1e-9);
+});
+
+test('sound level: never above its own level, never below the floor, whatever is sounding', () => {
+  for (let n = 0; n <= 6; n++) {
+    for (const each of [0, 0.2, 0.7, 1, 3]) {
+      const level = soundLevel({ base: 0.3, budget: 0.45, sounding: Array(n).fill(each) });
+      assert.ok(level <= 0.3 && level >= 0.3 * VOICE_FLOOR - 1e-12, `n ${n} each ${each} level ${level}`);
+    }
+  }
+});
+
+test('sound level: while there is headroom the total stays within the budget; the floor is -6 dB', () => {
+  const sounding = [0.2];
+  const level = soundLevel({ base: 0.3, budget: 0.45, sounding });
+  assert.ok(level + 0.2 <= 0.45 + 1e-12);
+  assert.ok(Math.abs(20 * Math.log10(VOICE_FLOOR) + 6.02) < 0.01);
+});
+
+test('limiter trim: undoes the compressor makeup gain from the config numbers (2.198 for -12 dB, ratio 20)', () => {
+  const trim = limiterTrim(LIMITER);
+  assert.ok(Math.abs(1 / trim - 2.198) < 0.001, `makeup ${1 / trim}`);
+  assert.ok(Math.abs(limiterTrim({ thresholdDb: 0, ratio: 20 }) - 1) < 1e-12);
+  assert.ok(limiterTrim({ thresholdDb: -24, ratio: 20 }) < trim);
 });
 
 test('soundFor: full, quiet, fade, plainFade and dim play; ignored, refused and the rest are silent', () => {
@@ -100,7 +130,7 @@ test('tones: sine or triangle, main pitch 250 to 800 Hz, and the wrong tap is at
     assert.ok(['sine', 'triangle'].includes(tone.wave));
     for (const hz of tone.notes) assert.ok(hz >= 250 && hz <= 800, `${hz} Hz`);
   }
-  const db = 20 * Math.log10(voiceLevel(TONES.wrong.level, 0) / voiceLevel(TONES.pop.level, 0));
+  const db = 20 * Math.log10(TONES.wrong.level / TONES.pop.level);
   assert.ok(db <= -MIN_WRONG_TAP_QUIETER_DB, `${db} dB`);
   assert.equal(TONES.wrong.notes.length, 1);
 });

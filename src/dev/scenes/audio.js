@@ -213,6 +213,9 @@ export default function mountAudioScene(root) {
     get peak() {
       return audio.peak();
     },
+    get ceilingReads() {
+      return audio.ceilingReads();
+    },
     get peakDb() {
       return toDb(audio.peak());
     },

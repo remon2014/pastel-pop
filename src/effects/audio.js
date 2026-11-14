@@ -11,11 +11,13 @@ import {
   MUSIC_FADE_OUT_SECONDS,
   MUSIC_TONE,
   TONES,
+  VOICE_BUDGET_TIMES_POP,
 } from '../config.js';
-import { busGain, createVoices, envelopeGain, pickNote, soundFor, voiceLevel } from './voices.js';
+import { busGain, createVoices, envelopeGain, limiterTrim, pickNote, ramp, soundFor, soundLevel } from './voices.js';
 
 const CEILING_CURVE_POINTS = 2049;
 const STOP_MARGIN_SECONDS = 0.02;
+const CEILING_HIT_FRACTION = 0.999;
 
 function ceilingCurve() {
   const ceiling = 10 ** (CEILING_DBFS / 20);
@@ -46,6 +48,7 @@ export function createAudio(settings, { doc = document, random = Math.random } =
   let musicWanted = false;
   let sequence = 0;
   let peakHold = 0;
+  let ceilingReads = 0;
   let samples = null;
   // A gain node with nothing playing into it does not update its readable value, so the readout shows the target.
   const busTarget = { effects: 0, music: 0 };
@@ -62,6 +65,8 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     limiter.ratio.value = LIMITER.ratio;
     limiter.attack.value = LIMITER.attack;
     limiter.release.value = LIMITER.release;
+    const trim = ctx.createGain();
+    trim.gain.value = limiterTrim(LIMITER);
     const ceiling = ctx.createWaveShaper();
     ceiling.curve = ceilingCurve();
     const analyser = ctx.createAnalyser();
@@ -71,7 +76,7 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     const musicBus = ctx.createGain();
     effectsBus.connect(master);
     musicBus.connect(master);
-    master.connect(limiter).connect(ceiling).connect(analyser).connect(ctx.destination);
+    master.connect(limiter).connect(trim).connect(ceiling).connect(analyser).connect(ctx.destination);
     nodes = { effectsBus, musicBus, analyser };
     applyBuses(0);
   }
@@ -98,6 +103,9 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     voice.osc.stop(now + seconds + STOP_MARGIN_SECONDS);
   }
 
+  // Level a sounding voice will have counted from its fade-in onward, so a sound that just began already counts in full.
+  const countedLevel = (now) => (v) => v.level * ramp(v.envelope.total - (now - v.start), v.envelope.fadeOut);
+
   function dropAllVoices() {
     for (const id of [...playing.keys()]) {
       const voice = playing.get(id);
@@ -117,7 +125,11 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     const id = `v${sequence++}`;
     const replaced = voices.start(id, now, tone.seconds);
     if (replaced !== null) stopVoice(replaced, EFFECT_QUICK_RELEASE_SECONDS);
-    const level = voiceLevel(tone.level, voices.count(now) - 1);
+    const level = soundLevel({
+      base: tone.level,
+      budget: VOICE_BUDGET_TIMES_POP * TONES.pop.level,
+      sounding: [...playing.values()].map(countedLevel(now)),
+    });
     const picked = pickNote(tone.notes, lastNote[name] ?? null, random);
     lastNote[name] = picked;
     const osc = ctx.createOscillator();
@@ -213,12 +225,18 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     measure() {
       if (!nodes) return;
       nodes.analyser.getFloatTimeDomainData(samples);
-      for (const v of samples) peakHold = Math.max(peakHold, Math.abs(v));
+      let top = 0;
+      for (const v of samples) top = Math.max(top, Math.abs(v));
+      peakHold = Math.max(peakHold, top);
+      if (top >= 10 ** (CEILING_DBFS / 20) * CEILING_HIT_FRACTION) ceilingReads++;
     },
     resetPeak() {
       peakHold = 0;
+      ceilingReads = 0;
     },
     peak: () => peakHold,
+    // Meter reads (20 ms apart, windows overlap) in which the output touched the ceiling.
+    ceilingReads: () => ceilingReads,
     numbers() {
       return {
         unlocked: ctx !== null,

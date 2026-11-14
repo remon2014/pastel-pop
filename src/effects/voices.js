@@ -1,6 +1,6 @@
 // Sound rules as plain logic (D-010): which request makes a sound, the voice cap, note choice, fade and
 // gain maths. No AudioContext, DOM or timers; times are seconds passed in. Playback is in audio.js.
-import { MAX_EFFECT_VOICES, SOUND_BY_KIND, SOUND_FORMS, VOICE_FALLOFF } from '../config.js';
+import { MAX_EFFECT_VOICES, SOUND_BY_KIND, SOUND_FORMS, VOICE_FLOOR } from '../config.js';
 
 const clamp01 = (n) => Math.min(1, Math.max(0, n));
 
@@ -26,9 +26,19 @@ export function envelopeGain(elapsed, { fadeIn, total, fadeOut }) {
   return Math.min(ramp(elapsed, fadeIn), ramp(total - elapsed, fadeOut));
 }
 
-// Level a new sound starts at when `playing` sounds are already on: base * falloff^playing.
-export function voiceLevel(base, playing) {
-  return base * VOICE_FALLOFF ** playing;
+// Level for a new sound: the budget left by the sounds still sounding (`sounding` is their current levels),
+// but never above its own `base` and never below base * floor.
+export function soundLevel({ base, budget, sounding, floor = VOICE_FLOOR }) {
+  const left = budget - sounding.reduce((sum, level) => sum + level, 0);
+  return Math.min(base, Math.max(base * floor, left));
+}
+
+// Gain that undoes the browser compressor's automatic makeup gain (knee 0). The Web Audio spec makes the
+// makeup (1 / gain of a full-scale input after compression) ^ 0.6; full scale lands at
+// threshold + (0 - threshold) / ratio dB, so the trim is that gain ^ 0.6.
+export function limiterTrim({ thresholdDb, ratio }) {
+  const fullScaleDb = thresholdDb - thresholdDb / ratio;
+  return 10 ** ((0.6 * fullScaleDb) / 20);
 }
 
 // Next note from `notes` that never repeats the last and never rises twice in a row, so no run of
