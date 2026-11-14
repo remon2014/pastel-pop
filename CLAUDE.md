@@ -59,7 +59,7 @@ Current layout; update this table when files are added, moved or removed.
 | `biome.json` | Biome lint and format settings (`src/` formatted; `index.html` linted only) |
 | `docs/game-design.md` | Source of truth for look, feel and play: Calm mode and Story mode |
 | `docs/wellbeing.md` | Sensory-safety rules, wording limits and the evidence behind them |
-| `docs/test-cases/` | QA test cases by area (`foundations.md`, written by QA for F-18) |
+| `docs/test-cases/` | QA test cases by area (`foundations.md`, written by QA for F-18; `phone-check.md`, the owner's real-phone checklist for F-19, P-01 to P-36) |
 | `docs/backlog.md` | Known issues and priorities |
 | `docs/foundations-plan.md` | Engineering foundations plan: tasks F-01 to F-19 and their progress |
 | `docs/decisions.md` | Log of significant technical decisions (D-001 onward) |
