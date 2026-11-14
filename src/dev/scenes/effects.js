@@ -56,6 +56,7 @@ const ROWS = [
   'Highest shake change area (must be 10% or less)',
   'Meter above layer (must stay 0)',
   'Meter ms per frame',
+  'While the pulse runs: taps and arrivals granted (full / quiet / waitUntil)',
 ];
 // Calibration block: switches twice a second, dark state well under 0.80, bright 0.10 or more above it.
 const CALIBRATION_RATE = 2;
@@ -112,6 +113,7 @@ export default function mountEffectsScene(root) {
   let meterMs = 0;
 
   const tally = {};
+  const whilePulse = { full: 0, quiet: 0, waitUntil: 0 };
   const request = (kind, circle, extra = {}) => {
     const granted = effects.request({
       kind,
@@ -126,6 +128,7 @@ export default function mountEffectsScene(root) {
     });
     const key = `${kind}.${granted.form}`;
     tally[key] = (tally[key] ?? 0) + 1;
+    if (pulseOn && (kind === 'pop' || kind === 'arrival') && granted.form in whilePulse) whilePulse[granted.form]++;
     return granted;
   };
 
@@ -377,6 +380,7 @@ export default function mountEffectsScene(root) {
     readout.set(ROWS[18], `${(meter.shakeArea.highest * 100).toFixed(1)}%`);
     readout.set(ROWS[19], calibrationOn ? `${meterAbove} (exempt: calibration on)` : String(meterAbove));
     readout.set(ROWS[20], meterOn ? meterMs.toFixed(2) : 'off');
+    readout.set(ROWS[21], `${whilePulse.full} / ${whilePulse.quiet} / ${whilePulse.waitUntil}`);
   }
   settings.subscribe(refresh);
   setInterval(refresh, READOUT_MS);
@@ -421,6 +425,9 @@ export default function mountEffectsScene(root) {
     },
     get stepsPerSecond() {
       return stepCounter.fps(performance.now());
+    },
+    get whilePulse() {
+      return { ...whilePulse };
     },
     get tally() {
       return { ...tally };

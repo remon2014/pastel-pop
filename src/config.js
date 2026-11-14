@@ -76,9 +76,6 @@ export const FLASH_BUDGET_WINDOW_SECONDS = FLASH_WINDOW_SECONDS + FLASH_WINDOW_M
 export const STORY_PULSE_MAX_RATE = 2;
 // Pulse beats sit on shared ticks this far apart; a pulse period is a whole number of ticks (owner, F-14).
 export const PULSE_TICK_SECONDS = 0.5;
-// While a pulse runs (or ran within the last window), taps get this many flashes: none. A 2-a-second pulse
-// fills the closed 1.05 s window on its own, so the pulse stays steady and taps and Story arrivals go quiet.
-export const TAP_FLASHES_WITH_PULSE = 0;
 export const CALM_PULSE_MAX_RATE = 0.5;
 // Calm: at most 2 circles begin arriving in any one second (WB 4).
 export const CALM_ARRIVALS_PER_SECOND = 2;
@@ -125,3 +122,7 @@ export const QUIET_MIN_SCALE = 0.7;
 export const PULSE_BAR_WIDTH_FRACTION = 0.4;
 export const PULSE_BAR_HEIGHT = 3;
 export const PULSE_BAR_TOP = 2;
+// PLACEHOLDER bar opacity (D-010, D-011): the bar stands at the base while the warning is on, and a beat lifts it to the
+// peak and back. The amber over any colour it can cover must change relative luminance by 0.07 or less (pulseBar.test.js).
+export const PULSE_BAR_BASE_ALPHA = 0.06;
+export const PULSE_BAR_PEAK_ALPHA = 0.12;

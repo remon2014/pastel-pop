@@ -103,20 +103,21 @@ describe('effect state', () => {
     assert.equal(fx.active.filter((e) => e.kind === 'pulse').length, 1);
     fx.update(5.3);
     assert.equal(fx.active.filter((e) => e.kind === 'pulse' && 5.3 - e.start > MAX_BEAT_LATENESS).length, 0);
-    assert.equal(fx.flashCount(), 0, 'nothing old was drawn');
-    assert.equal(fx.beatCount(), 0);
+    assert.equal(fx.beatCount(), 0, 'nothing old was drawn');
     fx.update(5.5);
     assert.equal(fx.active.filter((e) => e.kind === 'pulse').length, 1, 'fresh beats are drawn again');
-    assert.equal(fx.flashCount(), 1);
+    assert.equal(fx.beatCount(), 1);
   });
 
-  test('a quiet arrival during the pulse draws nothing and counts no flash', () => {
+  test('beats are free: they never raise flashCount() or peaks.flashes, and never block a tap', () => {
     const fx = createEffects();
     ask(fx, 'pulse', 'story', 0, { rate: 2 });
-    assert.equal(ask(fx, 'arrival', 'story', 0.1, { circleId: 'n' }).form, 'quiet');
-    fx.update(0.1);
-    assert.equal(fx.active.length, 0, 'no halo, nothing added');
+    for (let t = 0.25; t <= 3; t += 0.25) fx.update(t);
+    assert.equal(fx.beatCount(), 2, 'beats at 2.5 and 3.0 are inside the last second');
     assert.equal(fx.flashCount(), 0);
+    assert.equal(fx.peaks.flashes, 0);
+    assert.equal(fx.flashTotal(), 0);
+    assert.equal(ask(fx, 'arrival', 'story', 3.1, { circleId: 'n' }).form, 'full', 'arrivals flash during the pulse');
   });
 
   test('arrivals wait for waitUntil and start no earlier', () => {
@@ -154,13 +155,13 @@ describe('effect state', () => {
     assert.equal(fx.active.length, before);
   });
 
-  test('late beats: with long frames, drawn flashes stay at 3 a second and no two beats share a frame', () => {
+  test('late beats: with long frames, tap flashes stay at 3 a second and no two beats share a frame', () => {
     const gaps = [0.083, 0.1, 0.05, 0.1, 0.07, 0.1];
     for (const rate of [2, 1]) {
       const fx = createEffects();
       ask(fx, 'pulse', 'story', 0, { rate });
       const seen = new Set();
-      const drawn = [];
+      const taps = [];
       let now = 0;
       for (let i = 0; i < 400; i++) {
         now += gaps[i % gaps.length];
@@ -170,14 +171,13 @@ describe('effect state', () => {
           if (e.kind !== 'pulse' || seen.has(e)) continue;
           seen.add(e);
           beatsThisFrame++;
-          drawn.push(now);
         }
         assert.ok(beatsThisFrame <= 1, 'two beats drawn in one frame');
-        if (i % 3 === 0 && ask(fx, 'pop', 'story', now).form === 'full') drawn.push(now);
+        if (i % 3 === 0 && ask(fx, 'pop', 'story', now).form === 'full') taps.push(now);
       }
-      for (const t of drawn) {
-        const n = drawn.filter((x) => x <= t + 1e-9 && x > t - 1 + 1e-9).length;
-        assert.ok(n <= 3, `${n} drawn in one second ending at ${t}`);
+      for (const t of taps) {
+        const n = taps.filter((x) => x <= t + 1e-9 && x > t - 1 + 1e-9).length;
+        assert.ok(n <= 3, `${n} tap flashes in one second ending at ${t}`);
       }
       assert.ok(seen.size > 0, 'some beats are still drawn');
     }
@@ -202,13 +202,12 @@ describe('effect state', () => {
     assert.equal(fx.flashCount(), 0);
   });
 
-  test('the layer count uses closed windows: a tap, then pulse beats, peaks at exactly 3', () => {
+  test('the layer count uses closed windows: pops at 0, 0.5 and 1.0 peak at exactly 3', () => {
     const fx = createEffects();
-    assert.equal(ask(fx, 'pop', 'story', 0).form, 'full');
-    assert.equal(ask(fx, 'pulse', 'story', 0.2, { rate: 2 }).form, 'full');
+    for (const t of [0, 0.5, 1.0]) assert.equal(ask(fx, 'pop', 'story', t, { circleId: `p${t}` }).form, 'full');
     for (let t = 0.25; t <= 1.5; t += 0.25) fx.update(t);
-    assert.equal(fx.peaks.flashes, 3, 'tap at 0 plus beats at 0.5 and 1.0');
-    assert.equal(fx.flashCount(), 3, 'beats at 0.5, 1.0 and 1.5 are inside [0.45, 1.5]');
+    assert.equal(fx.peaks.flashes, 3, 'pops at 0, 0.5 and 1.0 are inside one closed 1.05 s window');
+    assert.equal(fx.flashCount(), 2, 'at 1.5 only the pops at 0.5 and 1.0 are in [0.45, 1.5]');
   });
 
   describe('Reduce motion turned on mid-effect', () => {

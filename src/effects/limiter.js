@@ -15,7 +15,6 @@ import {
   SHAKE_STARTS_PER_SECOND,
   STORY_ARRIVALS_PER_SECOND,
   STORY_PULSE_MAX_RATE,
-  TAP_FLASHES_WITH_PULSE,
   WOBBLE_SECONDS,
 } from '../config.js';
 import { dimFraction } from './colors.js';
@@ -47,49 +46,34 @@ export function createLimiter() {
   let reduceMotion = false;
   let shakeUntil = -Infinity;
 
-  // Taps and pulse beats are logged separately; together they may never reach FLASH_LIMIT in a window.
-  const beats = [];
+  // Flash grants (pops and Story arrivals) are logged; at most FLASH_LIMIT in a closed window.
+  // Pulse beats are soft (D-011): they are never logged and never take or reserve budget.
   const taps = [];
   const fired = [];
   let lastTick = 0;
-  let pulseStoppedAt = -Infinity;
 
   const tickOf = (t) => Math.floor(t / PULSE_TICK_SECONDS + EPS);
-  const used = (now) => pruneBudget(beats, now).length + pruneBudget(taps, now).length;
-  const pulseRecent = (now) => pulses.size > 0 || now <= pulseStoppedAt + FLASH_BUDGET_WINDOW_SECONDS + EPS;
+  const used = (now) => pruneBudget(taps, now).length;
 
-  // Decide every pulse beat up to `now`, in time order. A beat that does not fit is skipped.
+  // Decide every pulse beat up to `now`, in time order. A due beat is always granted.
   function advance(now) {
     const target = tickOf(now);
     if (pulses.size > 0) {
       for (let k = lastTick + 1; k <= target; k++) {
-        const t = k * PULSE_TICK_SECONDS;
         const due = [...pulses.values()].some((period) => k % period === 0);
-        if (due && used(t) < FLASH_LIMIT) {
-          beats.push(t);
-          fired.push(t);
-        }
+        if (due) fired.push(k * PULSE_TICK_SECONDS);
       }
     }
     lastTick = Math.max(lastTick, target);
   }
 
-  // The one test every tap flash passes: fewer than FLASH_LIMIT granted in the last second,
-  // and while a pulse runs (or just ran) at most TAP_FLASHES_WITH_PULSE tap flashes in that second.
-  function canFlash(now) {
-    if (used(now) >= FLASH_LIMIT) return false;
-    return !pulseRecent(now) || taps.length < TAP_FLASHES_WITH_PULSE;
-  }
+  const canFlash = (now) => used(now) < FLASH_LIMIT;
 
   // Earliest time canFlash may be true again (advice for a `waitUntil` answer).
   function flashFreeAt(now) {
-    const logged = [...beats, ...taps].sort((x, y) => x - y);
-    let at = now;
     // The window is closed, so a flash may start only just after the oldest one has left it.
-    const free = (t) => t + FLASH_BUDGET_WINDOW_SECONDS + 2 * EPS;
-    if (logged.length >= FLASH_LIMIT) at = free(logged[logged.length - FLASH_LIMIT]);
-    if (pulses.size === 0) at = Math.max(at, free(pulseStoppedAt));
-    return at;
+    if (taps.length < FLASH_LIMIT) return now;
+    return Math.max(now, taps[taps.length - FLASH_LIMIT] + FLASH_BUDGET_WINDOW_SECONDS + 2 * EPS);
   }
 
   // Beats sit on shared ticks, so a period must be a whole multiple of the tick length.
@@ -109,12 +93,9 @@ export function createLimiter() {
     let at = now;
     if (arrivals.length >= perSecond) at = arrivals[arrivals.length - perSecond] + FLASH_WINDOW_SECONDS;
     // Story arrivals pay a flash; in Calm the pop pays for the arrival and itself.
-    // While a pulse runs it owns the budget: the circle arrives quietly (no brightness) and pays nothing.
-    const quiet = !calm && pulseRecent(now);
-    if (!calm && !quiet && !canFlash(now)) at = Math.max(at, flashFreeAt(now));
+    if (!calm && !canFlash(now)) at = Math.max(at, flashFreeAt(now));
     if (at > now + EPS) return { form: 'waitUntil', at };
     arrivals.push(now);
-    if (quiet) return { form: 'quiet' };
     if (!calm) taps.push(now);
     return { form: 'full' };
   }
@@ -168,7 +149,7 @@ export function createLimiter() {
       const handle = handlers[req.kind];
       return handle ? handle(req) : { form: 'refused' };
     },
-    // Beats granted since the last call (the drawing side plays these). Skipped beats never appear.
+    // Beats granted since the last call (the drawing side plays these). Every due beat appears.
     takeBeats(now) {
       advance(now);
       return fired.splice(0);
@@ -180,7 +161,6 @@ export function createLimiter() {
     stopPulse(id, now) {
       advance(now);
       pulses.delete(id);
-      if (pulses.size === 0) pulseStoppedAt = now;
     },
   };
 }

@@ -63,6 +63,7 @@ export function createEffects() {
   const held = new Map();
   const flashes = [];
   const beats = [];
+  const pulsing = new Set();
   const shakeStarts = [];
   let clock = 0;
   let flashTotal = 0;
@@ -94,10 +95,10 @@ export function createEffects() {
   const flashesIn = (end) =>
     flashes.filter((t) => t <= end + EPS && t >= end - FLASH_BUDGET_WINDOW_SECONDS - EPS).length;
 
-  // A flash is a brightening that pays the budget: a Story arrival, a full pop or burst, a pulse beat.
+  // A flash is a brightening that pays the budget: a Story arrival, a full pop or burst. A pulse beat is soft
+  // (D-011, proved by pulseBar.test.js), so it is never a flash.
   // A Calm arrival and its pop are one flash, paid by the pop (the limiter's rule).
-  const isFlash = (kind, form, mode) =>
-    form === 'full' && (kind === 'pop' || kind === 'pulse' || (kind === 'arrival' && mode === 'story'));
+  const isFlash = (kind, form, mode) => form === 'full' && (kind === 'pop' || (kind === 'arrival' && mode === 'story'));
 
   function show(req, form, amount, now) {
     const seconds = SECONDS[`${req.kind}.${form}`];
@@ -127,6 +128,7 @@ export function createEffects() {
   function request(req) {
     clock = Math.max(clock, req.now);
     const answer = limiter.request(req);
+    if (req.kind === 'pulse' && answer.form === 'full') pulsing.add(req.circleId);
     if (answer.form === 'waitUntil') held.set(req.circleId, { req, at: answer.at });
     else show(req, answer.form, answer.amount, req.now);
     return answer;
@@ -152,7 +154,6 @@ export function createEffects() {
     for (const t of limiter.takeBeats(now)) {
       // A beat seen late (after a gap) is dropped unseen. The limiter still counted it, which errs safe.
       if (now - t > MAX_BEAT_LATENESS) continue;
-      countFlash(t);
       beats.push(t);
       begin(
         { kind: 'pulse', form: 'beat', start: t, seconds: PULSE_BEAT_SECONDS, progress: 0, strength: 1, offsetX: 0 },
@@ -183,7 +184,12 @@ export function createEffects() {
         if (on) cutMotion();
       });
     },
-    stopPulse: (id, now) => limiter.stopPulse(id, now),
+    stopPulse(id, now) {
+      limiter.stopPulse(id, now);
+      pulsing.delete(id);
+    },
+    // True while any pulse runs: the drawer keeps the bar at its base level.
+    pulseOn: () => pulsing.size > 0,
     forget: (circleId) => limiter.forget(circleId),
     // True while an arrival for this circle is waiting for its turn.
     isHeld: (circleId) => held.has(circleId),
