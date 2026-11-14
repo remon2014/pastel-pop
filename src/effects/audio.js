@@ -3,6 +3,7 @@
 import {
   BUS_RAMP_SECONDS,
   CEILING_DBFS,
+  DUCK_RAMP_SECONDS,
   EFFECT_QUICK_RELEASE_SECONDS,
   LIMITER,
   MASTER_GAIN,
@@ -13,7 +14,7 @@ import {
   TONES,
   VOICE_BUDGET_TIMES_POP,
 } from '../config.js';
-import { busGain, createVoices, envelopeGain, limiterTrim, pickNote, ramp, soundFor, soundLevel } from './voices.js';
+import { busGain, createVoices, duckFactor, envelopeGain, limiterTrim, pickNote, ramp, soundFor } from './voices.js';
 
 const CEILING_CURVE_POINTS = 2049;
 const STOP_MARGIN_SECONDS = 0.02;
@@ -103,8 +104,23 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     voice.osc.stop(now + seconds + STOP_MARGIN_SECONDS);
   }
 
-  // Level a sounding voice will have counted from its fade-in onward, so a sound that just began already counts in full.
-  const countedLevel = (now) => (v) => v.level * ramp(v.envelope.total - (now - v.start), v.envelope.fadeOut);
+  // Level a sounding voice counts for, from its fade-in onward (a sound that just began counts in full), with its duck.
+  const countedLevel = (now) => (v) => v.level * v.duck * ramp(v.envelope.total - (now - v.start), v.envelope.fadeOut);
+
+  // Lowers the sounds already playing so they plus the new sound fit the budget. Glides, so it never clicks.
+  function duckPlaying(newLevel, now) {
+    const sounding = [...playing.values()];
+    const factor = duckFactor({
+      newLevel,
+      budget: VOICE_BUDGET_TIMES_POP * TONES.pop.level,
+      sounding: sounding.map(countedLevel(now)),
+    });
+    if (factor >= 1) return;
+    for (const voice of sounding) {
+      voice.duck *= factor;
+      glide(voice.duckGain.gain, voice.duck, now, DUCK_RAMP_SECONDS);
+    }
+  }
 
   function dropAllVoices() {
     for (const id of [...playing.keys()]) {
@@ -125,11 +141,8 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     const id = `v${sequence++}`;
     const replaced = voices.start(id, now, tone.seconds);
     if (replaced !== null) stopVoice(replaced, EFFECT_QUICK_RELEASE_SECONDS);
-    const level = soundLevel({
-      base: tone.level,
-      budget: VOICE_BUDGET_TIMES_POP * TONES.pop.level,
-      sounding: [...playing.values()].map(countedLevel(now)),
-    });
+    const level = tone.level;
+    duckPlaying(level, now);
     const picked = pickNote(tone.notes, lastNote[name] ?? null, random);
     lastNote[name] = picked;
     const osc = ctx.createOscillator();
@@ -140,16 +153,19 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     gain.gain.linearRampToValueAtTime(level, now + tone.fadeIn);
     gain.gain.setValueAtTime(level, now + tone.seconds - tone.fadeOut);
     gain.gain.linearRampToValueAtTime(0, now + tone.seconds);
-    osc.connect(gain).connect(nodes.effectsBus);
+    const duckGain = ctx.createGain();
+    osc.connect(gain).connect(duckGain).connect(nodes.effectsBus);
     osc.start(now);
     osc.stop(now + tone.seconds + STOP_MARGIN_SECONDS);
     osc.onended = () => {
-      gain.disconnect();
+      duckGain.disconnect();
       playing.delete(id);
     };
     playing.set(id, {
       osc,
       gain,
+      duckGain,
+      duck: 1,
       level,
       start: now,
       envelope: { fadeIn: tone.fadeIn, total: tone.seconds, fadeOut: tone.fadeOut },

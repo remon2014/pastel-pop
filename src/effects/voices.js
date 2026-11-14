@@ -1,6 +1,6 @@
 // Sound rules as plain logic (D-010): which request makes a sound, the voice cap, note choice, fade and
 // gain maths. No AudioContext, DOM or timers; times are seconds passed in. Playback is in audio.js.
-import { MAX_EFFECT_VOICES, SOUND_BY_KIND, SOUND_FORMS, VOICE_FLOOR } from '../config.js';
+import { MAX_EFFECT_VOICES, SOUND_BY_KIND, SOUND_FORMS } from '../config.js';
 
 const clamp01 = (n) => Math.min(1, Math.max(0, n));
 
@@ -26,11 +26,13 @@ export function envelopeGain(elapsed, { fadeIn, total, fadeOut }) {
   return Math.min(ramp(elapsed, fadeIn), ramp(total - elapsed, fadeOut));
 }
 
-// Level for a new sound: the budget left by the sounds still sounding (`sounding` is their current levels),
-// but never above its own `base` and never below base * floor.
-export function soundLevel({ base, budget, sounding, floor = VOICE_FLOOR }) {
-  const left = budget - sounding.reduce((sum, level) => sum + level, 0);
-  return Math.min(base, Math.max(base * floor, left));
+// Multiplier (0..1) for the sounds already playing when a new one starts at `newLevel`, so that the new level
+// plus the playing levels (`sounding`, each already counting earlier ducks) fits `budget`. Never above 1, so
+// ducking never raises a sound. The new sound itself is never reduced.
+export function duckFactor({ newLevel, budget, sounding }) {
+  const total = sounding.reduce((sum, level) => sum + level, 0);
+  if (total <= 0 || newLevel + total <= budget) return 1;
+  return clamp01((budget - newLevel) / total);
 }
 
 // Gain that undoes the browser compressor's automatic makeup gain (knee 0). The Web Audio spec makes the

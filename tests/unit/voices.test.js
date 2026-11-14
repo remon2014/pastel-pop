@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   CEILING_DBFS,
   DEFAULT_SETTINGS,
+  DUCK_RAMP_SECONDS,
   EFFECT_QUICK_RELEASE_SECONDS,
   LIMITER,
   MASTER_GAIN,
@@ -10,17 +11,16 @@ import {
   MIN_WRONG_TAP_QUIETER_DB,
   SOUND_FORMS,
   TONES,
-  VOICE_FLOOR,
 } from '../../src/config.js';
 import {
   busGain,
   createVoices,
+  duckFactor,
   envelopeGain,
   limiterTrim,
   pickNote,
   ramp,
   soundFor,
-  soundLevel,
 } from '../../src/effects/voices.js';
 
 test('voice cap: a 5th sound replaces the oldest and the count never passes the cap', () => {
@@ -83,27 +83,43 @@ test('bus gain: muted is silent, volume is clamped and monotonic', () => {
   assert.ok(busGain(0.3, false) < busGain(0.6, false));
 });
 
-test('sound level: a lone sound plays at its own level; others sounding use up the budget', () => {
-  const budget = 1.5;
-  assert.equal(soundLevel({ base: 1, budget, sounding: [] }), 1);
-  assert.equal(soundLevel({ base: 1, budget, sounding: [1] }), 0.5);
-  assert.ok(Math.abs(soundLevel({ base: 1, budget, sounding: [0.9] }) - 0.6) < 1e-9);
+test('duck: nothing to duck when the total already fits the budget', () => {
+  assert.equal(duckFactor({ newLevel: 1, budget: 1.5, sounding: [] }), 1);
+  assert.equal(duckFactor({ newLevel: 1, budget: 1.5, sounding: [0.5] }), 1);
 });
 
-test('sound level: never above its own level, never below the floor, whatever is sounding', () => {
-  for (let n = 0; n <= 6; n++) {
-    for (const each of [0, 0.2, 0.7, 1, 3]) {
-      const level = soundLevel({ base: 0.3, budget: 0.45, sounding: Array(n).fill(each) });
-      assert.ok(level <= 0.3 && level >= 0.3 * VOICE_FLOOR - 1e-12, `n ${n} each ${each} level ${level}`);
+test('duck: playing sounds are lowered so the new sound at full level plus the rest is the budget', () => {
+  const f = duckFactor({ newLevel: 1, budget: 1.5, sounding: [1, 1] });
+  assert.ok(Math.abs(f - 0.25) < 1e-12);
+  assert.ok(Math.abs(1 + f * 2 - 1.5) < 1e-12);
+});
+
+test('duck: simulated bursts of 4 sounds keep the combined target within the budget, the newest at full level', () => {
+  const budget = 1.5;
+  for (const gap of [0, 1, 2]) {
+    let levels = [];
+    for (let i = 0; i < 40; i++) {
+      const f = duckFactor({ newLevel: 1, budget, sounding: levels });
+      assert.ok(f >= 0 && f <= 1);
+      levels = levels.map((l) => l * f);
+      levels.push(1);
+      if (levels.length > MAX_EFFECT_VOICES) levels.shift();
+      assert.ok(levels.reduce((a, b) => a + b, 0) <= budget + 1e-9, `gap ${gap} step ${i}`);
+      assert.equal(levels[levels.length - 1], 1);
     }
   }
 });
 
-test('sound level: while there is headroom the total stays within the budget; the floor is -6 dB', () => {
-  const sounding = [0.2];
-  const level = soundLevel({ base: 0.3, budget: 0.45, sounding });
-  assert.ok(level + 0.2 <= 0.45 + 1e-12);
-  assert.ok(Math.abs(20 * Math.log10(VOICE_FLOOR) + 6.02) < 0.01);
+test('duck: never raises a sound, and a budget below the new sound mutes the others rather than going negative', () => {
+  for (const sounding of [[0.2], [1, 1, 1], [0.01, 5]]) {
+    const f = duckFactor({ newLevel: 1, budget: 1.5, sounding });
+    assert.ok(f <= 1 && f >= 0);
+  }
+  assert.equal(duckFactor({ newLevel: 2, budget: 1.5, sounding: [1] }), 0);
+});
+
+test('duck ramp is at least 30 ms', () => {
+  assert.ok(DUCK_RAMP_SECONDS >= 0.03);
 });
 
 test('limiter trim: undoes the compressor makeup gain from the config numbers (2.198 for -12 dB, ratio 20)', () => {

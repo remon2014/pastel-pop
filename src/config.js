@@ -138,10 +138,11 @@ export const MASTER_GAIN = 0.5; // fixed and hidden: never on a slider
 // Master limiter after both buses, then a hard ceiling (a clip at CEILING_DBFS).
 export const LIMITER = Object.freeze({ thresholdDb: -12, knee: 0, ratio: 20, attack: 0.003, release: 0.25 });
 export const CEILING_DBFS = -6;
-// Effect sounds share a loudness budget: all sounds playing together aim for at most this many times one pop.
+// Combined level of effect sounds playing together: at most this many times one pop (after ducking settles).
 export const VOICE_BUDGET_TIMES_POP = 1.5;
-// PROVISIONAL floor: a new sound is never quieter than this fraction of its own single-sound level (0.5 is -6 dB).
-export const VOICE_FLOOR = 0.5;
+// A new sound starts at its own full level; sounds still playing duck so the total fits the budget.
+// PROVISIONAL: the duck glides over this long, so ducking never clicks (at least 30 ms).
+export const DUCK_RAMP_SECONDS = 0.03;
 // PLACEHOLDER tones (D-010): one table real sounds can replace. Sine preferred, triangle allowed; main pitch
 // 250 to 800 Hz, nothing above 1000 Hz, no low-tone boost. `notes` is the set a sound picks from; the pop
 // notes are a pentatonic set that sounds pleasant in any order. `level` is linear gain before the bus.
