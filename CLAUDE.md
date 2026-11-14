@@ -43,8 +43,6 @@ Current layout; update this table when files are added, moved or removed.
 | `src/palette.js` | Colour palette (`PALETTE`: neutral ids and hex) |
 | `src/render/circle.js` | Draws one world circle as a whole-pixel disc (`discRows`, `drawCircle`, `fillDisc`) at internal resolution |
 | `src/render/symbols.js` | Placeholder canvas-path symbols (star, cloud, kite, leaf, moon) |
-
-
 | `src/logic/scene.js` | Canvas-free rules of the interim scene: `pickColours`, `pickTarget`, `colourCleared`, `nextRefillColour`, `startRefill`, `stepRefill` (one circle per `REFILL_STAGGER_S`) |
 | `src/logic/world.js` | Canvas-free rules in play-area widths: circle size, speed, spawn, movement, bounce, bounds pull-back. No `document`, `window`, canvas, `performance` or `import.meta` |
 | `src/render/view.js` | Canvas-free view maths: `computeView` (internal size, whole-number scale, CSS size from the column size and `devicePixelRatio`), `columnRect` (safe-area-trimmed portrait column, at most `MAX_COLUMN_ASPECT`, centred), `swatchPixels` (target swatch size), `cssToWorld` (taps), `circlePixels` (circle as whole internal pixels). No `document`, `window` or canvas |
