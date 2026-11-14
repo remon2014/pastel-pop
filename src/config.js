@@ -59,7 +59,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   vibration: false,
   muted: false,
   musicVolume: 0.5,
-  effectsVolume: 0.7,
+  effectsVolume: 0.35,
 });
 // Step the dev scene's volume buttons move by.
 export const DEV_VOLUME_STEP = 0.1;
@@ -126,3 +126,40 @@ export const PULSE_BAR_TOP = 2;
 // peak and back. The amber over any colour it can cover must change relative luminance by 0.07 or less (pulseBar.test.js).
 export const PULSE_BAR_BASE_ALPHA = 0.06;
 export const PULSE_BAR_PEAK_ALPHA = 0.12;
+
+// Sound (F-17). PROVISIONAL numbers: the wellbeing advisor and game designer confirm them (D-005 Open).
+export const MAX_EFFECT_VOICES = 4; // a 5th sound replaces the oldest, never adds on top
+export const EFFECT_QUICK_RELEASE_SECONDS = 0.03; // a replaced sound's fade-out; at least 30 ms
+export const MUSIC_FADE_IN_SECONDS = 1.5;
+export const MUSIC_FADE_IN_RETURN_SECONDS = 2; // after the page was hidden
+export const MUSIC_FADE_OUT_SECONDS = 1;
+export const BUS_RAMP_SECONDS = 0.05; // volume and mute changes glide over this, so sliders do not click
+export const MASTER_GAIN = 0.5; // fixed and hidden: never on a slider
+// Master limiter after both buses, then a hard ceiling (a clip at CEILING_DBFS).
+export const LIMITER = Object.freeze({ thresholdDb: -12, knee: 0, ratio: 20, attack: 0.003, release: 0.25 });
+export const CEILING_DBFS = -6;
+// Each new effect sound starts at base * VOICE_FALLOFF^(sounds already playing), so a fast tapper
+// cannot stack volume. Sums to at most about 1.4 times one sound even with every sound in step.
+export const VOICE_FALLOFF = 0.3;
+// PLACEHOLDER tones (D-010): one table real sounds can replace. Sine preferred, triangle allowed; main pitch
+// 250 to 800 Hz, nothing above 1000 Hz, no low-tone boost. `notes` is the set a sound picks from; the pop
+// notes are a pentatonic set that sounds pleasant in any order. `level` is linear gain before the bus.
+export const TONES = Object.freeze({
+  pop: {
+    wave: 'sine',
+    notes: [392, 440, 523.25, 587.33, 659.25],
+    seconds: 0.25,
+    level: 0.3,
+    fadeIn: 0.015,
+    fadeOut: 0.12,
+  },
+  // At least 6 dB under the pop (0.15 / 0.3 is 6.02 dB); steady pitch, not a descending tone.
+  wrong: { wave: 'sine', notes: [293.66], seconds: 0.3, level: 0.14, fadeIn: 0.03, fadeOut: 0.15 },
+});
+export const MIN_WRONG_TAP_QUIETER_DB = 6;
+// Which tone each effect request plays, by kind. Forms that play: see SOUND_FORMS.
+export const SOUND_BY_KIND = Object.freeze({ pop: 'pop', wobble: 'wrong', shake: 'wrong' });
+// Same level on every one of these; `ignored`, `refused`, `waitUntil` and the rest are silent.
+export const SOUND_FORMS = Object.freeze(['full', 'quiet', 'fade', 'plainFade', 'dim']);
+// Placeholder music: a soft two-note drone on its own bus.
+export const MUSIC_TONE = Object.freeze({ wave: 'sine', notes: [196, 293.66], level: 0.25 });
