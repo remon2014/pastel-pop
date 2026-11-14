@@ -1,6 +1,12 @@
 // Sound rules as plain logic (D-010): which request makes a sound, the voice cap, note choice, fade and
 // gain maths. No AudioContext, DOM or timers; times are seconds passed in. Playback is in audio.js.
-import { MAX_EFFECT_VOICES, SOUND_BY_KIND, SOUND_FORMS } from '../config.js';
+import {
+  LEVEL_WINDOW_SECONDS,
+  MAX_EFFECT_VOICES,
+  MERGE_WINDOW_SECONDS,
+  SOUND_BY_KIND,
+  SOUND_FORMS,
+} from '../config.js';
 
 const clamp01 = (n) => Math.min(1, Math.max(0, n));
 
@@ -77,6 +83,43 @@ export function createVoices(max = MAX_EFFECT_VOICES) {
     startOf: (id) => voices.find((v) => v.id === id)?.start,
     clear() {
       voices = [];
+    },
+  };
+}
+
+// Same-instant taps play as one sound. accept(key, now) is true when a sound of that key should play, false when
+// it falls within the window of the one that last played (it merges into it, at that one sound's level).
+export function createMerger(windowSeconds = MERGE_WINDOW_SECONDS) {
+  const lastPlayed = new Map();
+  return {
+    accept(key, now) {
+      const last = lastPlayed.get(key);
+      if (last !== undefined && now - last < windowSeconds) return false;
+      lastPlayed.set(key, now);
+      return true;
+    },
+    clear: () => lastPlayed.clear(),
+  };
+}
+
+// RMS level over the last `seconds` of audio, from chunks added as (end time, sum of squares, sample count).
+// RMS is used, not the mean of absolute values, because it follows the signal's energy, which is what loudness tracks.
+export function createRmsWindow(seconds = LEVEL_WINDOW_SECONDS) {
+  let chunks = [];
+  return {
+    add(time, sumSquares, count) {
+      chunks.push({ time, sumSquares, count });
+      chunks = chunks.filter((c) => c.time > time - seconds);
+    },
+    value(now) {
+      let sum = 0;
+      let count = 0;
+      for (const c of chunks) {
+        if (c.time <= now - seconds) continue;
+        sum += c.sumSquares;
+        count += c.count;
+      }
+      return count === 0 ? 0 : Math.sqrt(sum / count);
     },
   };
 }

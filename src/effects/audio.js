@@ -14,7 +14,18 @@ import {
   TONES,
   VOICE_BUDGET_TIMES_POP,
 } from '../config.js';
-import { busGain, createVoices, duckFactor, envelopeGain, limiterTrim, pickNote, ramp, soundFor } from './voices.js';
+import {
+  busGain,
+  createMerger,
+  createRmsWindow,
+  createVoices,
+  duckFactor,
+  envelopeGain,
+  limiterTrim,
+  pickNote,
+  ramp,
+  soundFor,
+} from './voices.js';
 
 const CEILING_CURVE_POINTS = 2049;
 const STOP_MARGIN_SECONDS = 0.02;
@@ -41,6 +52,10 @@ function glide(param, target, now, seconds) {
 // caller runs from a pointerdown. Nothing plays before that.
 export function createAudio(settings, { doc = document, random = Math.random } = {}) {
   const voices = createVoices();
+  const merger = createMerger();
+  const rmsWindow = createRmsWindow();
+  let rmsHold = 0;
+  let lastMeasure = 0;
   const playing = new Map();
   const lastNote = {};
   let ctx = null;
@@ -129,6 +144,7 @@ export function createAudio(settings, { doc = document, random = Math.random } =
       voice.osc.stop();
     }
     voices.clear();
+    merger.clear();
   }
 
   // Plays the sound for an effect request's kind and the layer's answer form. Silent forms, a hidden page or a
@@ -138,6 +154,7 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     if (name === null || !usable()) return false;
     const tone = TONES[name];
     const now = ctx.currentTime;
+    if (!merger.accept(name, now)) return false;
     const id = `v${sequence++}`;
     const replaced = voices.start(id, now, tone.seconds);
     if (replaced !== null) stopVoice(replaced, EFFECT_QUICK_RELEASE_SECONDS);
@@ -241,16 +258,30 @@ export function createAudio(settings, { doc = document, random = Math.random } =
     measure() {
       if (!nodes) return;
       nodes.analyser.getFloatTimeDomainData(samples);
+      const now = ctx.currentTime;
+      // Only the samples since the last read are new; the analyser windows overlap.
+      const fresh = Math.min(samples.length, Math.max(1, Math.round((now - lastMeasure) * ctx.sampleRate)));
+      lastMeasure = now;
       let top = 0;
-      for (const v of samples) top = Math.max(top, Math.abs(v));
+      let sumSquares = 0;
+      for (let i = samples.length - fresh; i < samples.length; i++) {
+        top = Math.max(top, Math.abs(samples[i]));
+        sumSquares += samples[i] * samples[i];
+      }
       peakHold = Math.max(peakHold, top);
+      rmsWindow.add(now, sumSquares, fresh);
+      rmsHold = Math.max(rmsHold, rmsWindow.value(now));
       if (top >= 10 ** (CEILING_DBFS / 20) * CEILING_HIT_FRACTION) ceilingReads++;
     },
     resetPeak() {
       peakHold = 0;
       ceilingReads = 0;
+      rmsHold = 0;
     },
     peak: () => peakHold,
+    // Master level, RMS over the last 100 ms: now, and the highest since reset.
+    rms: () => (ctx ? rmsWindow.value(ctx.currentTime) : 0),
+    rmsPeak: () => rmsHold,
     // Meter reads (20 ms apart, windows overlap) in which the output touched the ceiling.
     ceilingReads: () => ceilingReads,
     numbers() {

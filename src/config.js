@@ -143,6 +143,10 @@ export const VOICE_BUDGET_TIMES_POP = 1.5;
 // A new sound starts at its own full level; sounds still playing duck so the total fits the budget.
 // PROVISIONAL: the duck glides over this long, so ducking never clicks (at least 30 ms).
 export const DUCK_RAMP_SECONDS = 0.03;
+// PROVISIONAL: effect sounds of one kind requested within this long of the first play as that one sound.
+export const MERGE_WINDOW_SECONDS = 0.015;
+// Dev readout: the master level is averaged (RMS) over this long.
+export const LEVEL_WINDOW_SECONDS = 0.1;
 // PLACEHOLDER tones (D-010): one table real sounds can replace. Sine preferred, triangle allowed; main pitch
 // 250 to 800 Hz, nothing above 1000 Hz, no low-tone boost. `notes` is the set a sound picks from; the pop
 // notes are a pentatonic set that sounds pleasant in any order. `level` is linear gain before the bus.

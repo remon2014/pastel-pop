@@ -8,12 +8,15 @@ import {
   LIMITER,
   MASTER_GAIN,
   MAX_EFFECT_VOICES,
+  MERGE_WINDOW_SECONDS,
   MIN_WRONG_TAP_QUIETER_DB,
   SOUND_FORMS,
   TONES,
 } from '../../src/config.js';
 import {
   busGain,
+  createMerger,
+  createRmsWindow,
   createVoices,
   duckFactor,
   envelopeGain,
@@ -196,4 +199,38 @@ test('pickNote: never repeats and never rises twice in a row, over many random r
 test('pickNote: works with a one-note set', () => {
   const first = pickNote([262], null, () => 0.5);
   assert.equal(pickNote([262], first, () => 0.5).note, 262);
+});
+
+test('merge: 3 requests within 15 ms make 1 sound; requests 16 ms apart make 2', () => {
+  const m = createMerger();
+  const played = [0, 0.005, 0.01].filter((t) => m.accept('pop', t));
+  assert.equal(played.length, 1);
+  const m2 = createMerger();
+  assert.equal([0, 0.016].filter((t) => m2.accept('pop', t)).length, 2);
+});
+
+test('merge: the merged sound is one sound, so its level is the level of a single sound', () => {
+  const m = createMerger();
+  let sounds = 0;
+  for (const t of [0, 0.002, 0.004]) if (m.accept('pop', t)) sounds++;
+  assert.equal(sounds * TONES.pop.level, TONES.pop.level);
+});
+
+test('merge: different tones do not merge; after a merge the next window starts at the sound that played', () => {
+  const m = createMerger();
+  assert.equal(m.accept('pop', 0), true);
+  assert.equal(m.accept('wrong', 0.001), true);
+  assert.equal(m.accept('pop', 0.014), false);
+  assert.equal(m.accept('pop', 0.016), true);
+  assert.ok(MERGE_WINDOW_SECONDS === 0.015);
+});
+
+test('rms window: RMS of the last 100 ms of chunks; older chunks drop out', () => {
+  const w = createRmsWindow(0.1);
+  w.add(0.01, 4 * 10, 10);
+  assert.equal(w.value(0.01), 2);
+  w.add(0.05, 0, 10);
+  assert.ok(Math.abs(w.value(0.05) - Math.sqrt(2)) < 1e-12);
+  assert.equal(w.value(0.2), 0);
+  assert.equal(createRmsWindow().value(0), 0);
 });

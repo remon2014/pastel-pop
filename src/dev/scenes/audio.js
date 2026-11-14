@@ -8,7 +8,7 @@ import { button, READOUT_MS } from '../ui.js';
 const START_RATE = 10;
 const FINGERS = 3;
 const FIRST_POINTER_ID = 300;
-const METER_MS = 20;
+const METER_MS = 10; // the 100 ms level is recomputed this often
 const SLIDER_STEPS = 100;
 const PAD_HEIGHT = 120;
 const ROWS = [
@@ -20,11 +20,14 @@ const ROWS = [
   'Effects slider / bus gain (target)',
   'Muted',
   'Reduce motion (no effect on sound)',
-  'Master peak dBFS (held since reset)',
+  'Master peak dBFS (instant, held since reset)',
   'Pop peak dBFS (last single pop)',
   'Wrong-tap peak dBFS (last single)',
   'Pad taps / sounds played',
   'Auto-tapper',
+  'Master level dBFS (RMS, sliding 100 ms): now / highest',
+  'Single pop highest 100 ms level dBFS',
+  'Instant peak vs single pop peak (guard: 3x or less)',
 ];
 const onOff = (b) => (b ? 'on' : 'off');
 const toDb = (linear) => (linear > 0 ? 20 * Math.log10(linear) : Number.NEGATIVE_INFINITY);
@@ -53,6 +56,7 @@ export default function mountAudioScene(root) {
   let padTaps = 0;
   let played = 0;
   let popPeak = 0;
+  let popRms = 0;
   let wrongPeak = 0;
 
   // The first real tap anywhere on the page enables sound, from inside the pointerdown.
@@ -92,8 +96,10 @@ export default function mountAudioScene(root) {
       audio.measure();
       if (Date.now() > stop) {
         clearInterval(id);
-        if (kind === 'pop') popPeak = audio.peak();
-        else wrongPeak = audio.peak();
+        if (kind === 'pop') {
+          popPeak = audio.peak();
+          popRms = audio.rmsPeak();
+        } else wrongPeak = audio.peak();
         refresh();
       }
     }, METER_MS);
@@ -135,6 +141,7 @@ export default function mountAudioScene(root) {
       audio.resetPeak();
       highestPlaying = 0;
       popPeak = 0;
+      popRms = 0;
       wrongPeak = 0;
     }),
   );
@@ -175,6 +182,9 @@ export default function mountAudioScene(root) {
     readout.set(ROWS[9], fmtDb(toDb(popPeak)));
     readout.set(ROWS[10], fmtDb(toDb(wrongPeak)));
     readout.set(ROWS[11], `${padTaps} / ${played}`);
+    readout.set(ROWS[13], `${fmtDb(toDb(audio.rms()))} / ${fmtDb(toDb(audio.rmsPeak()))}`);
+    readout.set(ROWS[14], fmtDb(toDb(popRms)));
+    readout.set(ROWS[15], popPeak > 0 ? `${(audio.peak() / popPeak).toFixed(2)}x` : 'measure a single pop');
     readout.set(ROWS[12], timer === null ? 'off' : `${START_RATE}/s x ${FINGERS} fingers`);
   }
   settings.subscribe(refresh);
@@ -218,6 +228,15 @@ export default function mountAudioScene(root) {
     },
     get peakDb() {
       return toDb(audio.peak());
+    },
+    get rms() {
+      return audio.rms();
+    },
+    get rmsPeak() {
+      return audio.rmsPeak();
+    },
+    get popRms() {
+      return popRms;
     },
     get popPeak() {
       return popPeak;
