@@ -21,6 +21,7 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 | D-009 | 2026-10-11 | No browser-test framework yet | Accepted |
 | D-010 | 2026-11-08 | Function before look: placeholder visuals, with rules and timing kept apart from drawing | Accepted |
 | D-011 | 2026-11-08 | Soft pulses pay no flash budget; softness is proved by a drawn-luminance test | Accepted (amends D-005) |
+| D-012 | 2026-11-22 | Commit hook checks that what is committed is the working tree | Accepted |
 
 ---
 
@@ -129,3 +130,11 @@ Significant technical decisions for Pastel Pop, newest last. Owned by the tech l
 - **Decision:** Every pulse the layer draws must change relative luminance by 0.07 or less across its beats, measured on composited drawn colours, not saturated red, at most 2 beats a second (Story) or one every 2 s (Calm). Such a pulse is not a flash, so the limiter logs no flash for a beat and reserves no budget. The guarantee is a unit test that computes each pulse drawer's luminance change from the palette and `src/config.js`; any new pulse drawer joins that test. The shared 0.5 s pulse clock, rate caps and late-beat drop stay. The F-16 meter remains the authority on screen.
 - **Reason:** A steady 2-a-second pulse filled the whole closed 1.05 s budget, forcing quiet taps and quiet Story arrivals during the warning; the wellbeing advisor judged quiet arrivals not truly free and the game designer rejected holding arrivals. A soft pulse removes the conflict and deletes code (`TAP_FLASHES_WITH_PULSE`, quiet arrivals, beat reservation).
 - **Alternatives rejected:** Keep the pulse paying budget with quiet taps and arrivals (unsafe reading of arrivals, poor feel at the climax). Hold arrivals during the pulse (board empties). Slow the pulse to free budget (owner chose a steady 2 a second). A per-pulse "soft" flag checked at run time (two code paths for one rule; the test proves it once).
+
+## D-012: Commit hook checks that what is committed is the working tree
+
+- **Date:** 2026-11-22. **Status:** Accepted (owner instruction 2026-11-22).
+- **Decision:** Before running tests and lint, `.claude/hooks/check-commit.mjs` reads `git status --porcelain` and blocks the commit (exit 2) if any tracked file has unstaged changes (unless the commit uses `-a` / `--all`, including combined short flags such as `-am`), if any untracked, non-ignored file exists, or if the commit names file paths (pathspecs, `-i`, `-o`, `--pathspec-from-file`). The message lists the files and tells Claude to stage everything with `git add` in a separate Bash call, then commit. CLAUDE.md "How to work" carries the matching rule: stage and commit in separate calls.
+- **Reason:** The hook ran tests on the working tree, not on what was staged, so a commit with failing tests could pass while the fix sat unstaged (happened once in F-14, commit eff7a81). Requiring a clean match between the working tree and the commit makes the working-tree test run a true test of the commit.
+- **Scope and limits:** This is a Claude Code `PreToolUse` hook. It only sees commits Claude makes through the Bash tool; it does not run for commits the owner makes in their own terminal, and it is not a git hook. A chained `git add ... && git commit` in one call is blocked, because the hook runs before the add. The command is parsed with a small shell-word splitter (quotes and `$( ... )` kept whole); unusual shell forms may be misread, in which case it errs toward blocking.
+- **Alternatives rejected:** Test the staged snapshot by stashing unstaged changes (`git stash --keep-index`) around the test run (it touches the owner's working tree and can lose or conflict changes if interrupted). A real git `pre-commit` hook (would also cover terminal commits, but it is outside the repo and each clone must install it; it can be added later).

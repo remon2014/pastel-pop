@@ -10,6 +10,7 @@ The look, feel and design are being significantly reworked. **`docs/game-design.
 - **Think like the player.** Judge every change from the target player's point of view: is it clear, fair, satisfying and comfortable on a phone held in one hand? Say so when something works against that, even if it was requested.
 - **Safety by default.** No secrets in the repo, no new third-party scripts, trackers or network calls without asking, and protect player data and privacy. Flag anything risky instead of working around it.
 - **Be efficient.** Read only the files the task needs, make focused changes rather than rewrites, don't re-read files you just edited, and keep replies short: what changed and anything I need to decide.
+- **Stage and commit in separate calls.** Run `git add` for everything you mean to commit in one Bash call, then `git commit` in the next. Don't chain `git add ... && git commit`: the commit hook runs before the add, so it would see unstaged files and block (D-012).
 
 ## Stack
 - Plain HTML5 Canvas 2D with vanilla ES modules. No game engine and no runtime dependencies. Do not add a framework or engine without asking.
@@ -64,7 +65,7 @@ Current layout; update this table when files are added, moved or removed.
 | `docs/foundations-plan.md` | Engineering foundations plan: tasks F-01 to F-19 and their progress |
 | `docs/decisions.md` | Log of significant technical decisions (D-001 onward) |
 | `docs/qa-log.md`, `docs/qa-notes.md` | QA verdict per task, and lasting notes for future test sessions |
-| `.claude/hooks/` | Claude Code hooks, wired up in `.claude/settings.json`: `format-file.mjs` formats and lints each edited file, `check-commit.mjs` runs tests and lint before any `git commit`, `protect-files.mjs` blocks edits to secrets and asks before edits to settings, MCP and hook files |
+| `.claude/hooks/` | Claude Code hooks, wired up in `.claude/settings.json`: `format-file.mjs` formats and lints each edited file, `check-commit.mjs` runs before any `git commit`: blocks if tracked files have unstaged changes (unless `-a`), untracked files exist or the commit names paths, so tests and lint run on exactly what is committed (D-012), `protect-files.mjs` blocks edits to secrets and asks before edits to settings, MCP and hook files |
 | `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor`, `tech-lead`, `gameplay-engineer`, `qa-tester`, `code-reviewer` |
 | `.github/workflows/ci.yml` | GitHub CI: on every push and pull request runs `npm test`, lint, format check, build, and checks dev code is absent from `dist/` |
 | `.claude/skills/` | Skills the owner runs by typing them: `ship-task/SKILL.md` (`/ship-task F-11`) runs one planned task through tech lead, engineer, QA and review, and stops for approval before merging |
