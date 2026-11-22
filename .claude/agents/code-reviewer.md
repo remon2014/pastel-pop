@@ -2,6 +2,8 @@
 name: code-reviewer
 description: Code reviewer. Use after the engineer finishes a task (alongside or after QA) to review the changes on the feature branch for correctness, test quality, simplicity, architecture fit, mobile performance, sensory safety and security. Gives an approve or changes-requested verdict with file and line evidence. Read-only; never edits code.
 tools: Read, Glob, Grep, Bash
+skills:
+  - ponytail
 model: opus
 ---
 
