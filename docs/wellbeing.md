@@ -1,6 +1,6 @@
 # Wellbeing and sensory safety: Pastel Pop
 
-**Status:** v0.9, 2026-11-08. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
+**Status:** v0.10, 2026-11-22. Working reference for the designer and engineers. Design detail lives in `docs/game-design.md`; this file holds the safety rules, the evidence behind them and the release checks. Where the two disagree on a design value, `docs/game-design.md` wins and this file should be corrected.
 
 **Changed in v0.2:** the sensory rules are split into two tiers by owner decision. Tier 1 (safety) covers the whole game. Tier 2 (comfort) covers Calm mode only. Story mode gains bounded allowances (section 6).
 
@@ -17,6 +17,8 @@
 **Changed in v0.8 (2026-11-08):** section 6 gains effects-layer rules for F-14: the over-budget Story burst, the Story Reduce motion dim and screen shake against the flash budget. They are reasoned, not measured.
 
 **Changed in v0.9 (2026-11-08):** section 6 gains effects-layer rules 4 to 6 from F-15: which clock the flash limit counts on, the shape of the one-second window, and Reduce motion turning on mid-effect. Reasoned, not measured.
+
+**Changed in v0.10 (2026-11-22):** the Reduce motion table splits circle drift by mode. Story drift is unchanged; Calm drift becomes slower and straighter under Reduce motion (owner decision 21). The values are design judgement, not evidence-based.
 
 **Who wrote this:** an AI advisor agent (`wellbeing-advisor`). Its review is not a clinical endorsement and must never be presented as one, in the game, the store listing or anywhere else.
 
@@ -171,7 +173,8 @@ A circle in Calm is light on a dark background: Star has a relative luminance of
 | Swell and settle | Calm | Reduced or off |
 | Target glow | Calm | Kept: it changes opacity only and its pixels never move, so it is not motion under WCAG 2.3.3 |
 | Low-time bar pulse | Story | Kept, on one condition: the pulse changes brightness, colour or opacity only, and never the bar's size, shape or position. WCAG 2.3.3 treats a pulse as "not motion" only on that condition. It stays inside the flash limit |
-| Circle drift | Both | Kept: it is the game |
+| Circle drift | Story | Unchanged: changing it would change difficulty and stars |
+| Circle drift | Calm | Kept, because it is the game, but calmer, with straighter paths: speed 0.04 play-area widths a second (instead of 0.05), top turn rate 30° a second (instead of 45°), wander period 8 to 12 s (instead of 4 to 8 s), wander uses at most a third of the top turn rate, look-ahead 4 s. Switching Reduce motion on or off during a visit eases into the new values over 1 s or more. All values PROVISIONAL. Basis: design judgement only. No study tests drift settings, and ambient drift is outside WCAG 2.3.3 (owner decision 21) |
 
 **Retired prototype effects**
 
@@ -233,7 +236,7 @@ Calm is one endless level with no story, no timer, no score, no streaks, no fail
 | Target change | After a number of clears, never on a clock; the new target is always a colour already on screen; swatch-only crossfade of about 2 s; no sting, no background tint; old and new targets both accepted during the crossfade. Assistive technology is told politely: the new label is announced once, after any speech already in progress, never interrupting and never repeated | Tier 2, design judgement. The polite announcement is owner decision 19 |
 | Wrong tap | One small slow wobble (a single cycle of about 300 ms or more) on that circle only; sound quieter than the pop and not a descending error tone. A circle that is already wobbling ignores further wrong taps and makes no sound, so nothing stacks | Owner decisions; no penalty of any kind. Silence on a repeat tap also keeps the Tier 1 rule that fast tapping cannot stack volume |
 | Missed tap | A tap on empty space does nothing: no sound, no mark | Design judgement |
-| Motion | Slow, smooth drift (starting value 0.05 play-area widths a second) with no sudden change of speed or direction. Circles never bounce: they turn away from edges and from each other over 1 s or more, and do not overlap. No visible ticking: if movement or the swell would show as whole-pixel jumps, place and scale more finely than the pixel grid, or drop the swell and let the glow carry the rhythm | Tier 2, design judgement. Circle drift is ambient, so it is outside WCAG 2.3.3 |
+| Motion | Slow, smooth drift (starting value 0.05 play-area widths a second) with no sudden change of speed or direction. Circles never bounce: they turn away from edges and from each other over 1 s or more, and do not overlap. No visible ticking: if movement or the swell would show as whole-pixel jumps, place and scale more finely than the pixel grid, or drop the swell and let the glow carry the rhythm. With Reduce motion on, drift is slower and straighter (see the Reduce motion table in section 4) | Tier 2, design judgement. Circle drift is ambient, so it is outside WCAG 2.3.3 |
 | Idle | Nothing changes if the player stops tapping. No prompt, hint, nudge or dimming by the game, and nothing that grows more insistent with time. Watching is a complete way to use Calm | Design judgement, following the no-pressure principle |
 | Screen sleep | Follows the phone's own setting. No wake lock in v1.0. Three conditions: music pauses when the screen sleeps; waking returns quietly to Calm exactly as it was left, with music fading back in and no overlay or countdown; the game itself never dims the screen | Owner decision 18. Reasons (design judgement): overriding the phone's sleep timer costs battery and takes a choice away from the player; music carrying on from a dark phone could startle |
 | Music | Fades in over 1 to 2 s, including from the open-into-Calm shortcut and after the screen wakes | Tier 1 (no sudden loud sound); the length is design judgement |
@@ -312,6 +315,7 @@ Story mode is meant to feel frantic. Everything here sits inside Tier 1; Tier 2 
 | 18 | Screen sleep follows the phone's setting; no wake lock in v1.0. Conditions: music pauses on sleep; quiet resume to Calm as left; the game itself does not dim |
 | 19 | Artist and interface brief agreed: solid silhouettes with no inner dots or holes; a neutral exit label ("Leave Calm"); polite announcement of target changes; a wrong tap on an already-wobbling circle is silent |
 | 20 | "Agree with all recommendations" from the review of `docs/game-design.md` v0.6. Decisions 12 to 19 are that agreement, as relayed by the coordinator |
+| 21 | 2026-11-22, "Accept all" from the review of the shared motion model (`docs/game-design.md` v0.8), as relayed by the coordinator. Reduce motion leaves Story drift unchanged and makes Calm drift slower and straighter (values in the Reduce motion table, section 4). Design judgement, not evidence-based |
 
 ## 10. Open checks before release
 
