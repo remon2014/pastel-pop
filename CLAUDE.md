@@ -68,7 +68,7 @@ Current layout; update this table when files are added, moved or removed.
 | `.claude/hooks/` | Claude Code hooks, wired up in `.claude/settings.json`: `format-file.mjs` formats and lints each edited file, `check-commit.mjs` runs before any `git commit`: blocks if tracked files have unstaged changes (unless `-a`), untracked files exist or the commit names paths, so tests and lint run on exactly what is committed (D-012), `protect-files.mjs` blocks edits to secrets and asks before edits to settings, MCP and hook files |
 | `.claude/agents/` | Agent definitions: `game-designer`, `wellbeing-advisor`, `tech-lead`, `gameplay-engineer`, `qa-tester`, `code-reviewer` |
 | `.github/workflows/ci.yml` | GitHub CI: on every push and pull request runs `npm test`, lint, format check, build, and checks dev code is absent from `dist/` |
-| `.claude/skills/` | Skills the owner runs by typing them: `ship-task/SKILL.md` (`/ship-task F-11`) runs one planned task through tech lead, engineer, QA and review, and stops for approval before merging |
+| `.claude/skills/` | Skills the owner runs by typing them: `ship-task/SKILL.md` (`/ship-task F-11`) runs one planned task through tech lead, engineer, QA and review, and stops for approval before merging. `ponytail/SKILL.md` ("smallest complete change" rules, copied from DietrichGebert/ponytail@ebd8654, MIT) is not typed: it is preloaded only into `gameplay-engineer` and `code-reviewer` through their `skills` frontmatter. No Ponytail plugin or hooks are installed |
 
 ## Rules
 - **Static assets go in `public/`.** Vite only copies files from `public/` into the build. Anything in the repo root (icons, `sw.js`, CSS loaded at runtime) is missing from production builds.

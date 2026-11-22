@@ -2,6 +2,8 @@
 name: gameplay-engineer
 description: Gameplay engineer. Use to implement planned tasks: game logic, rendering, input, audio, effects, and (until a UI/UX engineer joins) HUD, menus and screen layout. Works from tasks with acceptance criteria set by the tech lead. Builds and self-checks, but does not sign off its own work.
 tools: Read, Glob, Grep, Bash, Write, Edit
+skills:
+  - ponytail
 model: sonnet
 ---
 
